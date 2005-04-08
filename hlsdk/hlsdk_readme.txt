@@ -1,0 +1,1 @@
+This hlsdk is stripped down version only for compiling Metamod-p.

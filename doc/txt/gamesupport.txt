@@ -1,0 +1,6 @@
+Adding Game/Mod Support
+=-=-=-=-=-=-=-=-=-=-=-=
+
+Metamod with All-Mod-Support Patch already supports your Mod.
+
+--------------------------------------------------------------------------
