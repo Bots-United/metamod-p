@@ -46,6 +46,14 @@
 
 void do_exit(int exitval) ATTRIBUTE(__noreturn__);
 
+// faster than c-lib strcmp() on short strings
+inline int mm_strcmp(const char *s1, const char *s2) {
+	while(unlikely(*s1 == *s2++))
+		if(unlikely(*s1++ == 0))
+			return (0);
+	return(*(const unsigned char *)s1 - *(const unsigned char *)(s2 - 1));
+}
+
 // Unlike snprintf(), strncpy() doesn't necessarily null-terminate the
 // target.  It appears the former function reasonably considers the given
 // size to be "max size of target string" (including the null-terminator),
@@ -94,7 +102,7 @@ inline char *STRNCPY(char *dst, const char *src, int size) {
 // Renamed string functions to be clearer.
 inline int strmatch(const char *s1, const char *s2) {
 	if(likely(s1) && likely(s2))
-		return(!strcmp(s1, s2));
+		return(!mm_strcmp(s1, s2));
 	else
 		return(0);
 }

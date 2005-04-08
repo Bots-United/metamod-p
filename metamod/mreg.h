@@ -164,6 +164,7 @@ class MRegMsg : public class_metamod_new {
 		int msgid;				// msgid, assigned by engine
 		int size;				// size, if given by gamedll
 		int plugid;				// usermsg from plugin?
+		int count;				// times found
 };
 
 
@@ -183,7 +184,9 @@ class MRegMsgList : public class_metamod_new {
 		MRegMsg *add(const char *addname, int addmsgid, int addsize);
 		MRegMsg *find(const char *findname);
 		MRegMsg *find(int findmsgid);
+		MRegMsg *find_index(int index);
 		void show(void);	// list all msgs to console
+		void reset_counts(void);
 };
 
 #endif /* MREG_H */

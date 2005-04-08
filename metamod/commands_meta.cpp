@@ -45,7 +45,7 @@
 #include "vdate.h"			// COMPILE_TIME, COMPILE_TZONE
 
 
-#ifdef META_PERFMON
+#if defined(META_PERFMON) || defined(META_PERFMON2)
 
 long double total_tsc=0;
 unsigned long long count_tsc=0;
@@ -117,7 +117,7 @@ void svr_meta(void) {
 	// arguments: filename, description
 	else if(unlikely(!strcasecmp(cmd, "load")))
 		cmd_meta_load();
-#ifdef META_PERFMON
+#if defined(META_PERFMON) || defined(META_PERFMON2)
 	else if(unlikely(!strcasecmp(cmd, "tsc")))
 		cmd_meta_tsc();
 	else if(unlikely(!strcasecmp(cmd, "reset_tsc")))

@@ -486,14 +486,53 @@ MRegMsg *MRegMsgList::add(const char *addname, int addmsgid, int addsize) {
 	return(imsg);
 }
 
+// 
+void MRegMsgList::reset_counts(void) {
+	int i;
+	for(i=0; likely(i < endlist); i++)
+		mlist[i].count=0;
+}
+
+// sort function for qsort
+static int sort_by_count(const void* a, const void* b) {
+	const MRegMsg * A = (const MRegMsg *)a;
+	const MRegMsg * B = (const MRegMsg *)b;
+	
+	return(B->count-A->count);
+}
+
 // Try to find a registered msg with the given name.
 // meta_errno values:
-//  - ME_NOTFOUND	couldn't find a matching cvar
+//  - ME_NOTFOUND	couldn't find a matching msg
 MRegMsg *MRegMsgList::find(const char *findname) {
-	int i;
+	int i,j;
 	
 	for(i=0; likely(i < endlist); i++) {
-		if(unlikely(!strcmp(mlist[i].name, findname)))
+		if(likely(mm_strcmp(mlist[i].name, findname)))
+			continue;
+		
+		mlist[i].count++;
+		if(unlikely(!i) || likely(mlist[i-1].count))
+			return(&mlist[i]);
+		
+		for(j=0; likely(j < endlist); j++)
+			if(unlikely(mlist[j].count<0))
+				mlist[j].count=100;
+		
+		qsort(&mlist, endlist, sizeof(mlist[0]), sort_by_count);
+		
+		return(find_index(i+1));
+	}
+	RETURN_ERRNO(NULL, ME_NOTFOUND);
+}
+
+// Try to find a registered msg with the given index.
+// meta_errno values:
+//  - ME_NOTFOUND	couldn't find a matching msg
+MRegMsg *MRegMsgList::find_index(int index) {
+	int i;
+	for(i=0; likely(i < endlist); i++) {
+		if(unlikely(mlist[i].index == index))
 			return(&mlist[i]);
 	}
 	RETURN_ERRNO(NULL, ME_NOTFOUND);
@@ -501,7 +540,7 @@ MRegMsg *MRegMsgList::find(const char *findname) {
 
 // Try to find a registered msg with the given msgid.
 // meta_errno values:
-//  - ME_NOTFOUND	couldn't find a matching cvar
+//  - ME_NOTFOUND	couldn't find a matching msg
 MRegMsg *MRegMsgList::find(int findmsgid) {
 	int i;
 	for(i=0; likely(i < endlist); i++) {

@@ -2,7 +2,7 @@ MODNAME = metamod
 
 #__METAMOD_BUILD__ for our special eiface.h
 EXTRA_CFLAGS = -D__METAMOD_BUILD__ -DNO_META_NEW_HANDLER
-#-DMETA_PERFMON
+#-DMETA_PERFMON2
 #-DMETA_PERFMON
 
 SRCFILES = api_hook.cpp api_info.cpp commands_meta.cpp conf_meta.cpp \

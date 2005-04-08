@@ -221,6 +221,39 @@ inline unsigned long long GET_TSC(void) {
 	total_tsc += GET_TSC() - active_tsc; \
 	count_tsc++;
 
+#define FINDMSGID_START_TSC_TRACKING()
+#define FINDMSGID_END_TSC_TRACKING()
+
+// ===== end ==================================================================
+
+#elif defined(META_PERFMON2)
+
+// ============================================================================
+// mutil_GetUserMsgID performance monitoring
+// ============================================================================
+
+extern long double total_tsc;
+extern unsigned long long count_tsc;
+extern unsigned long long active_tsc;
+
+inline unsigned long long GET_TSC(void) {
+	union { struct { unsigned int eax, edx;	} split; unsigned long long full; } tsc;
+	__asm__ __volatile__("rdtsc":"=a"(tsc.split.eax), "=d"(tsc.split.edx));	
+	return(tsc.full);
+}
+
+#define FINDMSGID_START_TSC_TRACKING() \
+	active_tsc = GET_TSC()
+
+#define FINDMSGID_END_TSC_TRACKING() \
+	total_tsc += GET_TSC() - active_tsc; \
+	count_tsc++;
+
+#define API_START_TSC_TRACKING()
+#define API_PAUSE_TSC_TRACKING()
+#define API_UNPAUSE_TSC_TRACKING()
+#define API_END_TSC_TRACKING()
+
 // ===== end ==================================================================
 
 #else
@@ -231,6 +264,8 @@ inline unsigned long long GET_TSC(void) {
 #define API_PAUSE_TSC_TRACKING()
 #define API_UNPAUSE_TSC_TRACKING()
 #define API_END_TSC_TRACKING()
+#define FINDMSGID_START_TSC_TRACKING()
+#define FINDMSGID_END_TSC_TRACKING()
 
 // ===== end ==================================================================
 

@@ -117,7 +117,7 @@ static int sort_names_list(const sort_names_t * A, const sort_names_t * B)
 	const char * str_A = (const char *)A->name;
 	const char * str_B = (const char *)B->name;
 	
-	return(strcmp(str_A, str_B));
+	return(mm_strcmp(str_A, str_B));
 }
 
 //
@@ -178,7 +178,7 @@ static int combine_module_export_tables(HMODULE moduleMM, HMODULE moduleGame)
 		//Check if name already in the list
 		for(u = 0; likely(u < nameCount); u++)
 		{
-			if(unlikely(!stricmp(name, (const char*)newSort[u].name)))
+			if(unlikely(!mm_strcmp(name, (const char*)newSort[u].name)))
 			{
 				listFix -= 1;
 				break;

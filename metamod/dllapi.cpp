@@ -161,7 +161,7 @@ static void mm_ClientPutInServer(edict_t *pEntity) {
 	RETURN_API_void();
 }
 static void mm_ClientCommand(edict_t *pEntity) {
-	if(likely(Config->clientmeta) && unlikely(strmatch(CMD_ARGV(0), "meta"))) {
+	if(likely(Config->clientmeta) && unlikely(strmatch("meta", CMD_ARGV(0)))) {
 		client_meta(pEntity);
 	}
 	META_DLLAPI_HANDLE_void(FN_CLIENTCOMMAND, pfnClientCommand, p, (pEntity));
@@ -193,6 +193,7 @@ static void mm_ServerDeactivate(void) {
 	Plugins->refresh(PT_CHANGELEVEL);
 	Plugins->unpause_all();
 	// Plugins->retry_all(PT_CHANGELEVEL);
+	RegMsgs->reset_counts();
 	RETURN_API_void();
 }
 static void mm_PlayerPreThink(edict_t *pEntity) {

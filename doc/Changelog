@@ -1,12 +1,19 @@
 # vim: set tw=75 ft=none :
 
+2005/04/08      1.17.4p22
+[Patch: Metamod-P v22 by Jussi Kivilinna]
+ - Optimized GET_USER_MSG_ID() function for metamod-bots.
+ - Minor performance tweaks.
+ - [linux] Looks for gamedll for Earth Special Forces Mod from 'linuxdlls'
+   directory after checking 'dlls'.
+
 2005/03/25      1.17.4p21
 [Patch: Metamod-P v21 by Jussi Kivilinna]
  - Fixed 'meta reload' not working on plugins that have failed loading.
  - Fixed bug with handling of metamod-plugin-bots, which might have caused
    problems depending on order of loaded plugins. See 'call_count' in
    'api_hook.cpp' for details.
- - Minor performace tweaks.
+ - Minor performance tweaks.
  - Changed all non-fatal error messages to warning messages.
 
 2005/03/05      1.17.4p20

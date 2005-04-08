@@ -500,11 +500,11 @@ mBOOL MPlugin::platform_match(MPlugin* other) {
 	if(unlikely(status < PL_VALID) || unlikely(other->status < PL_VALID))
 		return(mFALSE);
 
-	if(unlikely(strcmp(file, other->file) == 0))
+	if(unlikely(mm_strcmp(file, other->file) == 0))
 		return(mTRUE);
 	
 	if(likely(status >= PL_OPENED) && likely(other->status >= PL_OPENED) &&
-	   unlikely(strcmp(info->logtag, other->info->logtag) == 0))
+	   unlikely(mm_strcmp(info->logtag, other->info->logtag) == 0))
 		return(mTRUE);
 	
 	if(likely(*desc != '\0') && unlikely(strcasecmp(desc,other->desc) == 0)) 

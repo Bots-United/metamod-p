@@ -43,7 +43,9 @@
 // Information we have about each game/mod DLL.
 typedef struct game_modinfo_s {
 	const char *name;		// name (the game dir)
+	const char *linux_dir;		// path of linux shared lib
 	const char *linux_so;		// filename of linux shared lib
+	const char *win_dir;		// path of win32 dll
 	const char *win_dll;		// filename of win32 dll
 	const char *desc;		// our long-name description
 } game_modinfo_t;
