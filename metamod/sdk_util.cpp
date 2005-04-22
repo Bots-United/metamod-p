@@ -37,7 +37,7 @@
 
 #include "osdep.h"			// win32 vsnprintf, etc
 
-const char *META_UTIL_VarArgs(const char *format, ...)
+const char * DLLINTERNAL META_UTIL_VarArgs(const char *format, ...)
 {
 	va_list			argptr;
 	static char		string[4096];
@@ -49,7 +49,7 @@ const char *META_UTIL_VarArgs(const char *format, ...)
 	return(string);
 }
 
-short FixedSigned16(float value, float scale)
+short DLLINTERNAL FixedSigned16(float value, float scale)
 {
 	int output;
 	
@@ -64,7 +64,7 @@ short FixedSigned16(float value, float scale)
 	return((short)output);
 }
 
-unsigned short FixedUnsigned16(float value, float scale)
+unsigned short DLLINTERNAL FixedUnsigned16(float value, float scale)
 {
 	int output;
 	
@@ -77,12 +77,12 @@ unsigned short FixedUnsigned16(float value, float scale)
 	return((unsigned short)output);
 }
 
-inline int fast_FNullEnt(const edict_t* pent) {
+inline int DLLINTERNAL fast_FNullEnt(const edict_t* pent) {
 	return(unlikely(!pent) || unlikely(!(*g_engfuncs.pfnEntOffsetOfPEntity)(pent)));
 }
 
 
-void META_UTIL_HudMessage(edict_t *pEntity, const hudtextparms_t &textparms, const char *pMessage)
+void DLLINTERNAL META_UTIL_HudMessage(edict_t *pEntity, const hudtextparms_t &textparms, const char *pMessage)
 {
 	if(unlikely(fast_FNullEnt(pEntity)) || unlikely(pEntity->free))
 		return;

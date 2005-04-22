@@ -59,7 +59,7 @@
 
 // Init values.  It would probably be more "proper" to use containers and
 // constructors, rather than arrays and init-functions.
-void MRegCmd::init(int idx)
+void DLLINTERNAL MRegCmd::init(int idx)
 {
 	index = idx;
 	name = NULL;
@@ -74,7 +74,7 @@ void MRegCmd::init(int idx)
 // meta_errno values:
 //  - ME_BADREQ		function disabled/invalid
 //  - ME_ARGUMENT	function pointer is null
-mBOOL MRegCmd::call(void) {
+mBOOL DLLINTERNAL MRegCmd::call(void) {
 	mBOOL ret;
 
 	// can we expect to call this function?
@@ -114,7 +114,7 @@ MRegCmdList::MRegCmdList(void)
 // Try to find a registered function with the given name.
 // meta_errno values:
 //  - ME_NOTFOUND	couldn't find a matching function
-MRegCmd *MRegCmdList::find(const char *findname) {
+MRegCmd * DLLINTERNAL MRegCmdList::find(const char *findname) {
 	int i;
 	for(i=0; likely(i < endlist); i++) {
 		if(unlikely(!strcasecmp(mlist[i].name, findname)))
@@ -128,7 +128,7 @@ MRegCmd *MRegCmdList::find(const char *findname) {
 // (meta_AddServerCommand).
 // meta_errno values:
 //  - ME_NOMEM			couldn't realloc or malloc for various parts
-MRegCmd *MRegCmdList::add(const char *addname) {
+MRegCmd * DLLINTERNAL MRegCmdList::add(const char *addname) {
 	MRegCmd *icmd;
 
 	if(unlikely(endlist==size)) {
@@ -169,7 +169,7 @@ MRegCmd *MRegCmdList::add(const char *addname) {
 }
 
 // Disable any functions belonging to the given plugin (by index id).
-void MRegCmdList::disable(int plugin_id) {
+void DLLINTERNAL MRegCmdList::disable(int plugin_id) {
 	int i;
 	for(i=0; likely(i < size); i++) {
 		if(unlikely(mlist[i].plugid == plugin_id))
@@ -178,7 +178,7 @@ void MRegCmdList::disable(int plugin_id) {
 }
 
 // List all the registered commands.
-void MRegCmdList::show(void) {
+void DLLINTERNAL MRegCmdList::show(void) {
 	int i, n=0, a=0;
 	MRegCmd *icmd;
 	MPlugin *iplug;
@@ -218,7 +218,7 @@ void MRegCmdList::show(void) {
 }
 
 // List all the registered commands for the given plugin id.
-void MRegCmdList::show(int plugin_id) {
+void DLLINTERNAL MRegCmdList::show(int plugin_id) {
 	int i, n=0;
 	MRegCmd *icmd;
 	
@@ -248,7 +248,7 @@ void MRegCmdList::show(int plugin_id) {
 
 // Init values.  It would probably be more "proper" to use containers and
 // constructors, rather than arrays and init-functions.
-void MRegCvar::init(int idx)
+void DLLINTERNAL MRegCvar::init(int idx)
 {
 	index = idx;
 	data = NULL;
@@ -259,7 +259,7 @@ void MRegCvar::init(int idx)
 // Set the cvar, copying values from given cvar.
 // meta_errno values:
 //  - ME_ARGUMENT	given cvar doesn't match this cvar
-mBOOL MRegCvar::set(cvar_t *src) {
+mBOOL DLLINTERNAL MRegCvar::set(cvar_t *src) {
 	if(unlikely(strcasecmp(src->name, data->name))) {
 		META_WARNING("Tried to set cvar with mismatched name; src=%s dst=%s",
 				src->name, data->name);
@@ -294,7 +294,7 @@ MRegCvarList::MRegCvarList(void)
 // cvar::set().
 // meta_errno values:
 //  - ME_NOMEM			couldn't alloc or realloc for various parts
-MRegCvar *MRegCvarList::add(const char *addname) {
+MRegCvar * DLLINTERNAL MRegCvarList::add(const char *addname) {
 	MRegCvar *icvar;
 
 	if(unlikely(endlist==size)) {
@@ -344,7 +344,7 @@ MRegCvar *MRegCvarList::add(const char *addname) {
 // Try to find a registered cvar with the given name.
 // meta_errno values:
 //  - ME_NOTFOUND	couldn't find a matching cvar
-MRegCvar *MRegCvarList::find(const char *findname) {
+MRegCvar * DLLINTERNAL MRegCvarList::find(const char *findname) {
 	int i;
 	for(i=0; likely(i < endlist); i++) {
 		if(unlikely(!strcasecmp(vlist[i].data->name, findname)))
@@ -354,7 +354,7 @@ MRegCvar *MRegCvarList::find(const char *findname) {
 }
 
 // Disable any cvars belonging to the given plugin (by index id).
-void MRegCvarList::disable(int plugin_id) {
+void DLLINTERNAL MRegCvarList::disable(int plugin_id) {
 	int i;
 	MRegCvar *icvar;
 	for(i=0; likely(i < size); i++) {
@@ -370,7 +370,7 @@ void MRegCvarList::disable(int plugin_id) {
 }
 
 // List all the registered cvars.
-void MRegCvarList::show(void) {
+void DLLINTERNAL MRegCvarList::show(void) {
 	int i, n=0, a=0;
 	MRegCvar *icvar;
 	MPlugin *iplug;
@@ -411,7 +411,7 @@ void MRegCvarList::show(void) {
 }
 
 // List the registered cvars for the given plugin id.
-void MRegCvarList::show(int plugin_id) {
+void DLLINTERNAL MRegCvarList::show(int plugin_id) {
 	int i, n=0;
 	MRegCvar *icvar;
 	char bname[30+1], bval[15+1];	// +1 for term null
@@ -450,7 +450,7 @@ void MRegCvarList::show(int plugin_id) {
 
 // Constructor
 MRegMsgList::MRegMsgList(void)
-	: size(MAX_REG_MSGS), endlist(0)
+	: endlist(0)
 {
 	int i;
 	// initialize array
@@ -459,12 +459,13 @@ MRegMsgList::MRegMsgList(void)
 		mlist[i].index=i+1;		// 1-based
 	}
 	endlist=0;
+	sort_flist();
 }
 
 // Add the given user msg the list and return the instance.
 // meta_errno values:
 //  - ME_MAXREACHED		reached max number of msgs allowed
-MRegMsg *MRegMsgList::add(const char *addname, int addmsgid, int addsize) {
+MRegMsg * DLLINTERNAL MRegMsgList::add(const char *addname, int addmsgid, int addsize) {
 	MRegMsg *imsg;
 
 	if(unlikely(endlist==size)) {
@@ -482,57 +483,67 @@ MRegMsg *MRegMsgList::add(const char *addname, int addmsgid, int addsize) {
 	imsg->msgid=addmsgid;
 	imsg->size=addsize;
 	imsg->plugid=0;
+	imsg->search_count=0;
 
 	return(imsg);
 }
 
 // 
-void MRegMsgList::reset_counts(void) {
+void DLLINTERNAL MRegMsgList::reset_counts(void) {
 	int i;
-	for(i=0; likely(i < endlist); i++)
-		mlist[i].count=0;
+	for(i=0; likely(i < size); i++)
+		mlist[i].search_count=0;
+	sort_flist();
 }
 
 // sort function for qsort
 static int sort_by_count(const void* a, const void* b) {
-	const MRegMsg * A = (const MRegMsg *)a;
-	const MRegMsg * B = (const MRegMsg *)b;
+	const MRegMsg ** A = (const MRegMsg **)a;
+	const MRegMsg ** B = (const MRegMsg **)b;
 	
-	return(B->count-A->count);
+	return((*B)->search_count-(*A)->search_count);
+}
+
+//
+void DLLINTERNAL MRegMsgList::sort_flist(void) {
+	int i;
+	for(i=0; likely(i < size); i++) {
+		if(unlikely(mlist[i].search_count<0))
+			mlist[i].search_count=10000;
+		flist[i]=&mlist[i];
+	}
+	
+	qsort(&flist, endlist, sizeof(flist[0]), sort_by_count);
 }
 
 // Try to find a registered msg with the given name.
 // meta_errno values:
-//  - ME_NOTFOUND	couldn't find a matching msg
-MRegMsg *MRegMsgList::find(const char *findname) {
-	int i,j;
+//  - ME_NOTFOUND	couldn't find a matching cvar
+MRegMsg * DLLINTERNAL MRegMsgList::fast_find(const char *findname) {
+	int i;
 	
 	for(i=0; likely(i < endlist); i++) {
-		if(likely(mm_strcmp(mlist[i].name, findname)))
-			continue;
-		
-		mlist[i].count++;
-		if(unlikely(!i) || likely(mlist[i-1].count))
-			return(&mlist[i]);
-		
-		for(j=0; likely(j < endlist); j++)
-			if(unlikely(mlist[j].count<0))
-				mlist[j].count=100;
-		
-		qsort(&mlist, endlist, sizeof(mlist[0]), sort_by_count);
-		
-		return(find_index(i+1));
+		if(unlikely(!mm_strcmp(flist[i]->name, findname))) {
+			MRegMsg * found = flist[i];
+			
+			found->search_count++;
+			
+			if(likely(i>=1) && unlikely((found->search_count - flist[i-1]->search_count)>=100))
+				sort_flist();
+			
+			return(found);
+		}
 	}
 	RETURN_ERRNO(NULL, ME_NOTFOUND);
 }
 
-// Try to find a registered msg with the given index.
+// Try to find a registered msg with the given name.
 // meta_errno values:
-//  - ME_NOTFOUND	couldn't find a matching msg
-MRegMsg *MRegMsgList::find_index(int index) {
+//  - ME_NOTFOUND	couldn't find a matching cvar
+MRegMsg * DLLINTERNAL MRegMsgList::find(const char *findname) {
 	int i;
 	for(i=0; likely(i < endlist); i++) {
-		if(unlikely(mlist[i].index == index))
+		if(unlikely(!mm_strcmp(mlist[i].name, findname)))
 			return(&mlist[i]);
 	}
 	RETURN_ERRNO(NULL, ME_NOTFOUND);
@@ -540,8 +551,8 @@ MRegMsg *MRegMsgList::find_index(int index) {
 
 // Try to find a registered msg with the given msgid.
 // meta_errno values:
-//  - ME_NOTFOUND	couldn't find a matching msg
-MRegMsg *MRegMsgList::find(int findmsgid) {
+//  - ME_NOTFOUND	couldn't find a matching cvar
+MRegMsg * DLLINTERNAL MRegMsgList::find(int findmsgid) {
 	int i;
 	for(i=0; likely(i < endlist); i++) {
 		if(unlikely(mlist[i].msgid == findmsgid))
@@ -551,7 +562,7 @@ MRegMsg *MRegMsgList::find(int findmsgid) {
 }
 
 // List the registered usermsgs for the gamedll.
-void MRegMsgList::show(void) {
+void DLLINTERNAL MRegMsgList::show(void) {
 	int i, n=0;
 	MRegMsg *imsg;
 	char bname[25+1];	// +1 for term null

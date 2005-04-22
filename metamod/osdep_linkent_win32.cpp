@@ -178,7 +178,7 @@ static int combine_module_export_tables(HMODULE moduleMM, HMODULE moduleGame)
 		//Check if name already in the list
 		for(u = 0; likely(u < nameCount); u++)
 		{
-			if(unlikely(!mm_strcmp(name, (const char*)newSort[u].name)))
+			if(unlikely(!stricmp(name, (const char*)newSort[u].name)))
 			{
 				listFix -= 1;
 				break;

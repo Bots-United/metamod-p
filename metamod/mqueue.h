@@ -61,7 +61,7 @@ class MFuncQueue : public class_metamod_new, Queue<func_item_t> {
 		MFuncQueue(void) :Queue<func_item_t>() { };
 		MFuncQueue(int qmaxsize) :Queue<func_item_t>(qmaxsize) { };
 	// added functions:
-		void remove(plid_t plid);
+		void DLLINTERNAL remove(plid_t plid);
 };
 
 #endif /* MQUEUE_H */

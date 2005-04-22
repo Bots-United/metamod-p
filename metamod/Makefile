@@ -146,21 +146,17 @@ CCOPT = $(CCO) $(CCOPT_ARCH) -ffast-math -fomit-frame-pointer -fno-exceptions -f
 # optimization level; overridden for certain problematic files
 CCO = -O3
 
-# architecture tuning by target type or commandline setting
-ifeq "$(MARCH)" ""
-	ifeq "$(TARGETTYPE)" "amd64"
-		CCOPT_ARCH =
-	else
-		ifeq "$(TARGETTYPE)" "compat-i386"
-			#hlds requires 486 or newer
-			CCOPT_ARCH = -march=i486
-		else
-			#default: pentium pro or athlon or newer
-			CCOPT_ARCH = -march=i686
-		endif
-	endif
+# architecture tuning by target type
+ifeq "$(TARGETTYPE)" "amd64"
+	CCOPT_ARCH =
 else
-	CCOPT_ARCH = -march=$(MARCH)
+	ifeq "$(TARGETTYPE)" "compat-i386"
+		#hlds requires 486 or newer
+		CCOPT_ARCH = -march=i486
+	else
+		#default: pentium pro or athlon or newer
+		CCOPT_ARCH = -march=i686
+	endif
 endif
 
 # debugging; halt on warnings

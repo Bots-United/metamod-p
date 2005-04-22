@@ -112,7 +112,7 @@ static void signal_handler_sigsegv(int) {
 	longjmp(signal_jmp_buf, 1);
 }
 
-mBOOL is_gamedll(const char *filename) {
+mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	static struct sigaction action;
 	static struct sigaction oldaction;
 	static ElfW(Ehdr)  * ehdr = 0;
@@ -200,7 +200,7 @@ mBOOL is_gamedll(const char *filename) {
 		return(mFALSE);
 	}
 	
-	if(unlikely(strncmp((char *)ehdr, ELFMAG, SELFMAG) != 0) || unlikely(ehdr->e_ident[EI_VERSION] != EV_CURRENT)) {
+	if(unlikely(mm_strncmp((char *)ehdr, ELFMAG, SELFMAG) != 0) || unlikely(ehdr->e_ident[EI_VERSION] != EV_CURRENT)) {
 		// Reset signal handler.
 		sigaction(SIGSEGV, &oldaction, 0);
 		
@@ -406,7 +406,7 @@ mBOOL is_gamedll(const char *filename)
 
 //get module handle of memptr
 #ifdef linux
-DLHANDLE get_module_handle_of_memptr(void * memptr)
+DLHANDLE DLLINTERNAL get_module_handle_of_memptr(void * memptr)
 {
 	Dl_info dli;
 	memset(&dli, 0, sizeof(dli));

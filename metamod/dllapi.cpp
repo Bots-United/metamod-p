@@ -161,7 +161,7 @@ static void mm_ClientPutInServer(edict_t *pEntity) {
 	RETURN_API_void();
 }
 static void mm_ClientCommand(edict_t *pEntity) {
-	if(likely(Config->clientmeta) && unlikely(strmatch("meta", CMD_ARGV(0)))) {
+	if(likely(Config->clientmeta) && unlikely(strmatch(CMD_ARGV(0), "meta"))) {
 		client_meta(pEntity);
 	}
 	META_DLLAPI_HANDLE_void(FN_CLIENTCOMMAND, pfnClientCommand, p, (pEntity));

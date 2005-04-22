@@ -55,7 +55,7 @@ THREAD_T logparse_thread_id;
 
 
 // Start the log parsing thread.
-void startup_logparse_thread(void) {
+void DLLINTERNAL startup_logparse_thread(void) {
 	int ret;
 
 	LogQueue = new MLogmsgQueue(MAX_QUEUE_SIZE);
@@ -106,7 +106,7 @@ void WINAPI logparse_handler(void) {
 // Returns an allocated event_args_t struct, which should be freed by the
 // main thread after it's no longer needed.  Note that this struct gets
 // passed to (possibly) multiple hooks.
-event_args_t *parse_event_args(const char *logline) {
+event_args_t * DLLINTERNAL parse_event_args(const char *logline) {
 	event_args_t *args;
 	char *cp, *begin, *end;
 	int len;
@@ -251,7 +251,7 @@ event_args_t *parse_event_args(const char *logline) {
 // contained in the struct refer to the "buf" in the parent event_args_t
 // and should _not_ be freed directly; instead, the buf itself should be
 // freed when the event_args_t struct is freed by the main thread.
-event_player_t *parse_player(char *start, int *retlen) {
+event_player_t * DLLINTERNAL parse_player(char *start, int *retlen) {
 	char *cp, *begin, *end;
 	int len;
 	event_player_t *pl;
@@ -355,7 +355,7 @@ event_player_t *parse_player(char *start, int *retlen) {
 }
 
 // Parse a quoted string.
-char *parse_quoted(char *start, int *retlen) {
+char * DLLINTERNAL parse_quoted(char *start, int *retlen) {
 	char *cp, *begin, *end;
 	int len;
 

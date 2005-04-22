@@ -36,6 +36,16 @@
 #define ATTRIBUTE(kw) __attribute__((kw))
 #define MM_CDECL
 
+// We use these macros to hide our internal globals from being exported 
+// on ELF .so
+#if defined(__GNUC__) && !defined(_WIN32) && __GNUC__ >= 3 && __GNUC_MINOR__ >= 3
+	#define DLLHIDDEN __attribute__((visibility("hidden")))
+	#define DLLINTERNAL __attribute__((visibility("internal")))
+#else
+	#define DLLHIDDEN
+	#define DLLINTERNAL
+#endif
+
 // Some systems that do not supply va_copy have __va_copy instead, since 
 // that was the name used in the draft proposal.
 #if !defined(__GNUC__) || __GNUC__ < 3

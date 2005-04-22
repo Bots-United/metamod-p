@@ -80,8 +80,8 @@ class MRegCmd : public class_metamod_new {
 		int plugid;			// index id of corresponding plugin
 		REG_STATUS status;		// whether corresponding plugin is loaded
 	// functions:
-		void init(int idx);	// init values, as not using constructors
-		mBOOL call(void);	// try to call the function
+		void DLLINTERNAL init(int idx);	// init values, as not using constructors
+		mBOOL DLLINTERNAL call(void);	// try to call the function
 };
 
 
@@ -99,14 +99,14 @@ class MRegCmdList : public class_metamod_new {
 
 	public:
 	// constructor:
-		MRegCmdList(void);
+		MRegCmdList(void) DLLINTERNAL;
 
 	// functions:
-		MRegCmd *find(const char *findname);	// find by MRegCmd->name
-		MRegCmd *add(const char *addname);
-		void disable(int plugin_id);		// change status to Invalid
-		void show(void);			// list all funcs to console
-		void show(int plugin_id);		// list given plugin's funcs to console
+		MRegCmd * DLLINTERNAL find(const char *findname);	// find by MRegCmd->name
+		MRegCmd * DLLINTERNAL add(const char *addname);
+		void DLLINTERNAL disable(int plugin_id);		// change status to Invalid
+		void DLLINTERNAL show(void);			// list all funcs to console
+		void DLLINTERNAL show(int plugin_id);		// list given plugin's funcs to console
 };
 
 
@@ -122,8 +122,8 @@ class MRegCvar : public class_metamod_new {
 		int plugid;				// index id of corresponding plugin
 		REG_STATUS status;			// whether corresponding plugin is loaded
 	// functions:
-		void init(int idx);		// init values, as not using constructors
-		mBOOL set(cvar_t *src);
+		void DLLINTERNAL init(int idx);		// init values, as not using constructors
+		mBOOL DLLINTERNAL set(cvar_t *src);
 };
 
 
@@ -141,14 +141,14 @@ class MRegCvarList : public class_metamod_new {
 
 	public:
 	// constructor:
-		MRegCvarList(void);
+		MRegCvarList(void) DLLINTERNAL;
 
 	// functions:
-		MRegCvar *add(const char *addname);
-		MRegCvar *find(const char *findname);	// find by MRegCvar->data.name
-		void disable(int plugin_id);		// change status to Invalid
-		void show(void);			// list all cvars to console
-		void show(int plugin_id);		// list given plugin's cvars to console
+		MRegCvar * DLLINTERNAL add(const char *addname);
+		MRegCvar * DLLINTERNAL find(const char *findname);	// find by MRegCvar->data.name
+		void DLLINTERNAL disable(int plugin_id);		// change status to Invalid
+		void DLLINTERNAL show(void);			// list all cvars to console
+		void DLLINTERNAL show(int plugin_id);		// list given plugin's cvars to console
 };
 
 
@@ -164,7 +164,7 @@ class MRegMsg : public class_metamod_new {
 		int msgid;				// msgid, assigned by engine
 		int size;				// size, if given by gamedll
 		int plugid;				// usermsg from plugin?
-		int count;				// times found
+		int search_count;			// how many times this regmsg has been searched by name?
 };
 
 
@@ -173,20 +173,23 @@ class MRegMsgList : public class_metamod_new {
 	private:
 	// data:
 		MRegMsg mlist[MAX_REG_MSGS];	// array of registered msgs
-		int size;			// size of list, ie MAX_REG_MSGS
+		MRegMsg *flist[MAX_REG_MSGS];	// fast access list
+		//int size;			// size of list, ie MAX_REG_MSGS
+		enum {size = MAX_REG_MSGS };	// size of list, ie MAX_REG_MSGS
 		int endlist;			// index of last used entry
 
 	public:
 	// constructor:
-		MRegMsgList(void);
+		MRegMsgList(void) DLLINTERNAL;
 
 	// functions:
-		MRegMsg *add(const char *addname, int addmsgid, int addsize);
-		MRegMsg *find(const char *findname);
-		MRegMsg *find(int findmsgid);
-		MRegMsg *find_index(int index);
-		void show(void);	// list all msgs to console
-		void reset_counts(void);
+		MRegMsg * DLLINTERNAL add(const char *addname, int addmsgid, int addsize);
+		MRegMsg * DLLINTERNAL find(const char *findname);
+		MRegMsg * DLLINTERNAL find(int findmsgid);
+		MRegMsg * DLLINTERNAL fast_find(const char *findname);
+		void DLLINTERNAL show(void);	// list all msgs to console
+		void DLLINTERNAL reset_counts(void);
+		void DLLINTERNAL sort_flist(void);
 };
 
 #endif /* MREG_H */

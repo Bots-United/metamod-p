@@ -57,11 +57,11 @@ const game_modlist_t known_games = {
 	//
 #include "games.h"
 	// End of list terminator:
-	{NULL, NULL, NULL, NULL, NULL}
+	{NULL, NULL, NULL, NULL}
 };
 
 // Find a modinfo corresponding to the given game name.
-const game_modinfo_t *lookup_game(const char *name) {
+const game_modinfo_t * DLLINTERNAL lookup_game(const char *name) {
 	const game_modinfo_t *imod;
 	int i;
 	for(i=0; likely(known_games[i].name); i++) {
@@ -74,7 +74,7 @@ const game_modinfo_t *lookup_game(const char *name) {
 }
 
 // Installs gamedll from Steam cache
-mBOOL install_gamedll(char *from, const char *to) {
+mBOOL DLLINTERNAL install_gamedll(char *from, const char *to) {
 	int length_in;
 	int length_out;
 	
@@ -120,27 +120,27 @@ mBOOL install_gamedll(char *from, const char *to) {
 
 // Set all the fields in the gamedll struct, - based either on an entry in
 // known_games matching the current gamedir, or on one specified manually 
-// by the server admin. This is called by setup_gamedll with dlls directory 
-// name.
+// by the server admin.
 //
 // meta_errno values:
 //  - ME_NOTFOUND	couldn't recognize game
-mBOOL setup_gamedll_in_dlls_dir(const game_modinfo_t *known, const char * dlls_dir, gamedll_t *gamedll) {
+mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 #ifdef __x86_64__
 	static char fixname_amd64[256]; // pointer is given outside function
 #endif
 	static char override_desc_buf[256]; // pointer is given outside function
 	static char autodetect_desc_buf[256]; // pointer is given outside function
 	char install_path[256];
+	const game_modinfo_t *known;
 	char *cp;
 	const char *autofn = 0, *knownfn=0;
 	int override=0;
-	
+
 	// Check for old-style "metagame.ini" file and complain.
 	if(unlikely(valid_gamedir_file(OLD_GAMEDLL_TXT)))
 		META_WARNING("File '%s' is no longer supported; instead, specify override gamedll in %s or with '+localinfo mm_gamedll <dllfile>'", OLD_GAMEDLL_TXT, CONFIG_INI);
 	// First, look for a known game, based on gamedir.
-	if(likely(known)) {
+	if(likely((known=lookup_game(gamedll->name)))) {
 #ifdef _WIN32
 		knownfn=known->win_dll;
 #elif defined(linux)
@@ -165,37 +165,21 @@ mBOOL setup_gamedll_in_dlls_dir(const game_modinfo_t *known, const char * dlls_d
 #else
 #error "OS unrecognized"
 #endif /* _WIN32 */
+		
 		// Do this before autodetecting gamedll from "dlls/*.dll"
 		if(likely(!Config->gamedll)) {
-			safe_snprintf(gamedll->pathname, sizeof(gamedll->pathname), "%s/%s", 
-				dlls_dir, knownfn);
+			safe_snprintf(gamedll->pathname, sizeof(gamedll->pathname), "dlls/%s", 
+				knownfn);
 			// Check if the gamedll file exists. If not, try to install it from
 			// the cache.
 			if(unlikely(!valid_gamedir_file(gamedll->pathname))) {
-				safe_snprintf(install_path, sizeof(install_path), "%s/%s/%s", 
-						gamedll->gamedir, dlls_dir, knownfn);
+				safe_snprintf(install_path, sizeof(install_path), "%s/dlls/%s", 
+						gamedll->gamedir, knownfn);
 				install_gamedll(gamedll->pathname, install_path);
-				
-				// Check if the gamedll file exists after trying install it.
-				// Only check for special dlls directory if current dlls_dir is 'dlls'.
-				if(unlikely(!valid_gamedir_file(gamedll->pathname)) && likely(!strcmp(dlls_dir, "dlls"))) {
-					// Check if Mod has special non-standard directory for gamedll
-#ifdef linux
-					if(likely(known->linux_dir) && unlikely(known->linux_dir[0])) {
-						return(setup_gamedll_in_dlls_dir(known, known->linux_dir, gamedll));
-					}
-#elif defined(_WIN32)
-					if(likely(known->win_dir) && unlikely(known->win_dir[0])) {
-						return(setup_gamedll_in_dlls_dir(known, known->win_dir, gamedll));
-					}
-#else
-#error "OS unrecognized"
-#endif /*linux*/
-				}
 			}
 		}
 	}
-	
+		
 	// Then, autodetect gamedlls in "gamedir/dlls/"
 	// autodetect_gamedll returns 0 if knownfn exists and is valid gamedll.
 	if(likely(Config->autodetect) && likely((autofn=autodetect_gamedll(gamedll, knownfn)))) {
@@ -211,7 +195,7 @@ mBOOL setup_gamedll_in_dlls_dir(const game_modinfo_t *known, const char * dlls_d
 	
 	// Neither override nor known-list nor auto-detect found a gamedll.
 	if(unlikely(!known) && likely(!Config->gamedll) && unlikely(!autofn))
-		RETURN_ERRNO(mFALSE, ME_NOTFOUND);
+			RETURN_ERRNO(mFALSE, ME_NOTFOUND);
 	
 	// Use override-dll if specified.
 	if(unlikely(Config->gamedll)) {
@@ -232,13 +216,13 @@ mBOOL setup_gamedll_in_dlls_dir(const game_modinfo_t *known, const char * dlls_d
 	}
 	// Else use Known-list dll.
 	else if(likely(known)) {
-		safe_snprintf(gamedll->pathname, sizeof(gamedll->pathname), "%s/%s/%s", 
-				gamedll->gamedir, dlls_dir, knownfn);
+		safe_snprintf(gamedll->pathname, sizeof(gamedll->pathname), "%s/dlls/%s", 
+				gamedll->gamedir, knownfn);
 	}
 	// Else use Autodetect dll.
 	else {
-		safe_snprintf(gamedll->pathname, sizeof(gamedll->pathname), "%s/%s/%s", 
-				gamedll->gamedir, dlls_dir, autofn);
+		safe_snprintf(gamedll->pathname, sizeof(gamedll->pathname), "%s/dlls/%s", 
+				gamedll->gamedir, autofn);
 	}
 
 	// get filename from pathname
@@ -253,10 +237,10 @@ mBOOL setup_gamedll_in_dlls_dir(const game_modinfo_t *known, const char * dlls_d
 	// gamedir, in case it differs from the "override" dll path.
 	if(likely(known) && unlikely(override))
 		safe_snprintf(gamedll->real_pathname, sizeof(gamedll->real_pathname),
-				"%s/%s/%s", gamedll->gamedir, dlls_dir, knownfn);
+				"%s/dlls/%s", gamedll->gamedir, knownfn);
 	else if(likely(known) && unlikely(autofn))
 		safe_snprintf(gamedll->real_pathname, sizeof(gamedll->real_pathname),
-				"%s/%s/%s", gamedll->gamedir, dlls_dir, knownfn);
+				"%s/dlls/%s", gamedll->gamedir, knownfn);
 	else // !known or (!override and !autofn)
 		STRNCPY(gamedll->real_pathname, gamedll->pathname, 
 				sizeof(gamedll->real_pathname));
@@ -287,11 +271,4 @@ mBOOL setup_gamedll_in_dlls_dir(const game_modinfo_t *known, const char * dlls_d
 		META_LOG("Recognized game '%s'; using dllfile '%s'", gamedll->name, gamedll->file);
 	}
 	return(mTRUE);
-}
-
-// Set all the fields in the gamedll struct, - based either on an entry in
-// known_games matching the current gamedir, or on one specified manually 
-// by the server admin. 
-mBOOL setup_gamedll(gamedll_t *gamedll) {
-	return(setup_gamedll_in_dlls_dir(lookup_game(gamedll->name), "dlls", gamedll));
 }

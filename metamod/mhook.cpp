@@ -95,7 +95,7 @@ MHook::MHook(int idx, plid_t pid, hook_t tp, const char *cp, logmatch_func_t pfn
 //  - ME_NOTFOUND	couldn't find plugin for this hook ?
 //  - ME_SKIPPED	plugin isn't running (paused, etc)
 //  - ME_ARGUMENT	unrecognized hook type
-mBOOL MHook::call(event_args_t *args, const char *logline) {
+mBOOL DLLINTERNAL MHook::call(event_args_t *args, const char *logline) {
 	MPlugin *plug;
 	// missing necessary data
 	if(type==H_NONE || !pfnHandle)
@@ -148,7 +148,7 @@ mBOOL MHook::call(event_args_t *args, const char *logline) {
 // meta_errno values:
 //  - ME_ARGUMENT	null queue, event args, or logline
 //  - ME_NOMEM		malloc failed for new entry to queue
-mBOOL MHook::enqueue(MFuncQueue *mfq, event_args_t *args, const char *logline) {
+mBOOL DLLINTERNAL MHook::enqueue(MFuncQueue *mfq, event_args_t *args, const char *logline) {
 	func_item_t *fp;
 
 	if(!mfq || !args || !logline)
@@ -186,7 +186,7 @@ MHookList::MHookList(void)
 //  - ME_BADREQ			no event specified
 //  - ME_MAXREACHED		reached max hooks
 //  - ME_NOMEM			couldn't malloc to create MHook entry
-int MHookList::add(plid_t plid, game_event_t event, event_func_t pfnHandle)
+int DLLINTERNAL MHookList::add(plid_t plid, game_event_t event, event_func_t pfnHandle)
 {
 	int i;
 
@@ -233,7 +233,7 @@ int MHookList::add(plid_t plid, game_event_t event, event_func_t pfnHandle)
 //  					or regex)
 //  - ME_MAXREACHED		reached max hooks
 //  - ME_NOMEM			couldn't malloc to create MHook entry
-int MHookList::add(plid_t plid, hook_t type, const char *match, 
+int DLLINTERNAL MHookList::add(plid_t plid, hook_t type, const char *match, 
 		logmatch_func_t pfnHandle)
 {
 	int i;
@@ -278,7 +278,7 @@ int MHookList::add(plid_t plid, hook_t type, const char *match,
 // meta_errno values:
 //  - ME_NOTFOUND	no hook at that index
 //  - ME_BADREQ		plugin trying to remove another plugin's hook?
-mBOOL MHookList::remove(plid_t plid, int hindex) {
+mBOOL DLLINTERNAL MHookList::remove(plid_t plid, int hindex) {
 	int i=hindex;
 	if(!hlist[i])
 		RETURN_ERRNO(mFALSE, ME_NOTFOUND);
@@ -293,7 +293,7 @@ mBOOL MHookList::remove(plid_t plid, int hindex) {
 }
 
 // Remove any hooks for the specified plugin.
-int MHookList::remove_all(plid_t plid) {
+int DLLINTERNAL MHookList::remove_all(plid_t plid) {
 	int i;
 	int count=0;
 
@@ -316,7 +316,7 @@ int MHookList::remove_all(plid_t plid) {
 // meta_errno values:
 //  - ME_ARGUMENT	null args
 //  - ME_BADREQ		args doesn't correspond to an Event hook
-mBOOL MHookList::call(event_args_t *evargs, const char *logline) 
+mBOOL DLLINTERNAL MHookList::call(event_args_t *evargs, const char *logline) 
 {
 	int i;
 
@@ -340,7 +340,7 @@ mBOOL MHookList::call(event_args_t *evargs, const char *logline)
 // meta_errno values:
 //  - ME_ARGUMENT	null args
 //  - ME_BADREQ		invalid hook type
-mBOOL MHookList::enqueue(MFuncQueue *mfq, hook_t htype, event_args_t *evargs,
+mBOOL DLLINTERNAL MHookList::enqueue(MFuncQueue *mfq, hook_t htype, event_args_t *evargs,
 		const char *logline) 
 {
 	int i;
@@ -386,7 +386,7 @@ mBOOL MHookList::enqueue(MFuncQueue *mfq, hook_t htype, event_args_t *evargs,
 }
 
 // Return a string corresponding to the hook type.
-char *MHookList::str_htype(hook_t htype) {
+char * DLLINTERNAL MHookList::str_htype(hook_t htype) {
 	switch(htype) {
 		case H_NONE:	return("NONE");
 		case H_EVENT:	return("EVENT");

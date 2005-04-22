@@ -47,7 +47,7 @@
 
 
 //Initializes replacement code
-int init_linkent_replacement(DLHANDLE moduleMetamod, DLHANDLE moduleGame);
+int DLLINTERNAL init_linkent_replacement(DLHANDLE moduleMetamod, DLHANDLE moduleGame);
 
 
 // Comments from SDK dlls/util.h:

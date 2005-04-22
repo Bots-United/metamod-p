@@ -96,15 +96,15 @@ extern int meta_debug_value;
 // server.cfg.
 // NOTE: META_DEV has now been mostly obsoleted in the code.
 
-void META_CONS(const char *fmt, ...);
-void META_DEV(const char *fmt, ...);
-void META_INFO(const char *fmt, ...);
-void META_WARNING(const char *fmt, ...);
-void META_ERROR(const char *fmt, ...);
-void META_LOG(const char *fmt, ...);
-void META_CLIENT(edict_t *pEntity, const char *fmt, ...);
+void DLLINTERNAL META_CONS(const char *fmt, ...);
+void DLLINTERNAL META_DEV(const char *fmt, ...);
+void DLLINTERNAL META_INFO(const char *fmt, ...);
+void DLLINTERNAL META_WARNING(const char *fmt, ...);
+void DLLINTERNAL META_ERROR(const char *fmt, ...);
+void DLLINTERNAL META_LOG(const char *fmt, ...);
+void DLLINTERNAL META_CLIENT(edict_t *pEntity, const char *fmt, ...);
 #ifndef __BUILD_FAST_METAMOD__
-	void META_DO_DEBUG(int level, const char *fmt, ...);
+	void DLLINTERNAL META_DO_DEBUG(int level, const char *fmt, ...);
 #endif
 
 #endif /* LOG_META_H */

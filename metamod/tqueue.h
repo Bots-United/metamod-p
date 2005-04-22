@@ -76,15 +76,15 @@ class Queue : public class_metamod_new {
 		COND_T cv_push;
 		COND_T cv_pop;
 	//functions
-		int MXlock(void) { return(MUTEX_LOCK(&mx_queue)); };
-		int MXunlock(void) { return(MUTEX_UNLOCK(&mx_queue)); };
+		int DLLINTERNAL MXlock(void) { return(MUTEX_LOCK(&mx_queue)); };
+		int DLLINTERNAL MXunlock(void) { return(MUTEX_UNLOCK(&mx_queue)); };
 	public:
 	// constructor:
-		Queue(void);
-		Queue(int qmaxsize);
+		Queue(void) DLLINTERNAL;
+		Queue(int qmaxsize) DLLINTERNAL;
 	// functions:
-		void push(qdata_t *qadd);
-		qdata_t* pop(void);
+		void DLLINTERNAL push(qdata_t *qadd);
+		qdata_t * DLLINTERNAL pop(void);
 };
 
 

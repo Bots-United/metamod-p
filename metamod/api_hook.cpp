@@ -56,12 +56,12 @@ static void ** api_tables[3] = {
 static unsigned int call_count = 0;
 
 // get function pointer from api table by function pointer offset
-inline void * get_api_function(const void * api_table, unsigned long func_offset) {
+inline void * DLLINTERNAL get_api_function(const void * api_table, unsigned long func_offset) {
 	return(*(void**)((unsigned long)api_table + func_offset));
 }
 
 // simplified 'void' version of main hook function
-void main_hook_function_void(const api_info_t * api_info, enum_api_t api, unsigned long func_offset, const void * packed_args) {
+void DLLINTERNAL main_hook_function_void(const api_info_t * api_info, enum_api_t api, unsigned long func_offset, const void * packed_args) {
 	int i;
 	META_RES mres, status, prev_mres;
 	MPlugin *iplug;
@@ -201,7 +201,7 @@ void main_hook_function_void(const api_info_t * api_info, enum_api_t api, unsign
 }
 
 // full return typed version of main hook function
-void * main_hook_function(const class_ret_t ret_init, const api_info_t * api_info, enum_api_t api, unsigned long func_offset, const void * packed_args) {
+void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, const api_info_t * api_info, enum_api_t api, unsigned long func_offset, const void * packed_args) {
 	int i;
 	META_RES mres, status, prev_mres;
 	MPlugin *iplug;
@@ -387,7 +387,7 @@ void * main_hook_function(const class_ret_t ret_init, const api_info_t * api_inf
 // Macros for creating api caller functions
 //
 #define BEGIN_API_CALLER_FUNC(ret_type, args_type_code) \
-	void * _COMBINE4(api_caller_, ret_type, _args_, args_type_code)(const void * func, const void * packed_args) { \
+	void * DLLINTERNAL _COMBINE4(api_caller_, ret_type, _args_, args_type_code)(const void * func, const void * packed_args) { \
 		_COMBINE2(pack_args_type_, args_type_code) * p ATTRIBUTE(unused)= (_COMBINE2(pack_args_type_, args_type_code) *)packed_args;
 #define END_API_CALLER_FUNC(ret_t, args_t, args) \
 		API_PAUSE_TSC_TRACKING(); \

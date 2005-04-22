@@ -41,10 +41,10 @@
 #define _COMBINE2(x,y) x##y
 
 // simplified 'void' version of main hook function
-extern void main_hook_function_void(const api_info_t * api_info, enum_api_t api, unsigned long func_offset, const void * packed_args);
+extern void DLLINTERNAL main_hook_function_void(const api_info_t * api_info, enum_api_t api, unsigned long func_offset, const void * packed_args);
 
 // full return typed version of main hook function
-extern void * main_hook_function(const class_ret_t ret_init, const api_info_t * api_info, enum_api_t api, unsigned long func_offset, const void * packed_args);
+extern void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, const api_info_t * api_info, enum_api_t api, unsigned long func_offset, const void * packed_args);
 
 //
 // API function args structures
@@ -173,10 +173,10 @@ typedef struct { const void *p1;
 //
 #ifdef __METAMOD_BUILD__
 	#define EXTERN_API_CALLER_FUNCTION(ret_type, args_code) \
-		extern "C" void * _COMBINE4(api_caller_, ret_type, _args_, args_code)(const void * func, const void * packed_args)
+		void * DLLINTERNAL _COMBINE4(api_caller_, ret_type, _args_, args_code)(const void * func, const void * packed_args)
 #else
 	#define EXTERN_API_CALLER_FUNCTION(ret_type, args_code) \
-		const api_caller_func_t _COMBINE4(api_caller_, ret_type, _args_, args_code) = (api_caller_func_t)0
+		const api_caller_func_t _COMBINE4(api_caller_, ret_type, _args_, args_code) DLLINTERNAL = (api_caller_func_t)0
 #endif
 
 EXTERN_API_CALLER_FUNCTION(void, ipV);

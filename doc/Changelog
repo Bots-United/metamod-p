@@ -1,5 +1,12 @@
 # vim: set tw=75 ft=none :
 
+2005/04/22      1.17.4p23
+[Patch: Metamod-P v23 by Jussi Kivilinna]
+ - Fixed broken RegMsgList caused by optimization for mm-bots.
+ - Fixed optimization for mm-bots.
+ - [linux] Removed ESF-Mod fix.
+ - [linux] Minor performance tweaks and reduced filesize for linux.
+
 2005/04/08      1.17.4p22
 [Patch: Metamod-P v22 by Jussi Kivilinna]
  - Optimized GET_USER_MSG_ID() function for metamod-bots.
@@ -13,7 +20,7 @@
  - Fixed bug with handling of metamod-plugin-bots, which might have caused
    problems depending on order of loaded plugins. See 'call_count' in
    'api_hook.cpp' for details.
- - Minor performance tweaks.
+ - Minor performace tweaks.
  - Changed all non-fatal error messages to warning messages.
 
 2005/03/05      1.17.4p20

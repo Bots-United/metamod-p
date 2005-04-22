@@ -37,7 +37,7 @@
 
 // Checks if file is hlsdk api game dll
 //  --Jussi Kivilinna
-mBOOL is_gamedll(const char *filename);
+mBOOL DLLINTERNAL is_gamedll(const char *filename);
 
 // MSVC doesn't provide opendir/readdir/closedir, so we write our own.
 //  --Jussi Kivilinna
@@ -66,6 +66,6 @@ mBOOL is_gamedll(const char *filename);
 	#include <dirent.h>
 #endif /* _WIN32 */
 
-DLHANDLE get_module_handle_of_memptr(void * memptr);
+DLHANDLE DLLINTERNAL get_module_handle_of_memptr(void * memptr);
 
 #endif /* OSDEP_P_H */

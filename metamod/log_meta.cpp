@@ -49,7 +49,7 @@ cvar_t meta_debug = {"meta_debug", "0", FCVAR_EXTDLL, 0, NULL};
 int meta_debug_value = 0; //meta_debug_value is converted from float(meta_debug.value) to int on every frame
 
 // Print to console.
-void META_CONS(const char *fmt, ...) {
+void DLLINTERNAL META_CONS(const char *fmt, ...) {
 	va_list ap;
 	char buf[MAX_LOGMSG_LEN];
 	unsigned int len;
@@ -69,7 +69,7 @@ void META_CONS(const char *fmt, ...) {
 }
 
 // Log developer-level messages (obsoleted).
-void META_DEV(const char *fmt, ...) {
+void DLLINTERNAL META_DEV(const char *fmt, ...) {
 	va_list ap;
 	char buf[MAX_LOGMSG_LEN];
 	int dev;
@@ -84,7 +84,7 @@ void META_DEV(const char *fmt, ...) {
 }
 
 // Log infos.
-void META_INFO(const char *fmt, ...) {
+void DLLINTERNAL META_INFO(const char *fmt, ...) {
 	va_list ap;
 	char buf[MAX_LOGMSG_LEN];
 
@@ -95,7 +95,7 @@ void META_INFO(const char *fmt, ...) {
 }
 
 // Log warnings.
-void META_WARNING(const char *fmt, ...) {
+void DLLINTERNAL META_WARNING(const char *fmt, ...) {
 	va_list ap;
 	char buf[MAX_LOGMSG_LEN];
 
@@ -106,7 +106,7 @@ void META_WARNING(const char *fmt, ...) {
 }
 
 // Log errors.
-void META_ERROR(const char *fmt, ...) {
+void DLLINTERNAL META_ERROR(const char *fmt, ...) {
 	va_list ap;
 	char buf[MAX_LOGMSG_LEN];
 
@@ -117,7 +117,7 @@ void META_ERROR(const char *fmt, ...) {
 }
 
 // Normal log messages.
-void META_LOG(const char *fmt, ...) {
+void DLLINTERNAL META_LOG(const char *fmt, ...) {
 	va_list ap;
 	char buf[MAX_LOGMSG_LEN];
 
@@ -128,7 +128,7 @@ void META_LOG(const char *fmt, ...) {
 }
 
 // Print to client.
-void META_CLIENT(edict_t *pEntity, const char *fmt, ...) {
+void DLLINTERNAL META_CLIENT(edict_t *pEntity, const char *fmt, ...) {
 	va_list ap;
 	char buf[MAX_CLIENTMSG_LEN];
 	unsigned int len;
@@ -149,7 +149,7 @@ void META_CLIENT(edict_t *pEntity, const char *fmt, ...) {
 
 #ifndef __BUILD_FAST_METAMOD__
 
-void META_DO_DEBUG(int level, const char *fmt, ...) {
+void DLLINTERNAL META_DO_DEBUG(int level, const char *fmt, ...) {
 	char meta_debug_str[1024];
 	va_list ap;
 	

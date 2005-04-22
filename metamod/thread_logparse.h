@@ -47,12 +47,12 @@ extern MFuncQueue *HookQueue;
 
 extern THREAD_T logparse_thread_id;
 
-void startup_logparse_thread(void);
+void DLLINTERNAL startup_logparse_thread(void);
 void WINAPI logparse_handler(void);
 
-event_args_t *parse_event_args(const char *logline);
-event_player_t *parse_player(char *start, int *retlen);
-char *parse_quoted(char *start, int *retlen);
+event_args_t * DLLINTERNAL parse_event_args(const char *logline);
+event_player_t * DLLINTERNAL parse_player(char *start, int *retlen);
+char * DLLINTERNAL parse_quoted(char *start, int *retlen);
 
 #endif /* THREAD_LOGPARSE_H */
 

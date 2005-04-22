@@ -92,7 +92,7 @@ MHookList *Hooks;
 
 // Very first metamod function that's run.
 // Do startup operations...
-void metamod_startup(void) {	
+void DLLINTERNAL metamod_startup(void) {	
 	char *cp, *mmfile=NULL, *cfile=NULL;
 
 	META_CONS("   ");
@@ -297,7 +297,7 @@ void metamod_startup(void) {
 // Set initial GameDLL fields (name, gamedir).
 // meta_errno values:
 //  - ME_NULLRESULT	getcwd failed
-mBOOL meta_init_gamedll(void) {
+mBOOL DLLINTERNAL meta_init_gamedll(void) {
 	char gamedir[PATH_MAX];
 	char *cp;
 
@@ -347,7 +347,7 @@ mBOOL meta_init_gamedll(void) {
 //  - ME_DLOPEN		couldn't dlopen game dll file
 //  - ME_DLMISSING	couldn't find required routine in game dll
 //                	(GiveFnptrsToDll, GetEntityAPI, GetEntityAPI2)
-mBOOL meta_load_gamedll(void) {
+mBOOL DLLINTERNAL meta_load_gamedll(void) {
 	int iface_vers;
 	int found=0;
 

@@ -92,7 +92,7 @@
 // Generic command handler, passed to the engine for any AddServerCommand
 // calls made by the plugin.  It finds the appropriate plugin function
 // pointer to call based on CMD_ARGV(0).
-void meta_command_handler(void) {
+void DLLHIDDEN meta_command_handler(void) {
 	MRegCmd *icmd;
 	const char *cmd;
 
@@ -122,7 +122,7 @@ void meta_command_handler(void) {
 // The string handed to the engine is just a strdup() of the plugin's
 // string.  The function pointer handed to the engine is actually a pointer
 // to a generic command-handler function (see above).
-void meta_AddServerCommand(char *cmd_name, void (*function) (void)) {
+void DLLHIDDEN meta_AddServerCommand(char *cmd_name, void (*function) (void)) {
 	MPlugin *iplug=NULL; 
 	MRegCmd *icmd=NULL;
 
@@ -171,7 +171,7 @@ void meta_AddServerCommand(char *cmd_name, void (*function) (void)) {
 // values via the engine functions, this will work fine.  If the plugin
 // code tries to _directly_ read/set the fields of its own cvar structures,
 // it will fail to work properly.
-void meta_CVarRegister(cvar_t *pCvar) {
+void DLLHIDDEN meta_CVarRegister(cvar_t *pCvar) {
 	MPlugin *iplug=NULL;
 	MRegCvar *icvar=NULL;
 
@@ -215,8 +215,7 @@ void meta_CVarRegister(cvar_t *pCvar) {
 
 
 // Replacement for engine routine RegUserMsg; called by plugins. 
-
-int meta_RegUserMsg(const char *pszName, int iSize) {
+int DLLHIDDEN meta_RegUserMsg(const char *pszName, int iSize) {
 	const char *cp;
 	MRegMsg *imsg;
 	MPlugin *iplug;

@@ -138,12 +138,12 @@ typedef long long int int64bit;
 		return(str_GetLastError());
 	}
 #endif /* _WIN32 */
-const char *DLFNAME(void *memptr);
-mBOOL IS_VALID_PTR(void *memptr);
+const char * DLLINTERNAL DLFNAME(void *memptr);
+mBOOL DLLINTERNAL IS_VALID_PTR(void *memptr);
 
 
 // Attempt to call the given function pointer, without segfaulting.
-mBOOL os_safe_call(REG_CMD_FN pfn);
+mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn);
 
 
 // Windows doesn't have an strtok_r() routine, so we write our own.
@@ -154,14 +154,14 @@ mBOOL os_safe_call(REG_CMD_FN pfn);
 
 
 // Special version that fixes vsnprintf bugs.
-int safe_vsnprintf(char* s,  size_t n,  const char *format, va_list ap);
-int safe_snprintf(char* s, size_t n, const char* format, ...);
+int DLLINTERNAL safe_vsnprintf(char* s,  size_t n,  const char *format, va_list ap);
+int DLLINTERNAL safe_snprintf(char* s, size_t n, const char* format, ...);
 
 
 // Linux doesn't have an strlwr() routine, so we write our own.
 #ifdef linux
 	#define strlwr(s) my_strlwr(s)
-	char *my_strlwr(char *s);
+	char * DLLINTERNAL my_strlwr(char *s);
 #endif /* _WIN32 */
 
 
@@ -247,12 +247,12 @@ int safe_snprintf(char* s, size_t n, const char* format, ...);
 //    "real" function and uses the "old" semantic; handler-type is: 
 //       int newhandler(size_t)
 //
-void MM_CDECL meta_new_handler(void);
+void MM_CDECL DLLHIDDEN meta_new_handler(void);
 
 // To keep the rest of the sources clean and keep not only OS but also
 // compiler dependant differences in this file, we define a local function
 // to set the new handler.
-void mm_set_new_handler( void );
+void DLLINTERNAL mm_set_new_handler( void );
 #endif
 
 
@@ -439,7 +439,7 @@ void normalize_pathname(char *path);
 //  - a toplevel path (ie "\blah")
 //  - a UNC network address (ie "\\srv1\blah").
 // Also, handle both native and normalized pathnames.
-inline mBOOL is_absolute_path(const char *path) {
+inline mBOOL DLLINTERNAL is_absolute_path(const char *path) {
 	if(likely(path[0]=='/')) return(mTRUE);
 #ifdef _WIN32
 	if(likely(path[1]==':')) return(mTRUE);
@@ -451,12 +451,12 @@ inline mBOOL is_absolute_path(const char *path) {
 #ifdef _WIN32
 // Buffer pointed to by resolved_name is assumed to be able to store a
 // string of PATH_MAX length.
-char *realpath(const char *file_name, char *resolved_name);
+char * realpath(const char *file_name, char *resolved_name);
 #endif /* _WIN32 */
 
 // Generic "error string" from a recent OS call.  For linux, this is based
 // on errno.  For win32, it's based on GetLastError.
-inline const char *str_os_error(void) {
+inline const char * DLLINTERNAL str_os_error(void) {
 #ifdef linux
 	return(strerror(errno));
 #elif defined(_WIN32)

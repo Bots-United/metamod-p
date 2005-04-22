@@ -42,7 +42,7 @@
 
 // Search gamedir/dlls/*.dll for gamedlls
 //TODO: add META_DEBUG
-const char *autodetect_gamedll(const gamedll_t *gamedll, const char *knownfn)
+const char * DLLINTERNAL autodetect_gamedll(const gamedll_t *gamedll, const char *knownfn)
 {
 	static char buf[256];
 	char dllpath[256];

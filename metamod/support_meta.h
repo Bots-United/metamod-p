@@ -47,11 +47,27 @@
 void do_exit(int exitval) ATTRIBUTE(__noreturn__);
 
 // faster than c-lib strcmp() on short strings
-inline int mm_strcmp(const char *s1, const char *s2) {
+inline int DLLINTERNAL mm_strcmp(const char *s1, const char *s2) {
 	while(unlikely(*s1 == *s2++))
 		if(unlikely(*s1++ == 0))
 			return (0);
 	return(*(const unsigned char *)s1 - *(const unsigned char *)(s2 - 1));
+}
+
+// faster than c-lib strncmp() on short strings
+inline int DLLINTERNAL mm_strncmp(const char *s1, const char *s2, size_t n) {
+	unsigned char u1, u2;
+	
+	while(likely(n-- > 0)) {
+		u1 = (unsigned char) *s1++;
+		u2 = (unsigned char) *s2++;
+		if(likely(u1 != u2))
+			return(u1 - u2);
+		if(unlikely(u1 == '\0'))
+			return(0);
+	}
+	
+	return(0);
 }
 
 // Unlike snprintf(), strncpy() doesn't necessarily null-terminate the
@@ -95,37 +111,37 @@ inline int mm_strcmp(const char *s1, const char *s2) {
 #endif
 
 // Technique 3: use inline
-inline char *STRNCPY(char *dst, const char *src, int size) {
+inline char * DLLINTERNAL STRNCPY(char *dst, const char *src, int size) {
 	return(strncat(&(*dst = 0), src, size-1));
 }
 
 // Renamed string functions to be clearer.
-inline int strmatch(const char *s1, const char *s2) {
+inline int DLLINTERNAL strmatch(const char *s1, const char *s2) {
 	if(likely(s1) && likely(s2))
 		return(!mm_strcmp(s1, s2));
 	else
 		return(0);
 }
-inline int strnmatch(const char *s1, const char *s2, size_t n) {
+inline int DLLINTERNAL strnmatch(const char *s1, const char *s2, size_t n) {
 	if(likely(s1) && likely(s2))
-		return(!strncmp(s1, s2, n));
+		return(!mm_strncmp(s1, s2, n));
 	else
 		return(0);
 }
-inline int strcasematch(const char *s1, const char *s2) {
+inline int DLLINTERNAL strcasematch(const char *s1, const char *s2) {
 	if(likely(s1) && likely(s2))
 		return(!strcasecmp(s1, s2));
 	else
 		return(0);
 }
-inline int strncasematch(const char *s1, const char *s2, size_t n) {
+inline int DLLINTERNAL strncasematch(const char *s1, const char *s2, size_t n) {
 	if(likely(s1) && likely(s2))
 		return(!strncasecmp(s1, s2, n));
 	else
 		return(0);
 }
 
-inline int old_valid_file(char *path) {
+inline int DLLINTERNAL old_valid_file(char *path) {
 	char *cp;
 	int len, ret;
 	cp = (char *)LOAD_FILE_FOR_ME(path, &len);
@@ -136,8 +152,8 @@ inline int old_valid_file(char *path) {
 	FREE_FILE(cp);
 	return(ret);
 }
-int valid_gamedir_file(const char *path);
-char *full_gamedir_path(const char *path, char *fullpath);
+int DLLINTERNAL valid_gamedir_file(const char *path);
+char * DLLINTERNAL full_gamedir_path(const char *path, char *fullpath);
 
 // Turn a variable/function name into the corresponding string, optionally
 // stripping off the leading "len" characters.  Useful for things like

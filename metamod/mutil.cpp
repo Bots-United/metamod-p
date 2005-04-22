@@ -177,24 +177,20 @@ static qboolean mutil_CallGameEntity(plid_t plid, const char *entStr, entvars_t 
 // Find a usermsg, registered by the gamedll, with the corresponding
 // msgname, and return remaining info about it (msgid, size).
 static int mutil_GetUserMsgID(plid_t plid, const char *msgname, int *size) {
-	FINDMSGID_START_TSC_TRACKING();
-	
 	plugin_info_t *plinfo;
 	MRegMsg *umsg;
-	int msgid=0;
-	
+
 	plinfo=(plugin_info_t *)plid;
 	META_DEBUG(8, ("Looking up usermsg name '%s' for plugin '%s'", msgname,
 				plinfo->name));
-	umsg=RegMsgs->find(msgname);
+	umsg=RegMsgs->fast_find(msgname);
 	if(likely(umsg)) {
 		if(unlikely(size))
 			*size=umsg->size;
-		msgid=umsg->msgid;
+		return(umsg->msgid);
 	}
-	
-	FINDMSGID_END_TSC_TRACKING();
-	return(msgid);
+	else
+		return(0);
 }
 
 // Find a usermsg, registered by the gamedll, with the corresponding

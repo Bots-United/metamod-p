@@ -64,7 +64,7 @@
 // Since windows doesn't provide a verison of strtok_r(), we include one
 // here.  This may or may not operate exactly like strtok_r(), but does
 // what we need it it do.
-char *my_strtok_r(char *s, const char *delim, char **ptrptr) {
+char * my_strtok_r(char *s, const char *delim, char **ptrptr) {
 	char *begin=NULL;
 	char *end=NULL;
 	char *rest=NULL;
@@ -102,7 +102,7 @@ char *my_strlwr(char *s) {
 // Microsoft's msvcrt.dll:vsnprintf is buggy and so is vsnprintf on some glibc versions.
 // We use wrapper function to fix bugs.
 //  from: http://sourceforge.net/tracker/index.php?func=detail&aid=1083721&group_id=2435&atid=102435
-int safe_vsnprintf(char* s, size_t n, const char *format, va_list src_ap) { 
+int DLLINTERNAL safe_vsnprintf(char* s, size_t n, const char *format, va_list src_ap) { 
 	va_list ap;
 	int res;
 	char *tmpbuf;
@@ -184,7 +184,7 @@ int safe_vsnprintf(char* s, size_t n, const char *format, va_list src_ap) {
 	return(res);
 }
 
-int safe_snprintf(char* s, size_t n, const char* format, ...) {
+int DLLINTERNAL safe_snprintf(char* s, size_t n, const char* format, ...) {
 	int res;
 	va_list ap;
 	
@@ -218,7 +218,7 @@ char *str_GetLastError(void) {
 #ifdef linux
 // Errno values:
 //  - ME_NOTFOUND	couldn't find a sharedlib that contains memory location
-const char *DLFNAME(void *memptr) {
+const char * DLLINTERNAL DLFNAME(void *memptr) {
 	Dl_info dli;
 	memset(&dli, 0, sizeof(dli));
 	if(likely(dladdr(memptr, &dli)))
@@ -299,7 +299,7 @@ void normalize_pathname(char *path) {
 
 // Buffer pointed to by resolved_name is assumed to be able to store a
 // string of PATH_MAX length.
-char *realpath(const char *file_name, char *resolved_name) {
+char * realpath(const char *file_name, char *resolved_name) {
 	int ret;
 	ret=GetFullPathName(file_name, PATH_MAX, resolved_name, NULL);
 	if(unlikely(ret > PATH_MAX)) {
@@ -333,7 +333,7 @@ char *realpath(const char *file_name, char *resolved_name) {
 // we need it for in this particular situation.
 // meta_errno values:
 //  - ME_NOTFOUND	couldn't find a matching sharedlib for this ptr
-mBOOL IS_VALID_PTR(void *memptr) {
+mBOOL DLLINTERNAL IS_VALID_PTR(void *memptr) {
 	Dl_info dli;
 	memset(&dli, 0, sizeof(dli));
 	if(likely(dladdr(memptr, &dli)))
@@ -358,7 +358,7 @@ mBOOL IS_VALID_PTR(void *memptr) {
 // in plugin commands and produced confusing output ("plugin has been
 // unloaded", when really it segfaultd), and (b) wasn't necessary since
 // IS_VALID_PTR() should cover the situation.
-mBOOL os_safe_call(REG_CMD_FN pfn) {
+mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn) {
 	// try and see if this is a valid memory location
 	if(unlikely(!IS_VALID_PTR((void *) pfn)))
 		// meta_errno should be already set in is_valid_ptr()
@@ -372,12 +372,12 @@ mBOOL os_safe_call(REG_CMD_FN pfn) {
 // To keep the rest of the sources clean and keep not only OS but also
 // compiler dependant differences in this file, we define a local function
 // to set the new handler.
-void mm_set_new_handler( void ) {
+void DLLINTERNAL mm_set_new_handler( void ) {
 	std::set_new_handler(meta_new_handler);
 }
 
 // See comments in osdep.h.
-void MM_CDECL meta_new_handler(void) {
+void MM_CDECL DLLHIDDEN meta_new_handler(void) {
 	// This merely because we don't want the program to exit if new()
 	// fails..
 	return;

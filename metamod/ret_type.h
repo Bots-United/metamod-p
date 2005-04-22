@@ -36,20 +36,20 @@
 class class_ret_t : public class_metamod_new {
 public:
 	// Construction
-	class_ret_t(void) { };
-	class_ret_t(float f) { data.ui = *(unsigned int*)&f; };
-	class_ret_t(void * p) { data.p = p; };
-	class_ret_t(const char * pc) { data.pc = pc; };
-	class_ret_t(int i) { data.i = i; };
-	class_ret_t(short s) { data.i = s; };
-	class_ret_t(char c) { data.i = c; };
-	class_ret_t(unsigned int ui) { data.ui = ui; };
-	class_ret_t(unsigned long ui) { data.ui = ui; };
-	class_ret_t(unsigned short us) { data.ui = us; };
-	class_ret_t(unsigned char uc) { data.ui = uc; };
+	inline class_ret_t(void) { };
+	inline class_ret_t(float f) { data.ui = *(unsigned int*)&f; };
+	inline class_ret_t(void * p) { data.p = p; };
+	inline class_ret_t(const char * pc) { data.pc = pc; };
+	inline class_ret_t(int i) { data.i = i; };
+	inline class_ret_t(short s) { data.i = s; };
+	inline class_ret_t(char c) { data.i = c; };
+	inline class_ret_t(unsigned int ui) { data.ui = ui; };
+	inline class_ret_t(unsigned long ui) { data.ui = ui; };
+	inline class_ret_t(unsigned short us) { data.ui = us; };
+	inline class_ret_t(unsigned char uc) { data.ui = uc; };
 	
 	// Reading/Writing
-	void * getptr(void) { return(&data); };
+	inline void * getptr(void) { return(&data); };
 	
 	#define SET_RET_CLASS(ret,type,x) \
 		*(type*)((ret).getptr()) = (type)(x)

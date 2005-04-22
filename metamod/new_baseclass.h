@@ -42,11 +42,11 @@ public:
 
 #ifdef NO_META_NEW_HANDLER	
 	// Operators
-	void * operator new(size_t size) { return(calloc(1, size)); }
-	void * operator new[](size_t size) { return(calloc(1, size)); }
+	inline void * operator new(size_t size) { return(calloc(1, size)); }
+	inline void * operator new[](size_t size) { return(calloc(1, size)); }
 	
-	void operator delete(void *ptr) { free(ptr); }
-	void operator delete[](void *ptr) { free(ptr); }
+	inline void operator delete(void *ptr) { free(ptr); }
+	inline void operator delete[](void *ptr) { free(ptr); }
 #endif
 };
 

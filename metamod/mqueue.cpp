@@ -41,7 +41,7 @@
 #include "mqueue.h"				// me
 
 
-void MFuncQueue::remove(plid_t plid) {
+void DLLINTERNAL MFuncQueue::remove(plid_t plid) {
 	QItem *fp;
 
 	MXlock();

@@ -123,10 +123,10 @@ class MPlugin : public class_metamod_new {
 		api_tables_t tables;
 		api_tables_t post_tables;
 		
-		inline void * get_api_table(enum_api_t api) {
+		inline DLLINTERNAL void * get_api_table(enum_api_t api) {
 			return(((void**)&tables)[api]);
 		}
-		inline void * get_api_post_table(enum_api_t api) {
+		inline DLLINTERNAL void * get_api_post_table(enum_api_t api) {
 			return(((void**)&post_tables)[api]);
 		}
 		
@@ -148,60 +148,61 @@ class MPlugin : public class_metamod_new {
 		char pathname[PATH_MAX];			// UNIQUE, ie "/home/willday/half-life/cstrike/dlls/mm_test_i386.so", built with GameDLL.gamedir
 		
 	// functions:		
-		mBOOL ini_parseline(const char *line);		// parse line from inifile
-		mBOOL cmd_parseline(const char *line);		// parse from console command
-		mBOOL plugin_parseline(const char *fname, int loader_index); // parse from plugin
-		mBOOL check_input(void);
+		mBOOL DLLINTERNAL ini_parseline(const char *line);		// parse line from inifile
+		mBOOL DLLINTERNAL cmd_parseline(const char *line);		// parse from console command
+		mBOOL DLLINTERNAL plugin_parseline(const char *fname, int loader_index); // parse from plugin
+		mBOOL DLLINTERNAL check_input(void);
 		
-		mBOOL resolve(void);				// find a matching file on disk
-		char *resolve_dirs(const char *path);
-		char *resolve_prefix(const char *path);
-		char *resolve_suffix(const char *path);
-		static mBOOL is_platform_postfix(const char *pf);
+		mBOOL DLLINTERNAL resolve(void);				// find a matching file on disk
+		char * DLLINTERNAL resolve_dirs(const char *path);
+		char * DLLINTERNAL resolve_prefix(const char *path);
+		char * DLLINTERNAL resolve_suffix(const char *path);
+		static mBOOL DLLINTERNAL is_platform_postfix(const char *pf);
 
-		mBOOL platform_match(MPlugin* plugin);
+		mBOOL DLLINTERNAL platform_match(MPlugin* plugin);
 		
-		mBOOL load(PLUG_LOADTIME now);
-		mBOOL unload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason, PL_UNLOAD_REASON real_reason);
-		mBOOL reload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason);
-		mBOOL pause(void);
-		mBOOL unpause(void);
-		mBOOL retry(PLUG_LOADTIME now, PL_UNLOAD_REASON reason); // if previously failed
-		void free_api_pointers(void);
-		mBOOL clear(void);
-		mBOOL plugin_unload(plid_t plid, PLUG_LOADTIME now, PL_UNLOAD_REASON reason); // other plugin unloading
-		void show(void);				// print info about plugin to console
+		mBOOL DLLINTERNAL load(PLUG_LOADTIME now);
+		mBOOL DLLINTERNAL unload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason, PL_UNLOAD_REASON real_reason);
+		mBOOL DLLINTERNAL reload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason);
+		mBOOL DLLINTERNAL pause(void);
+		mBOOL DLLINTERNAL unpause(void);
+		mBOOL DLLINTERNAL retry(PLUG_LOADTIME now, PL_UNLOAD_REASON reason); // if previously failed
+		void DLLINTERNAL free_api_pointers(void);
+		mBOOL DLLINTERNAL clear(void);
+		mBOOL DLLINTERNAL plugin_unload(plid_t plid, PLUG_LOADTIME now, PL_UNLOAD_REASON reason); // other plugin unloading
+		void DLLINTERNAL show(void);				// print info about plugin to console
 
-		mBOOL newer_file(void);			// check for newer file on disk
+		mBOOL DLLINTERNAL newer_file(void);			// check for newer file on disk
 
 	// output string functions
-		const char *str_status(STR_STATUS fmt);
-		const char *str_action(STR_ACTION fmt);
-		const char *str_source(STR_SOURCE fmt);
+		const char * DLLINTERNAL str_status(STR_STATUS fmt);
+		const char * DLLINTERNAL str_action(STR_ACTION fmt);
+		const char * DLLINTERNAL str_source(STR_SOURCE fmt);
 
-		const char *str_reason(PL_UNLOAD_REASON preason, PL_UNLOAD_REASON preal_reason);
-		const char *str_loadtime(PLUG_LOADTIME pallow, STR_LOADTIME fmt);
+		const char * DLLINTERNAL str_reason(PL_UNLOAD_REASON preason, PL_UNLOAD_REASON preal_reason);
+		const char * DLLINTERNAL str_loadtime(PLUG_LOADTIME pallow, STR_LOADTIME fmt);
 
-		const char *str_status(void)		{ return(str_status(ST_SIMPLE)); };
-		const char *str_action(void)		{ return(str_action(SA_SIMPLE)); };
-		const char *str_source(void)		{ return(str_source(SO_SIMPLE)); };
+		inline const char *str_status(void)		{ return(str_status(ST_SIMPLE)); };
+		inline const char *str_action(void)		{ return(str_action(SA_SIMPLE)); };
+		inline const char *str_source(void)		{ return(str_source(SO_SIMPLE)); };
 
-		const char *str_loadable(void) { 
+		inline const char *str_loadable(void) { 
 			return(likely(info)?str_loadtime(info->loadable, SL_SIMPLE):" -");
 		};
-		const char *str_unloadable(void) { 
+		inline const char *str_unloadable(void) { 
 			return(likely(info)?str_loadtime(info->unloadable, SL_SIMPLE):" -");
 		};
-		const char *str_loadable(STR_LOADTIME fmt) { 
+		inline const char *str_loadable(STR_LOADTIME fmt) { 
 			return(likely(info)?str_loadtime(info->loadable, fmt):" -");
 		};
-		const char *str_unloadable(STR_LOADTIME fmt) { 
+		inline const char *str_unloadable(STR_LOADTIME fmt) { 
 			return(likely(info)?str_loadtime(info->unloadable, fmt):" -");
 		};
 	private:
-		mBOOL query(void);
-		mBOOL attach(PLUG_LOADTIME now);
-		mBOOL detach(PLUG_LOADTIME now, PL_UNLOAD_REASON reason);
+		mBOOL DLLINTERNAL query(void);
+		mBOOL DLLINTERNAL attach(PLUG_LOADTIME now);
+		mBOOL DLLINTERNAL detach(PLUG_LOADTIME now, PL_UNLOAD_REASON reason);
+		
 		gamedll_funcs_t gamedll_funcs;
 		mutil_funcs_t mutil_funcs;
 } align16;

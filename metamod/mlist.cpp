@@ -65,7 +65,7 @@ MPluginList::MPluginList(const char *ifile)
 }
 
 // Resets plugin to empty
-void MPluginList::reset_plugin(MPlugin *pl_find) {
+void DLLINTERNAL MPluginList::reset_plugin(MPlugin *pl_find) {
 	int i;
 	
 	//calculate index
@@ -84,7 +84,7 @@ void MPluginList::reset_plugin(MPlugin *pl_find) {
 // meta_errno values:
 //  - ME_ARGUMENT	invalid pindex
 //  - ME_NOTFOUND	couldn't find a matching plugin
-MPlugin *MPluginList::find(int pindex) {
+MPlugin * DLLINTERNAL MPluginList::find(int pindex) {
 	MPlugin *pfound;
 	if(unlikely(pindex <= 0))
 		RETURN_ERRNO(NULL, ME_ARGUMENT);
@@ -99,7 +99,7 @@ MPlugin *MPluginList::find(int pindex) {
 // meta_errno values:
 //  - ME_ARGUMENT	invalid pindex
 //  - ME_NOTFOUND	couldn't find a matching plugin
-MPlugin *MPluginList::find(DLHANDLE handle) {
+MPlugin * DLLINTERNAL MPluginList::find(DLHANDLE handle) {
 	int i;
 
 	if(unlikely(!handle))
@@ -114,7 +114,7 @@ MPlugin *MPluginList::find(DLHANDLE handle) {
 }
 
 // Clear source_plugin_index on all matching plugins
-void MPluginList::clear_source_plugin_plugin(int source_index) {
+void DLLINTERNAL MPluginList::clear_source_plugin_plugin(int source_index) {
 	int i;
 	
 	if(unlikely(source_index <= 0))
@@ -129,7 +129,7 @@ void MPluginList::clear_source_plugin_plugin(int source_index) {
 }
 
 // Find if any plugin has been loaded by plugin 'source_index'
-mBOOL MPluginList::found_child_plugins(int source_index) {
+mBOOL DLLINTERNAL MPluginList::found_child_plugins(int source_index) {
 	int i;
 	
 	if(unlikely(source_index <= 0))
@@ -146,7 +146,7 @@ mBOOL MPluginList::found_child_plugins(int source_index) {
 }
 
 // Try make endlist lower (called after plugin unload)
-void MPluginList::trim_list(void) {
+void DLLINTERNAL MPluginList::trim_list(void) {
 	int i,n;
 	
 	if(unlikely(endlist <= 0))
@@ -166,7 +166,7 @@ void MPluginList::trim_list(void) {
 // meta_errno values:
 //  - ME_ARGUMENT	null plid_t
 //  - ME_NOTFOUND	couldn't find a matching plugin
-MPlugin *MPluginList::find(plid_t id) {
+MPlugin * DLLINTERNAL MPluginList::find(plid_t id) {
 	int i;
 
 	if(unlikely(!id))
@@ -184,7 +184,7 @@ MPlugin *MPluginList::find(plid_t id) {
 // meta_errno values:
 //  - ME_ARGUMENT	null path
 //  - ME_NOTFOUND	couldn't find a matching plugin
-MPlugin *MPluginList::find(const char *findpath) {
+MPlugin * DLLINTERNAL MPluginList::find(const char *findpath) {
 	int i;
 
 	if(unlikely(!findpath))
@@ -208,7 +208,7 @@ MPlugin *MPluginList::find(const char *findpath) {
 //  - ME_ARGUMENT	null memptr
 //  - ME_NOTFOUND	couldn't find a matching plugin
 //  - errno's from DLFNAME()
-MPlugin *MPluginList::find_memloc(void *memptr) {
+MPlugin * DLLINTERNAL MPluginList::find_memloc(void *memptr) {
 #ifdef linux
 	const char *dlfile;
 
@@ -241,7 +241,7 @@ MPlugin *MPluginList::find_memloc(void *memptr) {
 //  - ME_ARGUMENT	null prefix
 //  - ME_NOTFOUND	couldn't find a matching plugin
 //  - ME_NOTUNIQ	found multiple matches; no unique match
-MPlugin *MPluginList::find_match(const char *prefix) {
+MPlugin * DLLINTERNAL MPluginList::find_match(const char *prefix) {
 	int i, len;
 	MPlugin *iplug, *pfound;
 	char buf[NAME_MAX];
@@ -299,7 +299,7 @@ MPlugin *MPluginList::find_match(const char *prefix) {
 // meta_errno values:
 //  - ME_ARGUMENT	null prefix
 //  - ME_NOTFOUND	couldn't find a matching plugin
-MPlugin *MPluginList::find_match(MPlugin *pmatch) {
+MPlugin * DLLINTERNAL MPluginList::find_match(MPlugin *pmatch) {
 	int i;
 	MPlugin *iplug, *pfound;
 	if(unlikely(!pmatch))
@@ -322,7 +322,7 @@ MPlugin *MPluginList::find_match(MPlugin *pmatch) {
 // Add a plugin to the list.
 // meta_errno values:
 //  - ME_MAXREACHED		reached max plugins
-MPlugin *MPluginList::add(MPlugin *padd) {
+MPlugin * DLLINTERNAL MPluginList::add(MPlugin *padd) {
 	int i;
 	MPlugin *iplug;
 
@@ -367,7 +367,7 @@ MPlugin *MPluginList::add(MPlugin *padd) {
 // Read plugins.ini at server startup.
 // meta_errno values:
 //  - ME_NOFILE		ini file missing or empty
-mBOOL MPluginList::ini_startup() {
+mBOOL DLLINTERNAL MPluginList::ini_startup() {
 	FILE *fp;
 	char line[MAX_STRBUF_LEN];
 	int n, ln;
@@ -439,7 +439,7 @@ mBOOL MPluginList::ini_startup() {
 // Re-read plugins.ini looking for added/deleted/changed plugins.
 // meta_errno values:
 //  - ME_NOFILE		ini file missing or empty
-mBOOL MPluginList::ini_refresh() {
+mBOOL DLLINTERNAL MPluginList::ini_refresh() {
 	FILE *fp;
 	char line[MAX_STRBUF_LEN];
 	int n, ln;
@@ -555,7 +555,7 @@ mBOOL MPluginList::ini_refresh() {
 //  - ME_ALREADY	this plugin already loaded
 //  - errno's from add()
 //  - errno's from load()
-MPlugin *MPluginList::plugin_addload(plid_t plid, const char *fname, PLUG_LOADTIME now) {
+MPlugin * DLLINTERNAL MPluginList::plugin_addload(plid_t plid, const char *fname, PLUG_LOADTIME now) {
 	MPlugin pl_temp;
 	MPlugin *pl_found, *pl_added, *pl_loader;
 	
@@ -627,7 +627,7 @@ MPlugin *MPluginList::plugin_addload(plid_t plid, const char *fname, PLUG_LOADTI
 //  - ME_ALREADY	this plugin already loaded
 //  - errno's from add()
 //  - errno's from load()
-mBOOL MPluginList::cmd_addload(const char *args) {
+mBOOL DLLINTERNAL MPluginList::cmd_addload(const char *args) {
 	MPlugin pl_temp;
 	MPlugin *pl_found, *pl_added;
 	
@@ -695,7 +695,7 @@ mBOOL MPluginList::cmd_addload(const char *args) {
 // Load plugins at startup.
 // meta_errno values:
 //  - errno's from ini_startup()
-mBOOL MPluginList::load() {
+mBOOL DLLINTERNAL MPluginList::load() {
 	int i, n;
 
 	if(unlikely(!ini_startup())) {
@@ -721,7 +721,7 @@ mBOOL MPluginList::load() {
 // Update list of loaded plugins from ini file, and load any new/changed plugins.
 // meta_errno values:
 //  - errno's from ini_refresh()
-mBOOL MPluginList::refresh(PLUG_LOADTIME now) {
+mBOOL DLLINTERNAL MPluginList::refresh(PLUG_LOADTIME now) {
 	int i, ndone=0, nkept=0, nloaded=0, nunloaded=0, nreloaded=0, ndelayed=0;
 	MPlugin *iplug;
 
@@ -800,7 +800,7 @@ mBOOL MPluginList::refresh(PLUG_LOADTIME now) {
 // Re-enable any plugins currently paused.
 // meta_errno values:
 //  - none
-void MPluginList::unpause_all(void) {
+void DLLINTERNAL MPluginList::unpause_all(void) {
 	int i;
 	MPlugin *iplug;
 	for(i=0; likely(i < endlist); i++) {
@@ -814,7 +814,7 @@ void MPluginList::unpause_all(void) {
 // until changelevel.
 // meta_errno values:
 //  - none
-void MPluginList::retry_all(PLUG_LOADTIME now) {
+void DLLINTERNAL MPluginList::retry_all(PLUG_LOADTIME now) {
 	int i;
 	MPlugin *iplug;
 	for(i=0; likely(i < endlist); i++) {
@@ -827,7 +827,7 @@ void MPluginList::retry_all(PLUG_LOADTIME now) {
 // List plugins and information about them in a formatted table.
 // meta_errno values:
 //  - none
-void MPluginList::show(int source_index) {
+void DLLINTERNAL MPluginList::show(int source_index) {
 	int i, n=0, r=0;
 	MPlugin *pl;
 	char desc[15+1], file[16+1], vers[7+1];		// plus 1 for term null
@@ -879,7 +879,7 @@ void MPluginList::show(int source_index) {
 //    etc).
 // meta_errno values:
 //  - none
-void MPluginList::show_client(edict_t *pEntity) {
+void DLLINTERNAL MPluginList::show_client(edict_t *pEntity) {
 	int i, n=0;
 	MPlugin *pl;
 	META_CLIENT(pEntity, "Currently running plugins:");

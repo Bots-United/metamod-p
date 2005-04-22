@@ -59,7 +59,7 @@
 //  - ME_COMMENT	ignored commented line
 //  - ME_FORMAT		invalid line format
 //  - ME_OSNOTSUP	plugin is not for this OS
-mBOOL MPlugin::ini_parseline(const char *line) {
+mBOOL DLLINTERNAL MPlugin::ini_parseline(const char *line) {
 	char *token;
 	char *ptr_token;
 	char *cp;
@@ -149,7 +149,7 @@ mBOOL MPlugin::ini_parseline(const char *line) {
 // Parse a line from console "load" command into a plugin.
 // meta_errno values:
 //  - ME_FORMAT		invalid line format
-mBOOL MPlugin::cmd_parseline(const char *line) {
+mBOOL DLLINTERNAL MPlugin::cmd_parseline(const char *line) {
 	char buf[NAME_MAX + PATH_MAX + MAX_DESC_LEN];
 	char *token;
 	char *ptr_token;
@@ -199,7 +199,7 @@ mBOOL MPlugin::cmd_parseline(const char *line) {
 
 // Parse a filename string from PEXT_LOAD_PLUGIN_BY_* function into a plugin.
 // meta_errno values:
-mBOOL MPlugin::plugin_parseline(const char *fname, int loader_index) {
+mBOOL DLLINTERNAL MPlugin::plugin_parseline(const char *fname, int loader_index) {
 	char *cp;
 	
 	source_plugin_index = loader_index;
@@ -230,7 +230,7 @@ mBOOL MPlugin::plugin_parseline(const char *fname, int loader_index) {
 // Make sure this plugin has the necessary minimal information.
 // meta_errno values:
 //  - ME_ARGUMENT	missing necessary fields in plugin
-mBOOL MPlugin::check_input(void) {
+mBOOL DLLINTERNAL MPlugin::check_input(void) {
 	// doublecheck our input/state
 	if(unlikely(status < PL_VALID)) {
 		META_WARNING("dll: Tried to operate on plugin[%d] with a non-valid status (%d)", index, str_status());
@@ -272,7 +272,7 @@ mBOOL MPlugin::check_input(void) {
 // meta_errno values:
 //  - ME_NOTFOUND	couldn't find a matching file for the partial name
 //  - errno's from check_input()
-mBOOL MPlugin::resolve(void) {
+mBOOL DLLINTERNAL MPlugin::resolve(void) {
 	char *found;
 	char *cp;
 	int len;
@@ -315,7 +315,7 @@ mBOOL MPlugin::resolve(void) {
 //     GAMEDIR/dlls/filename
 // meta_errno values:
 //  - none
-char *MPlugin::resolve_dirs(const char *path) {
+char * DLLINTERNAL MPlugin::resolve_dirs(const char *path) {
 	struct stat st;
 	static char buf[PATH_MAX];
 	char *found;
@@ -345,7 +345,7 @@ char *MPlugin::resolve_dirs(const char *path) {
 //     dir/file
 // meta_errno values:
 //  - none
-char *MPlugin::resolve_prefix(const char *path) {
+char * DLLINTERNAL MPlugin::resolve_prefix(const char *path) {
 	struct stat st;
 	char *cp, *fname;
 	char dname[PATH_MAX];
@@ -388,7 +388,7 @@ char *MPlugin::resolve_prefix(const char *path) {
 //     path_i386.so, path_i486.so, etc (if linux)
 // meta_errno values:
 //  - none
-char *MPlugin::resolve_suffix(const char *path) {
+char * DLLINTERNAL MPlugin::resolve_suffix(const char *path) {
 	struct stat st;
 	static char buf[PATH_MAX];
 	static char tmpbuf[PATH_MAX];
@@ -455,8 +455,7 @@ char *MPlugin::resolve_suffix(const char *path) {
 // Check if a passed string starts with a known platform postfix.
 // It does not check beyond the period in order to work for both
 // Linux and Win32.
-mBOOL MPlugin::is_platform_postfix(const char *pf)
-{
+mBOOL DLLINTERNAL MPlugin::is_platform_postfix(const char *pf) {
 	typedef struct { const char * postfix; size_t len; } postfix_t;
 	static const postfix_t postfixes[] = {
 		{"_i386.", 6},
@@ -473,7 +472,7 @@ mBOOL MPlugin::is_platform_postfix(const char *pf)
 		return(mFALSE);
 	
 	for(const postfix_t * plist = postfixes; likely(plist->postfix); plist++) {
-		if(unlikely(!strncmp(pf, plist->postfix, plist->len)))
+		if(unlikely(!mm_strncmp(pf, plist->postfix, plist->len)))
 			return(mTRUE);
 	}
 	
@@ -493,7 +492,7 @@ mBOOL MPlugin::is_platform_postfix(const char *pf)
 //  the part up to the last dot, if one exists.
 // meta_errno values:
 //  - none
-mBOOL MPlugin::platform_match(MPlugin* other) {
+mBOOL DLLINTERNAL MPlugin::platform_match(MPlugin* other) {
 	char *end, *other_end;
 	int prefixlen;
 
@@ -525,7 +524,7 @@ mBOOL MPlugin::platform_match(MPlugin* other) {
 	if(likely((other_end-other->file) != prefixlen))
 		return(mFALSE);
 	
-	if(unlikely(strncmp(file,other->file, prefixlen) == 0))
+	if(unlikely(mm_strncmp(file,other->file, prefixlen) == 0))
 		return(mTRUE);
 	
 	return(mFALSE);
@@ -541,7 +540,7 @@ mBOOL MPlugin::platform_match(MPlugin* other) {
 //  - errno's from query()
 //  - errno's from attach()
 //  - errno's from check_input()
-mBOOL MPlugin::load(PLUG_LOADTIME now) {
+mBOOL DLLINTERNAL MPlugin::load(PLUG_LOADTIME now) {
 	if(unlikely(!check_input())) {
 		// details logged, meta_errno set in check_input()
 		RETURN_ERRNO(mFALSE, ME_ARGUMENT);
@@ -637,7 +636,7 @@ mBOOL MPlugin::load(PLUG_LOADTIME now) {
 //  - ME_DLMISSING	couldn't find a query() or giveFuncs() in plugin
 //  - ME_DLERROR	plugin query() returned error
 //  - ME_NULLDATA	info struct from query() was null
-mBOOL MPlugin::query(void) {
+mBOOL DLLINTERNAL MPlugin::query(void) {
 	int plugin_pext_version;
 	META_INIT_FN pfn_init;
 	GIVE_ENGINE_FUNCTIONS_FN pfn_give_engfuncs;
@@ -815,7 +814,7 @@ mBOOL MPlugin::query(void) {
 //  - ME_DLMISSING	couldn't find meta_attach() in plugin
 //  - ME_DLERROR	plugin attach() returned error
 //  - ME_NOMEM		failed malloc
-mBOOL MPlugin::attach(PLUG_LOADTIME now) {
+mBOOL DLLINTERNAL MPlugin::attach(PLUG_LOADTIME now) {
 	int ret;
 	int iface_vers;
 
@@ -953,7 +952,7 @@ mBOOL MPlugin::attach(PLUG_LOADTIME now) {
 // Unload a plugin from plugin request
 // meta_errno values:
 //  - errno's from unload()
-mBOOL MPlugin::plugin_unload(plid_t plid, PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
+mBOOL DLLINTERNAL MPlugin::plugin_unload(plid_t plid, PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
 	PLUG_ACTION old_action;
 	MPlugin * pl_unloader;
 	
@@ -1008,7 +1007,7 @@ mBOOL MPlugin::plugin_unload(plid_t plid, PLUG_LOADTIME now, PL_UNLOAD_REASON re
 //  - ME_DELAYED	unload request is delayed (till changelevel?)
 //  - ME_NOTALLOWED	plugin not unloadable after startup
 //  - errno's from check_input()
-mBOOL MPlugin::unload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason, PL_UNLOAD_REASON real_reason) {
+mBOOL DLLINTERNAL MPlugin::unload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason, PL_UNLOAD_REASON real_reason) {
 	if(unlikely(!check_input())) {
 		// details logged, meta_errno set in check_input()
 		RETURN_ERRNO(mFALSE, ME_ARGUMENT);
@@ -1102,7 +1101,7 @@ mBOOL MPlugin::unload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason, PL_UNLOAD_REAS
 // meta_errno values:
 //  - ME_DLMISSING	couldn't find meta_detach() in plugin
 //  - ME_DLERROR	plugin detach() returned error
-mBOOL MPlugin::detach(PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
+mBOOL DLLINTERNAL MPlugin::detach(PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
 	int ret;
 	META_DETACH_FN pfn_detach;
 
@@ -1127,7 +1126,7 @@ mBOOL MPlugin::detach(PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
 //  - errno's from check_input()
 //  - errno's from unload()
 //  - errno's from load()
-mBOOL MPlugin::reload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
+mBOOL DLLINTERNAL MPlugin::reload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
 	if(unlikely(!check_input())) {
 		// details logged, meta_errno set in check_input()
 		RETURN_ERRNO(mFALSE, ME_ARGUMENT);
@@ -1193,7 +1192,7 @@ mBOOL MPlugin::pause(void) {
 // Unpause a plugin.
 // meta_errno values:
 //  - ME_BADREQ		can't unpause; not paused
-mBOOL MPlugin::unpause(void) {
+mBOOL DLLINTERNAL MPlugin::unpause(void) {
 	if(unlikely(status != PL_PAUSED)) {
 		META_WARNING("Cannot unpause plugin '%s'; not currently paused (status=%s)", desc, str_status());
 		RETURN_ERRNO(mFALSE, ME_BADREQ);
@@ -1209,7 +1208,7 @@ mBOOL MPlugin::unpause(void) {
 //  - errno's from load()
 //  - errno's from unload()
 //  - errno's from reload()
-mBOOL MPlugin::retry(PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
+mBOOL DLLINTERNAL MPlugin::retry(PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
 	if(unlikely(action==PA_LOAD))
 		return(load(now));
 	else if(unlikely(action==PA_ATTACH))
@@ -1225,7 +1224,7 @@ mBOOL MPlugin::retry(PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
 }
 
 //
-void MPlugin::free_api_pointers(void) {
+void DLLINTERNAL MPlugin::free_api_pointers(void) {
 	if(likely(gamedll_funcs.dllapi_table))
 		free(gamedll_funcs.dllapi_table);
 	if(likely(gamedll_funcs.newapi_table))
@@ -1250,7 +1249,7 @@ void MPlugin::free_api_pointers(void) {
 // meta_errno values:
 //  - ME_BADREQ		not marked for clearing
 //  - ME_DLERROR	failed to dlclose
-mBOOL MPlugin::clear(void) {
+mBOOL DLLINTERNAL MPlugin::clear(void) {
 	if(unlikely(status != PL_FAILED) && unlikely(status != PL_BADFILE)
 			&& unlikely(status != PL_EMPTY) && unlikely(status != PL_OPENED)) {
 		META_WARNING("Cannot clear plugin '%s'; not marked as failed, empty, or open (status=%s)", desc, str_status());
@@ -1283,7 +1282,7 @@ mBOOL MPlugin::clear(void) {
 }
 
 // List information about plugin to console.
-void MPlugin::show(void) {
+void DLLINTERNAL MPlugin::show(void) {
 	char *cp, *tstr;
 	int n, width;
 	width=13;
@@ -1368,7 +1367,7 @@ void MPlugin::show(void) {
 // meta_errno values:
 //  - ME_NOFILE		couldn't find file
 //  - ME_NOERROR	no error; false indicates file not newer
-mBOOL MPlugin::newer_file(void) {
+mBOOL DLLINTERNAL MPlugin::newer_file(void) {
 	struct stat st;
 	time_t file_time;
 
@@ -1388,7 +1387,7 @@ mBOOL MPlugin::newer_file(void) {
 // SHOW is max 4 chars, for "show" output.
 // meta_errno values:
 //  - none
-const char *MPlugin::str_status(STR_STATUS fmt) {
+const char * DLLINTERNAL MPlugin::str_status(STR_STATUS fmt) {
 	switch(status) {
 		case PL_EMPTY:
 			if(likely(fmt==ST_SHOW)) return("empt");
@@ -1422,7 +1421,7 @@ const char *MPlugin::str_status(STR_STATUS fmt) {
 // SHOW is max 4 chars, for "show" output.
 // meta_errno values:
 //  - none
-const char *MPlugin::str_action(STR_ACTION fmt) {
+const char * DLLINTERNAL MPlugin::str_action(STR_ACTION fmt) {
 	switch(action) {
 		case PA_NULL:
 			if(likely(fmt==SA_SHOW)) return("NULL");
@@ -1458,7 +1457,7 @@ const char *MPlugin::str_action(STR_ACTION fmt) {
 // NOW is to describe current situation of load/unload attempt.
 // meta_errno values:
 //  - none
-const char *MPlugin::str_loadtime(PLUG_LOADTIME ptime, STR_LOADTIME fmt) {
+const char * DLLINTERNAL MPlugin::str_loadtime(PLUG_LOADTIME ptime, STR_LOADTIME fmt) {
 	switch(ptime) {
 		case PT_NEVER:
 			if(likely(fmt==SL_SHOW)) return("Never");
@@ -1492,7 +1491,7 @@ const char *MPlugin::str_loadtime(PLUG_LOADTIME ptime, STR_LOADTIME fmt) {
 // Return a string describing why a plugin is to be unloaded.
 // meta_errno values:
 //  - none
-const char *MPlugin::str_reason(PL_UNLOAD_REASON preason, PL_UNLOAD_REASON preal_reason) {
+const char * DLLINTERNAL MPlugin::str_reason(PL_UNLOAD_REASON preason, PL_UNLOAD_REASON preal_reason) {
 	char buf[128];
 	
 	if(unlikely(preason == PNL_PLUGIN))
@@ -1525,7 +1524,7 @@ const char *MPlugin::str_reason(PL_UNLOAD_REASON preason, PL_UNLOAD_REASON preal
 // Return a string describing how the plugin was loaded.
 // meta_errno values:
 //  - none
-const char *MPlugin::str_source(STR_SOURCE fmt) {
+const char * DLLINTERNAL MPlugin::str_source(STR_SOURCE fmt) {
 	switch(source) {
 		case PS_INI:
 			if(likely(fmt==SO_SHOW)) return("ini");

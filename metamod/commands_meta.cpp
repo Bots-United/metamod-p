@@ -45,13 +45,13 @@
 #include "vdate.h"			// COMPILE_TIME, COMPILE_TZONE
 
 
-#if defined(META_PERFMON) || defined(META_PERFMON2)
+#ifdef META_PERFMON
 
 long double total_tsc=0;
 unsigned long long count_tsc=0;
 unsigned long long active_tsc=0;
 
-void cmd_meta_tsc(void) {
+void DLLINTERNAL cmd_meta_tsc(void) {
 	if(unlikely(!count_tsc))
 		return;
 	
@@ -60,14 +60,14 @@ void cmd_meta_tsc(void) {
 	META_CONS(" mean_tsc: %f", (double)(total_tsc / count_tsc));
 }
 
-void cmd_meta_reset_tsc(void) {
+void DLLINTERNAL cmd_meta_reset_tsc(void) {
 	total_tsc=0;
 	count_tsc=0;
 }
 #endif /*META_PERFMON*/
 
 // Register commands and cvars.
-void meta_register_cmdcvar() {
+void DLLINTERNAL meta_register_cmdcvar() {
 	CVAR_REGISTER(&meta_debug);
 	CVAR_REGISTER(&meta_version);
 	meta_debug_value = (int)meta_debug.value;
@@ -75,7 +75,7 @@ void meta_register_cmdcvar() {
 }
 
 // Parse "meta" console command.
-void svr_meta(void) {
+void DLLHIDDEN svr_meta(void) {
 	const char *cmd;
 	cmd=CMD_ARGV(1);
 	// arguments: none
@@ -117,7 +117,7 @@ void svr_meta(void) {
 	// arguments: filename, description
 	else if(unlikely(!strcasecmp(cmd, "load")))
 		cmd_meta_load();
-#if defined(META_PERFMON) || defined(META_PERFMON2)
+#ifdef META_PERFMON
 	else if(unlikely(!strcasecmp(cmd, "tsc")))
 		cmd_meta_tsc();
 	else if(unlikely(!strcasecmp(cmd, "reset_tsc")))
@@ -132,7 +132,7 @@ void svr_meta(void) {
 }
 
 // Parse "meta" client command.
-void client_meta(edict_t *pEntity) {
+void DLLINTERNAL client_meta(edict_t *pEntity) {
 	const char *cmd;
 	cmd=CMD_ARGV(1);
 	META_LOG("ClientCommand 'meta %s' from player '%s'", 
@@ -153,7 +153,7 @@ void client_meta(edict_t *pEntity) {
 }
 
 // Print usage for "meta" console command.
-void cmd_meta_usage(void) {
+void DLLINTERNAL cmd_meta_usage(void) {
 	META_CONS("usage: meta <command> [<arguments>]");
 	META_CONS("valid commands are:");
 	META_CONS("   version          - display metamod version info");
@@ -176,7 +176,7 @@ void cmd_meta_usage(void) {
 }
 
 // Print usage for "meta" client command.
-void client_meta_usage(edict_t *pEntity) {
+void DLLINTERNAL client_meta_usage(edict_t *pEntity) {
 	META_CLIENT(pEntity, "usage: meta <command> [<arguments>]");
 	META_CLIENT(pEntity, "valid commands are:");
 	META_CLIENT(pEntity, "   version          - display metamod version info");
@@ -184,12 +184,12 @@ void client_meta_usage(edict_t *pEntity) {
 }
 
 // "meta aybabtu" client command.
-void client_meta_aybabtu(edict_t *pEntity) {
+void DLLINTERNAL client_meta_aybabtu(edict_t *pEntity) {
 	META_CLIENT(pEntity, "%s", "All Your Base Are Belong To Us");
 }
 
 // "meta version" console command.
-void cmd_meta_version(void) {
+void DLLINTERNAL cmd_meta_version(void) {
 	if(unlikely(CMD_ARGC() != 2)) {
 		META_CONS("usage: meta version");
 		return;
@@ -204,7 +204,7 @@ void cmd_meta_version(void) {
 }
 
 // "meta version" client command.
-void client_meta_version(edict_t *pEntity) {
+void DLLINTERNAL client_meta_version(edict_t *pEntity) {
 	if(unlikely(CMD_ARGC() != 2)) {
 		META_CLIENT(pEntity, "usage: meta version");
 		return;
@@ -219,7 +219,7 @@ void client_meta_version(edict_t *pEntity) {
 }
 
 // "meta gpl" console command.
-void cmd_meta_gpl(void) {
+void DLLINTERNAL cmd_meta_gpl(void) {
 	META_CONS("%s version %s  %s", VNAME, VVERSION, VDATE);
 	META_CONS("Copyright (c) 2001-%s %s", COPYRIGHT_YEAR, VAUTHOR);
 	META_CONS("");
@@ -252,7 +252,7 @@ void cmd_meta_gpl(void) {
 }
 
 // "meta game" console command.
-void cmd_meta_game(void) {
+void DLLINTERNAL cmd_meta_game(void) {
 	if(unlikely(CMD_ARGC() != 2)) {
 		META_CONS("usage: meta game");
 		return;
@@ -267,7 +267,7 @@ void cmd_meta_game(void) {
 }
 
 // "meta refresh" console command.
-void cmd_meta_refresh(void) {
+void DLLINTERNAL cmd_meta_refresh(void) {
 	if(unlikely(CMD_ARGC() != 2)) {
 		META_CONS("usage: meta refresh");
 		return;
@@ -279,7 +279,7 @@ void cmd_meta_refresh(void) {
 }
 
 // "meta list" console command.
-void cmd_meta_pluginlist(void) {
+void DLLINTERNAL cmd_meta_pluginlist(void) {
 	if(unlikely(CMD_ARGC() != 2)) {
 		META_CONS("usage: meta list");
 		return;
@@ -288,7 +288,7 @@ void cmd_meta_pluginlist(void) {
 }
 
 // "meta list" client command.
-void client_meta_pluginlist(edict_t *pEntity) {
+void DLLINTERNAL client_meta_pluginlist(edict_t *pEntity) {
 	if(unlikely(CMD_ARGC() != 2)) {
 		META_CLIENT(pEntity, "usage: meta list");
 		return;
@@ -297,7 +297,7 @@ void client_meta_pluginlist(edict_t *pEntity) {
 }
 
 // "meta cmds" console command.
-void cmd_meta_cmdlist(void) {
+void DLLINTERNAL cmd_meta_cmdlist(void) {
 	if(unlikely(CMD_ARGC() != 2)) {
 		META_CONS("usage: meta cmds");
 		return;
@@ -306,7 +306,7 @@ void cmd_meta_cmdlist(void) {
 }
 
 // "meta cvars" console command.
-void cmd_meta_cvarlist(void) {
+void DLLINTERNAL cmd_meta_cvarlist(void) {
 	if(unlikely(CMD_ARGC() != 2)) {
 		META_CONS("usage: meta cvars");
 		return;
@@ -315,7 +315,7 @@ void cmd_meta_cvarlist(void) {
 }
 
 // "meta config" console command.
-void cmd_meta_config(void) {
+void DLLINTERNAL cmd_meta_config(void) {
 	if(unlikely(CMD_ARGC() != 2)) {
 		META_CONS("usage: meta cvars");
 		return;
@@ -336,7 +336,7 @@ void cmd_meta_config(void) {
 // path_i386.so, path_i486.so, etc
 
 // "meta load" console command.
-void cmd_meta_load(void) {
+void DLLINTERNAL cmd_meta_load(void) {
 	int argc;
 	const char *args;
 	argc=CMD_ARGC();
@@ -374,7 +374,7 @@ void cmd_meta_load(void) {
 }
 
 // Handle various console commands that refer to a known/loaded plugin.
-void cmd_doplug(PLUG_CMD pcmd) {
+void DLLINTERNAL cmd_doplug(PLUG_CMD pcmd) {
 	int i=0, argc;
 	const char *cmd, *arg;
 	MPlugin *findp;

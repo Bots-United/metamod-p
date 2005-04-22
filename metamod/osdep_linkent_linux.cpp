@@ -64,7 +64,7 @@
 	/*AMD64-linux runs in "Small position independent code model" for processes that use dynamic linking*/
 	
 	//extracts pointer from "jmp dword ptr[pointer]"
-	inline void * extract_function_pointer_from_jmp(void * x) {
+	inline void * DLLINTERNAL extract_function_pointer_from_jmp(void * x) {
 		// "Small position independent code model"
 		// see: http://www.x86-64.org/documentation/abi.pdf
 		unsigned char * bytes = (unsigned char *)x;
@@ -133,7 +133,7 @@ static pthread_mutex_t mutex_replacement_dlsym = PTHREAD_RECURSIVE_MUTEX_INITIAL
 //
 //restores old dlsym
 //
-inline void restore_original_dlsym(void)
+inline void DLLINTERNAL restore_original_dlsym(void)
 {
 	//Copy old dlsym bytes back
 	memcpy((void*)dlsym_original, dlsym_old_bytes, BYTES_SIZE);
@@ -142,7 +142,7 @@ inline void restore_original_dlsym(void)
 //
 //resets new dlsym
 //
-inline void reset_dlsym_hook(void)
+inline void DLLINTERNAL reset_dlsym_hook(void)
 {
 	//Copy new dlsym bytes back
 	memcpy((void*)dlsym_original, dlsym_new_bytes, BYTES_SIZE);
@@ -288,7 +288,7 @@ static int init_metamod_dlsym_replacement(void * MetamodHandle, void * GameDllHa
 //
 // ...
 //
-int init_linkent_replacement(DLHANDLE moduleMetamod, DLHANDLE moduleGame)
+int DLLINTERNAL init_linkent_replacement(DLHANDLE moduleMetamod, DLHANDLE moduleGame)
 {
 	return(init_metamod_dlsym_replacement(moduleMetamod, moduleGame));
 }
