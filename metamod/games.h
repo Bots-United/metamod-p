@@ -61,7 +61,7 @@
 	{"dcrisis",           "dc"MODARCH".so",           "dc.dll",            "Desert Crisis"},
 	{"dmc",               "dmc"MODARCH".so",          "dmc.dll",           "Deathmatch Classic"},
 	{"dod",               "dod"MODARCH".so",          "dod.dll",           "Day of Defeat"},
-	{"dpb",               "pb_i686.so",               "pb.dll",            "Digital Paintball"},
+	{"dpb",               "pb.i386.so",               "pb.dll",            "Digital Paintball"},
 	{"dragonmodz",        "hl"MODARCH".so",           "mp.dll",            "Dragon Mod Z"},
 	{"esf",               "hl"MODARCH".so",           "hl.dll",            "Earth's Special Forces"},
 	{"existence",         "ex"MODARCH".so",           "existence.dll",     "Existence"},

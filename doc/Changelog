@@ -1,5 +1,11 @@
 # vim: set tw=75 ft=none :
 
+2005/07/27      1.18p24
+[Patch: Metamod-P v24 by Jussi Kivilinna]
+ - Updated to match latest metamod.org version.
+ - Removed mm-p-extensions-API, since loading/unloading plugins functions
+   are included in Metamod 1.18 in mutil-API.
+
 2005/04/22      1.17.4p23
 [Patch: Metamod-P v23 by Jussi Kivilinna]
  - Fixed broken RegMsgList caused by optimization for mm-bots.

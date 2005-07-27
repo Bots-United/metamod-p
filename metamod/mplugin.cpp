@@ -51,7 +51,6 @@
 #include "types_meta.h"			// mBOOL
 #include "log_meta.h"			// logging functions, etc
 #include "osdep.h"				// win32 snprintf, is_absolute_path,
-#include "mm_pextensions.h"		// META_GIVE_PEXT_FUNCTIONS_FN, MetaPExtensionFunctions
 
 
 // Parse a line from plugins.ini into a plugin.
@@ -637,11 +636,9 @@ mBOOL DLLINTERNAL MPlugin::load(PLUG_LOADTIME now) {
 //  - ME_DLERROR	plugin query() returned error
 //  - ME_NULLDATA	info struct from query() was null
 mBOOL DLLINTERNAL MPlugin::query(void) {
-	int plugin_pext_version;
 	META_INIT_FN pfn_init;
 	GIVE_ENGINE_FUNCTIONS_FN pfn_give_engfuncs;
 	META_QUERY_FN pfn_query;
-	META_GIVE_PEXT_FUNCTIONS_FN pfn_give_pext_funcs;
 
 	// open the plugin DLL
 	if(unlikely(!(handle=DLOPEN(pathname)))) {
@@ -773,23 +770,7 @@ mBOOL DLLINTERNAL MPlugin::query(void) {
 	// Replace temporary desc with plugin's internal name.
 	if(unlikely(desc[0] == '<'))
 		STRNCPY(desc, info->name, sizeof(desc));
-	
-	//
-	// Give plugin the p-series extension function table.
-	// Check for version differences!
-	//
-	if(likely(NULL!=(pfn_give_pext_funcs=(META_GIVE_PEXT_FUNCTIONS_FN) DLSYM(handle, "Meta_PExtGiveFnptrs")))) {
-		plugin_pext_version = pfn_give_pext_funcs(META_PEXT_VERSION, &MetaPExtensionFunctions);
 		
-		//if plugin is newer, we got incompatibility problem!
-		if(unlikely(plugin_pext_version > META_PEXT_VERSION)) {
-			META_WARNING("dll: Plugin '%s' requires a newer version of Metamod-All-Mod-Support-Patch (extension interface needs to be at least %d not the current %d)",
-				desc, 
-				plugin_pext_version,
-				META_PEXT_VERSION);
-		}
-	}
-	
 	META_DEBUG(6, ("dll: Plugin '%s': Query successful", desc));
 	
 	return(mTRUE);
@@ -1302,6 +1283,7 @@ void DLLINTERNAL MPlugin::show(void) {
 	META_CONS("%*s: %s", width, "author", info ? info->author : "(nil)");
 	META_CONS("%*s: %s", width, "url", info ? info->url : "(nil)");
 	META_CONS("%*s: %s", width, "logtag", info ? info->logtag : "(nil)");
+	META_CONS("%*s: %s", width, "ifvers", info ? info->ifvers : "(nil)");
 	// ctime() includes newline at EOL
 	tstr=ctime(&time_loaded);
 	if(likely((cp=strchr(tstr, '\n'))))

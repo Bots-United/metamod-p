@@ -74,11 +74,19 @@
 #ifdef __BUILD_FAST_METAMOD__
 	#define META_DEBUG(level, args) do { break; } while(0)
 #else
-	#define META_DEBUG(level, args) \
-		do { \
-			if(unlikely(meta_debug_value >= level)) \
-				META_DO_DEBUG(level, OPEN_ARGS args); \
-		} while(0)
+	#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
+		#define META_DEBUG(level, args) \
+			do { \
+				if(unlikely(meta_debug_value >= level)) \
+					META_DO_DEBUG(level, OPEN_ARGS args); \
+			} while(0)
+	#else
+		#define META_DEBUG(level, args) \
+			do { \
+				if(unlikely(meta_debug.value >= (float)level)) \
+					META_DO_DEBUG(level, OPEN_ARGS args); \
+			} while(0)
+	#endif
 #endif
 
 // max buffer size for printed messages
@@ -88,7 +96,10 @@
 #define MAX_CLIENTMSG_LEN 128
 
 extern cvar_t meta_debug;
+
+#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
 extern int meta_debug_value;
+#endif
 
 // META_DEV provides debug logging via the cvar "developer" (when set to 1)
 // and uses a function call rather than a macro as it's really intended to

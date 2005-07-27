@@ -143,7 +143,9 @@ void DLLINTERNAL metamod_startup(void) {
 	// already set.
 	if(unlikely((int)CVAR_GET_FLOAT("developer") != 0) && likely((int)meta_debug.value == 0)) {
 		CVAR_SET_FLOAT("meta_debug", 3.0);
+#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
 		meta_debug_value = 3;
+#endif
 	}
 
 	// Init default values
@@ -195,7 +197,9 @@ void DLLINTERNAL metamod_startup(void) {
 	// until later.
 	if(unlikely(Config->debuglevel != 0)) {
 		CVAR_SET_FLOAT("meta_debug", (float)Config->debuglevel);
+#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
 		meta_debug_value = Config->debuglevel;
+#endif
 	}
 
 	// Prepare for registered commands from plugins.

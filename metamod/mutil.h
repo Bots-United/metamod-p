@@ -71,6 +71,9 @@ typedef struct meta_util_funcs_s {
 	const char *(*pfnGetUserMsgName)	(plid_t plid, int msgid, int *size);
 	const char *(*pfnGetPluginPath)		(plid_t plid);
 	const char *(*pfnGetGameInfo)		(plid_t plid, ginfo_t tag);
+	int (*pfnLoadPlugin)(plid_t plid, const char *cmdline, PLUG_LOADTIME now, void **plugin_handle);
+	int (*pfnUnloadPlugin)(plid_t plid, const char *cmdline, PLUG_LOADTIME now, PL_UNLOAD_REASON reason);
+	int (*pfnUnloadPluginByHandle)(plid_t plid, void *plugin_handle, PLUG_LOADTIME now, PL_UNLOAD_REASON reason);
 #ifdef UNFINISHED
 	int			(*pfnHookGameEvent)		(plid_t plid, game_event_t event, 
 											event_func_t pfnHandle);
@@ -99,6 +102,9 @@ extern mutil_funcs_t MetaUtilFunctions;
 #define GET_USER_MSG_NAME	(*gpMetaUtilFuncs->pfnGetUserMsgName)
 #define GET_PLUGIN_PATH		(*gpMetaUtilFuncs->pfnGetPluginPath)
 #define GET_GAME_INFO		(*gpMetaUtilFuncs->pfnGetGameInfo)
+#define LOAD_PLUGIN		(*gpMetaUtilFuncs->pfnLoadPlugin)
+#define UNLOAD_PLUGIN		(*gpMetaUtilFuncs->pfnUnloadPlugin)
+#define UNLOAD_PLUGIN_BY_HANDLE	(*gpMetaUtilFuncs->pfnUnloadPluginByHandle)
 
 #ifdef UNFINISHED
 #define HOOK_GAME_EVENT		(*gpMetaUtilFuncs->pfnHookGameEvent)

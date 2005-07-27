@@ -70,7 +70,9 @@ void DLLINTERNAL cmd_meta_reset_tsc(void) {
 void DLLINTERNAL meta_register_cmdcvar() {
 	CVAR_REGISTER(&meta_debug);
 	CVAR_REGISTER(&meta_version);
+#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
 	meta_debug_value = (int)meta_debug.value;
+#endif
 	REG_SVR_COMMAND("meta", svr_meta);
 }
 
@@ -194,7 +196,7 @@ void DLLINTERNAL cmd_meta_version(void) {
 		META_CONS("usage: meta version");
 		return;
 	}
-	META_CONS("%s v%s  %s", VNAME, VVERSION, VDATE);
+	META_CONS("%s v%s  %s (%s)", VNAME, VVERSION, VDATE, META_INTERFACE_VERSION);
 	META_CONS("by %s", VAUTHOR);
 	META_CONS("   %s", VURL);
 	META_CONS(" Patch: %s v%d", VPATCH_NAME, VPATCH_IVERSION);
@@ -209,13 +211,14 @@ void DLLINTERNAL client_meta_version(edict_t *pEntity) {
 		META_CLIENT(pEntity, "usage: meta version");
 		return;
 	}
-	META_CLIENT(pEntity, "%s v%s  %s", VNAME, VVERSION, VDATE);
+	META_CLIENT(pEntity, "%s v%s  %s (%s)", VNAME, VVERSION, VDATE, META_INTERFACE_VERSION);
 	META_CLIENT(pEntity, "by %s", VAUTHOR);
 	META_CLIENT(pEntity, "   %s", VURL);
 	META_CLIENT(pEntity, " Patch: %s v%d", VPATCH_NAME, VPATCH_IVERSION);
 	META_CLIENT(pEntity, " by %s", VPATCH_AUTHOR);
 	META_CLIENT(pEntity, "    %s", VPATCH_WEBSITE);
 	META_CLIENT(pEntity, "compiled: %s %s (%s)", COMPILE_TIME, COMPILE_TZONE, OPT_TYPE);
+	META_CLIENT(pEntity, "ifvers: %s", META_INTERFACE_VERSION);
 }
 
 // "meta gpl" console command.

@@ -40,8 +40,8 @@
 #include "dllapi.h"				// GETENTITYAPI_FN, etc
 #include "engine_api.h"			// GET_ENGINE_FUNCTIONS_FN, etc
 #include "plinfo.h"				// plugin_info_t, etc
-#include "mutil.h"				// mutil_funcs_t, etc
 #include "osdep.h"				// DLLEXPORT, etc
+#include "mutil.h"
 
 // Version consists of "major:minor", two separate integer numbers.
 // Version 1	original
@@ -59,25 +59,13 @@
 // Version 5:8	added GetPluginPath [v1.11]
 // Version 5:9	added GetGameInfo [v1.14]
 // Version 5:10 added GINFO_REALDLL_FULLPATH for GetGameInfo [v1.17]
-#define META_INTERFACE_VERSION "5:10"
+// Version 5:11 added plugin loading and unloading API [v1.18]
+#define META_INTERFACE_VERSION "5:11"
 
 #ifdef UNFINISHED
 // Version 5:99	added event hook utility functions [v.???]
 #define META_INTERFACE_VERSION "5:99"
 #endif /* UNFINISHED */
-
-// Flags to indicate why the plugin is being unloaded.
-typedef enum {
-	PNL_NULL = 0,
-	PNL_INI_DELETED,		// was deleted from plugins.ini
-	PNL_FILE_NEWER,			// file on disk is newer than last load
-	PNL_COMMAND,			// requested by server/console command
-	PNL_CMD_FORCED,			// forced by server/console command
-	PNL_DELAYED,			// delayed from previous request; can't tell origin
-//only used for 'real_reason' on MPlugin::unload()
-	PNL_PLUGIN,			// requested by plugin function call
-	PNL_PLG_FORCED,			// forced by plugin function call
-} PL_UNLOAD_REASON;
 
 // Flags returned by a plugin's api function.
 // NOTE: order is crucial, as greater/less comparisons are made.

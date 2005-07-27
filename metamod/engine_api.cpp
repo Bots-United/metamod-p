@@ -362,12 +362,16 @@ static const char *mm_CVarGetString(const char *szVarName) {
 }
 static void mm_CVarSetFloat(const char *szVarName, float flValue) {
 	META_ENGINE_HANDLE_void(FN_CVARSETFLOAT, pfnCVarSetFloat, pf, (szVarName, flValue));
-	//meta_debug_value = (int)meta_debug.value;
+#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
+	meta_debug_value = (int)meta_debug.value;
+#endif
 	RETURN_API_void()
 }
 static void mm_CVarSetString(const char *szVarName, const char *szValue) {
 	META_ENGINE_HANDLE_void(FN_CVARSETSTRING, pfnCVarSetString, 2p, (szVarName, szValue));
-	//meta_debug_value = (int)meta_debug.value;
+#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
+	meta_debug_value = (int)meta_debug.value;
+#endif
 	RETURN_API_void()
 }
 
@@ -754,7 +758,9 @@ static int mm_engCreateInstancedBaseline( int classname, struct entity_state_s *
 }
 static void mm_Cvar_DirectSet( struct cvar_s *var, char *value ) {
 	META_ENGINE_HANDLE_void(FN_CVAR_DIRECTSET, pfnCvar_DirectSet, 2p, (var, value));
-	//meta_debug_value = (int)meta_debug.value;
+#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
+	meta_debug_value = (int)meta_debug.value;
+#endif
 	RETURN_API_void()
 }
 

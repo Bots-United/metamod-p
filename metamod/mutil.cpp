@@ -39,11 +39,11 @@
 
 #include <extdll.h>			// always
 
+#include "meta_api.h"		// 
 #include "mutil.h"			// me
 #include "mhook.h"			// class MHookList, etc
 #include "linkent.h"		// ENTITY_FN, etc
 #include "metamod.h"		// Hooks, etc
-#include "meta_api.h"		// 
 #include "types_meta.h"		// mBOOL
 #include "osdep.h"			// win32 vsnprintf, etc
 #include "sdk_util.h"		// ALERT, etc
@@ -285,6 +285,64 @@ static const char *mutil_GetGameInfo(plid_t plid, ginfo_t type) {
 	return(buf);
 }
 
+// Load plugin by filename. Works like "meta load <plugin>" (multiple plugins with one call not supported).
+static int mutil_LoadMetaPluginByName(plid_t plid, const char *cmdline, PLUG_LOADTIME now, void **plugin_handle) {
+	MPlugin * pl_loaded;
+	
+	//try load plugin
+	meta_errno = ME_NOERROR;
+	if(unlikely(!(pl_loaded=Plugins->plugin_addload(plid, cmdline, now)))) {
+		if(likely(plugin_handle))
+			*plugin_handle = NULL;
+		
+		return((int)meta_errno);
+	} else {
+		if(likely(plugin_handle))
+			*plugin_handle = (void*)pl_loaded->handle;
+		
+		return(0);
+	}
+}
+
+// Unload plugin by filename. Works like "meta unload <plugin>" (multiple plugins with one call not supported).
+// If loading fails, plugin is still loaded.
+static int mutil_UnloadMetaPluginByName(plid_t plid, const char *cmdline, PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
+	MPlugin *findp = 0;
+	
+	// try to match plugin id first
+	if(unlikely(isdigit(cmdline[0])))
+		findp=Plugins->find(atoi(cmdline));
+	// else try to match some string (prefix)
+	else
+		findp=Plugins->find_match(cmdline);
+	
+	if(unlikely(!findp))
+		return((int)ME_NOTUNIQ);
+	
+	//try unload plugin
+	meta_errno = ME_NOERROR;
+	if(likely(findp->plugin_unload(plid, now, reason)))
+		return(0);
+	else
+		return((int)meta_errno);
+}
+
+// Unload plugin by handle. If loading fails, plugin is still loaded.
+static int mutil_UnloadMetaPluginByHandle(plid_t plid, void *plugin_handle, PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
+	MPlugin *findp;
+	
+	// try to match plugin handle
+	if(unlikely(!(findp=Plugins->find((DLHANDLE)plugin_handle))))
+		return((int)ME_NOTUNIQ);
+	
+	//try unload plugin
+	meta_errno = ME_NOERROR;
+	if(likely(findp->plugin_unload(plid, now, reason)))
+		return(0);
+	else
+		return((int)meta_errno);
+}
+
 #ifdef UNFINISHED
 static int mutil_HookGameEvent(plid_t plid, game_event_t event, 
 		event_func_t pfnHandle) 
@@ -336,6 +394,9 @@ mutil_funcs_t MetaUtilFunctions = {
 	mutil_GetUserMsgName,	// pfnGetUserMsgName
 	mutil_GetPluginPath,	// pfnGetPluginPath
 	mutil_GetGameInfo,		// pfnGetGameInfo
+	mutil_LoadMetaPluginByName, // pfnLoadPlugin
+	mutil_UnloadMetaPluginByName, // pfnUnloadPlugin
+	mutil_UnloadMetaPluginByHandle, // pfnUnloadPluginByHandle
 #ifdef UNFINISHED
 	mutil_HookGameEvent,	// pfnGameEvent
 	mutil_HookLogTrigger,	// pfnLogTrigger

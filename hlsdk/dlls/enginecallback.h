@@ -160,8 +160,4 @@ inline void MESSAGE_BEGIN( int msg_dest, int msg_type, const float *pOrigin = NU
 
 #define PLAYER_CNX_STATS		( *g_engfuncs.pfnGetPlayerStats )
 
-#ifndef GETPLAYERAUTHID
-	#define GETPLAYERAUTHID (*g_engfuncs.pfnGetPlayerAuthId)
-#endif
-
 #endif		//ENGINECALLBACK_H
