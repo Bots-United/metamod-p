@@ -61,7 +61,8 @@
 // Version 5:9	added GetGameInfo [v1.14]
 // Version 5:10 added GINFO_REALDLL_FULLPATH for GetGameInfo [v1.17]
 // Version 5:11 added plugin loading and unloading API [v1.18]
-#define META_INTERFACE_VERSION "5:11"
+// Version 5:12 added IS_QUERYING_CLIENT_CVAR to mutils [v1.18]
+#define META_INTERFACE_VERSION "5:12"
 
 #ifdef UNFINISHED
 // Version 5:99	added event hook utility functions [v.???]
