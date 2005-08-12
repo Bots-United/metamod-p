@@ -109,6 +109,7 @@ extern mutil_funcs_t MetaUtilFunctions DLLHIDDEN;
 #define LOAD_PLUGIN		(*gpMetaUtilFuncs->pfnLoadPlugin)
 #define UNLOAD_PLUGIN		(*gpMetaUtilFuncs->pfnUnloadPlugin)
 #define UNLOAD_PLUGIN_BY_HANDLE	(*gpMetaUtilFuncs->pfnUnloadPluginByHandle)
+#define IS_QUERYING_CLIENT_CVAR (*gpMetaUtilFuncs->pfnIsQueryingClientCvar)
 
 #ifdef UNFINISHED
 #define HOOK_GAME_EVENT		(*gpMetaUtilFuncs->pfnHookGameEvent)
