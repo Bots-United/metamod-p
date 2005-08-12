@@ -39,11 +39,20 @@
 // We use these macros to hide our internal globals from being exported 
 // on ELF .so
 #if defined(__GNUC__) && !defined(_WIN32) && __GNUC__ >= 3 && __GNUC_MINOR__ >= 3
+	// Hidden data/function.
 	#define DLLHIDDEN __attribute__((visibility("hidden")))
-	#define DLLINTERNAL __attribute__((visibility("internal")))
+	// Hidden internal function.
+	#if defined(__x86_64__) || defined(__amd64__)
+		#define DLLINTERNAL __attribute__((visibility("internal")))
+		#define DLLINTERNAL_NOVIS
+	#else	
+		#define DLLINTERNAL __attribute__((visibility("internal"), regparm(3)))
+		#define DLLINTERNAL_NOVIS __attribute__((regparm(3)))
+	#endif
 #else
 	#define DLLHIDDEN
-	#define DLLINTERNAL
+	#define DLLINTERNAL_NOVIS __attribute__((regparm(3)))
+	#define DLLINTERNAL DLLINTERNAL_NOVIS
 #endif
 
 // Some systems that do not supply va_copy have __va_copy instead, since 
@@ -63,6 +72,7 @@
 
 // 
 #define align16 __attribute__ ((aligned (16)))
+#define __PACKED __attribute__ ((packed))
 
 // Opening macros with variable number of arguments
 #if defined(__GNUC__) && __GNUC__ < 3

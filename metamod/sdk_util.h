@@ -93,6 +93,9 @@ inline void DLLINTERNAL SET_LOCALINFO(char *key, char *value) {
 	SET_SERVER_KEYVALUE(GET_INFOKEYBUFFER(NULL), key, value);
 }
 
+inline int DLLINTERNAL fast_FNullEnt(const edict_t* pent) {
+	return(unlikely(!pent) || unlikely(!(*g_engfuncs.pfnEntOffsetOfPEntity)(pent)));
+}
 
 // Our slightly modified version, using an edict_t pointer instead of a
 // CBaseEntity pointer. (was in 1.17p1, included in 1.17.1)

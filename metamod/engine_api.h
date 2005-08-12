@@ -37,6 +37,8 @@
 #ifndef ENGINE_API_H
 #define ENGINE_API_H
 
+#include "comp_dep.h"
+
 // Plugin's GetEngineFunctions, called by metamod.
 typedef int (*GET_ENGINE_FUNCTIONS_FN) (enginefuncs_t *pengfuncsFromEngine, int *interfaceVersion);
 
@@ -45,7 +47,7 @@ typedef int (*GET_ENGINE_FUNCTIONS_FN) (enginefuncs_t *pengfuncsFromEngine, int 
 //! ONLY ADD NEW FUNCTIONS TO THE END OF THIS STRUCT.  INTERFACE VERSION IS FROZEN AT 138
 #define ENGINE_INTERFACE_VERSION 138
 
-extern enginefuncs_t meta_engfuncs;
+extern enginefuncs_t meta_engfuncs DLLHIDDEN;
 
 // Typedefs for the above functions:
 
@@ -221,5 +223,6 @@ typedef int (*FN_GETTIMESTUTORMESSAGESHOWN) (int mid);
 typedef void (*FN_PROCESSTUTORMESSAGEDECAYBUFFER) (int *buffer, int bufferLength);
 typedef void (*FN_CONSTRUCTTUTORMESSAGEDECAYBUFFER) (int *buffer, int bufferLength);
 typedef void (*FN_RESETTUTORMESSAGEDECAYDATA) (void);
+typedef void (*FN_QUERYCLIENTCVARVALUE) ( const edict_t *player, const char *cvarName );  
 
 #endif /* ENGINE_API_H */

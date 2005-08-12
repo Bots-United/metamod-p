@@ -40,10 +40,12 @@
 #include <asm/page.h>
 #define PAGE_ALIGN(addr) (((addr)+PAGE_SIZE-1)&PAGE_MASK)
 #include <pthread.h>
+#include <link.h>
 
 #include "osdep.h"
+#include "osdep_p.h"
 #include "log_meta.h"			// META_LOG, etc
-#include "support_meta.h"		// do_exit, etc
+#include "support_meta.h"
 
 //
 // Linux code for dynamic linkents
@@ -129,6 +131,113 @@ static unsigned char dlsym_old_bytes[BYTES_SIZE];
 //Mutex for our protection
 static pthread_mutex_t mutex_replacement_dlsym = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
+//
+static struct link_map * DLLINTERNAL_NOVIS get_link_map(void) {
+	struct link_map * l_map;
+	
+	l_map = _r_debug.r_map;
+	while(likely(l_map) && unlikely(l_map->l_prev)) {
+		l_map = l_map->l_prev;
+	}
+	
+	return(l_map);
+}
+
+//
+static int DLLINTERNAL_NOVIS get_tables(struct link_map * map, unsigned long * symtab, unsigned long * strtab, int * nchains) {
+	ElfW(Dyn) * dyn;
+	
+	dyn = map->l_ld;
+	
+	*strtab = 0;
+	*symtab = 0;
+	*nchains = 0;
+	
+	for(int i = 0; likely(dyn[i].d_tag != DT_NULL); i++) {
+		if(unlikely(dyn[i].d_tag == DT_HASH)) {
+			*nchains = *(int*)(dyn[i].d_un.d_ptr+4);
+		} 
+		else if(unlikely(dyn[i].d_tag == DT_STRTAB)) {
+			*strtab = dyn[i].d_un.d_ptr;
+		}
+		else if(unlikely(dyn[i].d_tag == DT_SYMTAB)) {
+			*symtab = dyn[i].d_un.d_ptr;
+		}
+		
+		if(unlikely(*nchains) && unlikely(*strtab) && unlikely(*symtab))
+			break;
+	}
+	
+	return(likely(*nchains) && likely(*strtab) && likely(*symtab));
+}
+
+//
+static void * DLLINTERNAL_NOVIS find_symbol(struct link_map * map, const char * name, int stt_type, int stb_type, unsigned long symtab, unsigned long strtab, int nchains) {
+	ElfW(Sym) * sym;
+	char * str;
+	size_t name_len;
+	
+	sym = (ElfW(Sym)*)symtab;
+	name_len = strlen(name);
+	
+	for(int i = 0; likely(i < nchains); i++) {
+#ifdef __x86_64__
+		if(likely(ELF64_ST_TYPE(sym[i].st_info) != stt_type) || likely(ELF64_ST_BIND(sym[i].st_info) != stb_type))
+			continue;
+#else
+		if(likely(ELF32_ST_TYPE(sym[i].st_info) != stt_type) || likely(ELF32_ST_BIND(sym[i].st_info) != stb_type))
+			continue;
+#endif		
+		str = (char*)(strtab + sym[i].st_name);
+		
+		if(unlikely(mm_strncmp(str, name, name_len) == 0)) {
+			if(likely(str[name_len]==0)) {
+				return((void*)(map->l_addr + sym[i].st_value));
+			}
+		}
+	}
+	
+	return(0);
+}
+
+// 
+static void * DLLINTERNAL_NOVIS get_real_func_ptr(const char * lib, const char * name, int * errorcode) {
+	struct link_map * l_map;
+	unsigned long symtab;
+	unsigned long strtab;
+	int nchains;
+	void * sym_ptr;
+	
+	if(errorcode)
+		errorcode[0] = 0;
+	
+	l_map = get_link_map();
+	if(unlikely(!l_map)) {
+		if(errorcode)
+			errorcode[0] = 1;
+		return(0);
+	}
+	
+	do {
+		// skip all except 'lib'
+		if(likely(!strstr(l_map->l_name, lib)))
+			continue;
+		
+		if(unlikely(!get_tables(l_map, &symtab, &strtab, &nchains))) {
+			continue;
+		}
+		
+		sym_ptr = find_symbol(l_map, name, STT_FUNC, STB_GLOBAL, symtab, strtab, nchains);
+		if(likely(sym_ptr) && likely(*(unsigned short*)sym_ptr != 0x25ff)) {
+			return(sym_ptr);
+		}
+	} while(likely(l_map = l_map->l_next));
+	
+	if(errorcode)
+		errorcode[0] = 2;
+	
+	return(0);
+}
 
 //
 //restores old dlsym
@@ -223,33 +332,20 @@ static void * __replacement_dlsym(void * module, const char * funcname)
 //
 // Initialize
 //
-static int init_metamod_dlsym_replacement(void * MetamodHandle, void * GameDllHandle)
-{	
+int DLLINTERNAL init_linkent_replacement(DLHANDLE MetamodHandle, DLHANDLE GameDllHandle)
+{
+	int errorcode = 0;
+	
 	metamod_module_handle = MetamodHandle;
 	gamedll_module_handle = GameDllHandle;
 	
-	//Get dlsym pointer
-	dlsym_original = (dlsym_func)dlsym(RTLD_DEFAULT, "dlsym");
-		
-	//Call.. so that 'fast-jump' gets initialized
-	dlsym_original(0, "dlopen");
-	
-	//dlsym_original is now pointing to some sort of dynamic-linking object that forwards
-	//call to dlsym to actual code with "jmp dword ptr[dlsym_pointer]".
-	//
-	//This forwarder gets reseted often so we cannot change this directly
-	
-	//make sure that forwarder has correct opcode
-	if(!is_code_jmp_opcode(dlsym_original))
-	{
+	dlsym_original = (dlsym_func)get_real_func_ptr("/libdl.so", "dlsym", &errorcode);
+	if(unlikely(!dlsym_original)) {
 		//whine loud and exit
-		META_ERROR("Couldn't initialize dynamic linkents, dlsym_original: %04x.  Exiting...", *(unsigned short*)dlsym_original);
-		do_exit(1);
+		META_ERROR("Couldn't initialize dynamic linkents, get_real_func_ptr(libdl.so, dlsym) failed with errorcode: %d", errorcode);
+		return(0);
 	}
 	
-	//extract dlsym_pointer from "jmp dword ptr[dlsym_pointer]"
-	*(long*)&dlsym_original = (long)extract_function_pointer_from_jmp((void*)dlsym_original);
-		
 	//Backup old bytes of "dlsym" function
 	memcpy(dlsym_old_bytes, (void*)dlsym_original, BYTES_SIZE);
 	
@@ -275,7 +371,7 @@ static int init_metamod_dlsym_replacement(void * MetamodHandle, void * GameDllHa
 	if(mprotect((void*)start_of_page, size_of_pages, PROT_READ|PROT_WRITE|PROT_EXEC))
 	{
 		META_ERROR("Couldn't initialize dynamic linkents, mprotect failed: %i.  Exiting...", errno);
-		do_exit(1);
+		return(0);
 	}
 	
 	//Write our own jmp-forwarder on "dlsym"
@@ -283,12 +379,4 @@ static int init_metamod_dlsym_replacement(void * MetamodHandle, void * GameDllHa
 	
 	//done
 	return(1);
-}
-
-//
-// ...
-//
-int DLLINTERNAL init_linkent_replacement(DLHANDLE moduleMetamod, DLHANDLE moduleGame)
-{
-	return(init_metamod_dlsym_replacement(moduleMetamod, moduleGame));
 }

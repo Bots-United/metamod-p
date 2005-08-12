@@ -37,6 +37,7 @@
 #ifndef METAMOD_H
 #define METAMOD_H
 
+#include "comp_dep.h"
 #include "meta_api.h"			// META_RES, etc
 #include "mlist.h"				// MPluginList, etc
 #include "mreg.h"				// MRegCmdList, etc
@@ -59,10 +60,10 @@
 #define CONFIG_INI			"addons/metamod/config.ini"
 
 // metamod module handle
-extern DLHANDLE metamod_handle;
+extern DLHANDLE metamod_handle DLLHIDDEN;
 
 // cvar to contain version
-extern cvar_t meta_version;
+extern cvar_t meta_version DLLHIDDEN;
 
 // Info about the game dll/mod.
 typedef struct gamedll_s {
@@ -75,14 +76,14 @@ typedef struct gamedll_s {
 	DLHANDLE handle;
 	gamedll_funcs_t funcs;		// dllapi_table, newapi_table
 } gamedll_t;
-extern gamedll_t GameDLL;
+extern gamedll_t GameDLL DLLHIDDEN;
 
 // SDK variables for storing engine funcs and globals.
-extern enginefuncs_t g_engfuncs;
-extern globalvars_t  *gpGlobals;
+extern enginefuncs_t g_engfuncs DLLHIDDEN;
+extern globalvars_t  *gpGlobals DLLHIDDEN;
 
 // Our modified version of the engine funcs, to give to plugins.
-extern enginefuncs_t g_plugin_engfuncs;
+extern enginefuncs_t g_plugin_engfuncs DLLHIDDEN;
 
 // Our structure for storing engine references.
 typedef struct engine_s {
@@ -90,35 +91,40 @@ typedef struct engine_s {
 	globalvars_t	*globals;		// engine globals
 	enginefuncs_t	*pl_funcs;		// "modified" eng funcs we give to plugins
 } engine_t;
-extern engine_t Engine;
+extern engine_t Engine DLLHIDDEN;
 
 // Config structure.
-extern MConfig *Config;
+extern MConfig *Config DLLHIDDEN;
 
 // List of plugins loaded/opened/running.
-extern MPluginList *Plugins;
+extern MPluginList *Plugins DLLHIDDEN;
 
 // List of command functions registered by plugins.
-extern MRegCmdList *RegCmds;
+extern MRegCmdList *RegCmds DLLHIDDEN;
 
 // List of cvar structures registered by plugins.
-extern MRegCvarList *RegCvars;
+extern MRegCvarList *RegCvars DLLHIDDEN;
 
 // List of user messages registered by gamedll.
-extern MRegMsgList *RegMsgs;
+extern MRegMsgList *RegMsgs DLLHIDDEN;
+
+// List of query client cvars by plugins.
+extern MQueryClientCvarList * QueryClientCvars DLLHIDDEN;
 
 #ifdef UNFINISHED
 // List of event/logline hooks requested by plugins.
-extern MHookList *Hooks;
+extern MHookList *Hooks DLLHIDDEN;
 #endif /* UNFINISHED */
 
 // Data provided to plugins.
 // Separate copies to prevent plugins from modifying "readable" parts.
 // See meta_api.h for meta_globals_t structure.
-extern meta_globals_t PublicMetaGlobals;
-extern meta_globals_t PrivateMetaGlobals;
+extern meta_globals_t PublicMetaGlobals DLLHIDDEN;
+extern meta_globals_t PrivateMetaGlobals DLLHIDDEN;
 
-void DLLINTERNAL metamod_startup(void);
+extern int metamod_not_loaded DLLHIDDEN;
+
+int DLLINTERNAL metamod_startup(void);
 
 mBOOL DLLINTERNAL meta_init_gamedll(void);
 mBOOL DLLINTERNAL meta_load_gamedll(void);
@@ -198,9 +204,9 @@ mBOOL DLLINTERNAL meta_load_gamedll(void);
 // Api-hook performance monitoring
 // ============================================================================
 
-extern long double total_tsc;
-extern unsigned long long count_tsc;
-extern unsigned long long active_tsc;
+extern long double total_tsc DLLHIDDEN;
+extern unsigned long long count_tsc DLLHIDDEN;
+extern unsigned long long active_tsc DLLHIDDEN;
 
 inline unsigned long long DLLINTERNAL GET_TSC(void) {
 	union { struct { unsigned int eax, edx;	} split; unsigned long long full; } tsc;

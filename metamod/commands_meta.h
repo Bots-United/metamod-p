@@ -57,7 +57,7 @@ typedef enum {
 
 void DLLINTERNAL meta_register_cmdcvar();
 
-void DLLHIDDEN svr_meta(void);
+void DLLHIDDEN svr_meta(void); // only hidden because called from outside!
 
 void DLLINTERNAL cmd_meta_usage(void);
 void DLLINTERNAL cmd_meta_version(void);

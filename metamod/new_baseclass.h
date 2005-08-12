@@ -40,14 +40,12 @@ public:
 	// Construction
 	class_metamod_new(void) { };
 
-#ifdef NO_META_NEW_HANDLER	
 	// Operators
 	inline void * operator new(size_t size) { return(calloc(1, size)); }
 	inline void * operator new[](size_t size) { return(calloc(1, size)); }
-	
-	inline void operator delete(void *ptr) { free(ptr); }
-	inline void operator delete[](void *ptr) { free(ptr); }
-#endif
+
+	inline void operator delete(void *ptr) { if(ptr) free(ptr); }
+	inline void operator delete[](void *ptr) { if(ptr) free(ptr); }
 };
 
 #endif /*METAMOD_NEW_BASECLASS_H*/

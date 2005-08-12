@@ -83,8 +83,10 @@ MPluginList *Plugins;
 MRegCmdList *RegCmds;
 MRegCvarList *RegCvars;
 MRegMsgList *RegMsgs;
+MQueryClientCvarList * QueryClientCvars;
 
 DLHANDLE metamod_handle;
+int metamod_not_loaded = 0;
 
 #ifdef UNFINISHED
 MHookList *Hooks;
@@ -92,7 +94,7 @@ MHookList *Hooks;
 
 // Very first metamod function that's run.
 // Do startup operations...
-void DLLINTERNAL metamod_startup(void) {	
+int DLLINTERNAL metamod_startup(void) {	
 	char *cp, *mmfile=NULL, *cfile=NULL;
 
 	META_CONS("   ");
@@ -116,16 +118,11 @@ void DLLINTERNAL metamod_startup(void) {
 	if(unlikely((int)CVAR_GET_FLOAT("developer") != 0))
 		sleep(1);
 
-#ifndef NO_META_NEW_HANDLER
-	// specify our new() handler
-	mm_set_new_handler();
-#endif
-
 	// Get gamedir, very early on, because it seems we need it all over the
 	// place here at the start.
 	if(unlikely(!meta_init_gamedll())) {
 		META_ERROR("Failure to init game DLL; exiting...");
-		do_exit(1);
+		return(0);
 	}
 
 	// Register various console commands and cvars.
@@ -133,9 +130,15 @@ void DLLINTERNAL metamod_startup(void) {
 	// Looks like it works okay..
 	meta_register_cmdcvar();
 	{
-		//dirty hack
+		//dirty hacks
+		int vers[4] = {RC_VERS_DWORD};
 		char mvers[32];
-		safe_snprintf(mvers,sizeof(mvers),"%d.%d.%dp%d",RC_VERS_DWORD);		
+		
+		if(vers[2]==0)
+			safe_snprintf(mvers, sizeof(mvers), "%d.%dp%d", vers[0], vers[1], vers[3]);	
+		else
+			safe_snprintf(mvers, sizeof(mvers), "%d.%d.%dp%d", vers[0], vers[1], vers[2], vers[3]);	
+		
 		CVAR_SET_STRING(meta_version.name, mvers);
 	}
 
@@ -208,6 +211,9 @@ void DLLINTERNAL metamod_startup(void) {
 
 	// Prepare for registered user messages from gamedll.
 	RegMsgs = new MRegMsgList();
+	
+	// Prepare for recording client cvar queries.
+	QueryClientCvars = new MQueryClientCvarList();
 
 	// Copy, and store pointer in Engine struct.  Yes, we could just store
 	// the actual engine_t struct in Engine, but then it wouldn't be a
@@ -219,6 +225,7 @@ void DLLINTERNAL metamod_startup(void) {
 	Engine.pl_funcs->pfnCVarRegister = meta_CVarRegister;
 	Engine.pl_funcs->pfnCvar_RegisterVariable = meta_CVarRegister;
 	Engine.pl_funcs->pfnRegUserMsg = meta_RegUserMsg;
+	Engine.pl_funcs->pfnQueryClientCvarValue = meta_QueryClientCvarValue;
 
 #ifdef UNFINISHED
 	// Init the list of event/logline hooks.
@@ -261,7 +268,7 @@ void DLLINTERNAL metamod_startup(void) {
 
 	if(unlikely(!meta_load_gamedll())) {
 		META_ERROR("Failure to load game DLL; exiting...");
-		do_exit(1);
+		return(0);
 	}
 	if(unlikely(!Plugins->load())) {
 		META_WARNING("Failure to load plugins...");
@@ -296,6 +303,8 @@ void DLLINTERNAL metamod_startup(void) {
 			SERVER_COMMAND(cmd);
 		}
 	}
+	
+	return(1);
 }
 
 // Set initial GameDLL fields (name, gamedir).
@@ -389,7 +398,10 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 			//activate linkent-replacement after give_engfuncs so that if game dll is 
 			//plugin too and uses same method we get combined export table of plugin 
 			//and game dll
-			init_linkent_replacement(metamod_handle, GameDLL.handle);
+			if(unlikely(!init_linkent_replacement(metamod_handle, GameDLL.handle))) {
+				META_WARNING("dll: Couldn't load linkent replacement for game DLL");
+				RETURN_ERRNO(mFALSE, ME_DLERROR);
+			}
 	}
 	else {
 		META_WARNING("dll: Couldn't find GiveFnptrsToDll() in game DLL '%s': %s", 

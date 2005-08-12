@@ -583,3 +583,98 @@ void DLLINTERNAL MRegMsgList::show(void) {
 	META_CONS("%d game user msgs", n); 
 }
 
+
+///// class MQueryClientCvarList:
+
+// Constructor
+MQueryClientCvarList::MQueryClientCvarList(void) {
+	int i;
+	// initialize array
+	memset(mlist, 0, sizeof(mlist));
+	for(i=0; likely(i < size); i++) {
+		mlist[i].index=i+1;		// 1-based
+	}
+}
+
+// 
+void MQueryClientCvarList::reset(void) {
+	int i;
+	for(i=0; likely(i < size); i++) {
+		if(unlikely(mlist[i].name)) {
+			free(mlist[i].name);
+		}
+	}
+	(*this) = MQueryClientCvarList();
+}
+
+// Add the given client cvar query the list and return the instance.
+// meta_errno values:
+//  - ME_ARGUMENT		invalid player or name==NULL
+MQueryClientCvar * DLLINTERNAL MQueryClientCvarList::add(const edict_t *player, const char *name) {
+	int index;
+	
+	if(unlikely(fast_FNullEnt(player))) {
+		// invalid input
+		META_WARNING("Couldn't add client cvar query '%s' to list; given player edict is invalid.", name);
+		RETURN_ERRNO(NULL, ME_ARGUMENT);
+	}
+	if(unlikely(!name)) {
+		// invalid input
+		META_WARNING("Couldn't add client cvar query '%s' to list; name is invalid.", name);
+		RETURN_ERRNO(NULL, ME_ARGUMENT);
+	}
+	
+	// index is 1-based.
+	index = ENTINDEX((edict_t*)player);
+	if(unlikely(index <= 0) || unlikely(index > gpGlobals->maxClients)) {
+		// invalid input
+		META_WARNING("Couldn't add client cvar query '%s' to list; given edict is not client.", name);
+		RETURN_ERRNO(NULL, ME_ARGUMENT);
+	}
+	
+	if(unlikely(mlist[index-1].name)) {
+		META_WARNING("Client cvar query slot not empty; old query name '%s', new query name '%s'; removing old.", mlist[index-1].name, name);
+		free(mlist[index-1].name);
+		mlist[index-1].name = 0;
+	}
+	
+	// Copy msg data into empty slot.
+	mlist[index-1].player=player;
+	mlist[index-1].name=strdup(name); //input must not be erased (const string in gamedll or strdup'd string from plugin)
+
+	return(&mlist[index-1]);
+}
+
+// Remove the given client cvar query the list.
+// meta_errno values:
+//  - ME_NOTFOUND		not found
+mBOOL DLLINTERNAL MQueryClientCvarList::remove(const edict_t *player) {
+	MQueryClientCvar *imsg;
+	
+	imsg = find(player);
+	if(unlikely(!imsg)) {
+		RETURN_ERRNO(mFALSE, ME_NOTFOUND);
+	}
+	
+	imsg->player=0;
+	if(likely(imsg->name))
+		free(imsg->name);
+	imsg->name=0;
+	
+	return(mTRUE);
+}
+
+// Try to find a registered msg with the given name.
+// meta_errno values:
+//  - ME_NOTFOUND	couldn't find a matching cvar
+MQueryClientCvar * DLLINTERNAL MQueryClientCvarList::find(const edict_t *player) {
+	int index;
+	
+	// index is 1-based.
+	index = ENTINDEX((edict_t*)player);
+	if(likely(index > 0) && likely(index <= gpGlobals->maxClients) && likely(mlist[index-1].player==player))
+		return(&mlist[index-1]);
+	
+	RETURN_ERRNO(NULL, ME_NOTFOUND);
+}
+

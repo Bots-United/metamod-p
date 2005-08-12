@@ -98,6 +98,8 @@ const newapi_info_t newapi_info = {
 	{ mFALSE,  16,	api_caller_void_args_p,		"OnFreeEntPrivateData" },	// pfnOnFreeEntPrivateData
 	{ mFALSE,  3,	api_caller_void_args_void,	"GameShutdown" },			// pfnGameShutdown
 	{ mFALSE,  14,	api_caller_int_args_2p,		"ShouldCollide" },			// pfnShouldCollide
+	// Added 2005/08/11 (no SDK update):
+	{ mFALSE,  3,	api_caller_void_args_2p,	"CvarValue" },			// pfnCvarValue
 	{ mFALSE,  0,	NULL, 	NULL },
 };
 
@@ -260,6 +262,8 @@ const engine_info_t engine_info = {
 	{ mFALSE,  30,	api_caller_void_args_pi,	"ProcessTutorMessageDecayBuffer" },	// pfnProcessTutorMessageDecayBuffer
 	{ mFALSE,  30,	api_caller_void_args_pi,	"ConstructTutorMessageDecayBuffer" },	// pfnConstructTutorMessageDecayBuffer
 	{ mFALSE,  9,	api_caller_void_args_void,	"ResetTutorMessageDecayData" },	// pfnResetTutorMessageDecayData
+	// Added 2005/08/11 (no SDK update):
+	{ mFALSE,  3,	api_caller_void_args_2p,	"QueryClientCvarValue" },	// pfnQueryClientCvarValue
 	// end
 	{ mFALSE,  0,   NULL,	NULL },
 };

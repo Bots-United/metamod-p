@@ -54,7 +54,7 @@ typedef enum enum_api_t {
 } enum_api_t;
 
 // API caller function prototype
-typedef void * (*api_caller_func_t)(const void * func, const void * packed_args);
+typedef void * (DLLINTERNAL_NOVIS * api_caller_func_t)(const void * func, const void * packed_args);
 
 
 typedef struct api_info_s {
@@ -126,6 +126,7 @@ typedef struct newapi_info_s {
 	api_info_t pfnOnFreeEntPrivateData;
 	api_info_t pfnGameShutdown;
 	api_info_t pfnShouldCollide;
+	api_info_t pfnCvarValue;
 	api_info_t END;
 } newapi_info_t;
 
@@ -290,13 +291,14 @@ typedef struct engine_info_s {
 	api_info_t pfnProcessTutorMessageDecayBuffer;
 	api_info_t pfnConstructTutorMessageDecayBuffer;
 	api_info_t pfnResetTutorMessageDecayData;
+	api_info_t pfnQueryClientCvarValue;
 	// end
 	api_info_t END;
 } engine_info_t;
 
 
-extern const dllapi_info_t dllapi_info;
-extern const newapi_info_t newapi_info;
-extern const engine_info_t engine_info;
+extern const dllapi_info_t dllapi_info DLLHIDDEN;
+extern const newapi_info_t newapi_info DLLHIDDEN;
+extern const engine_info_t engine_info DLLHIDDEN;
 
 #endif /* API_INFO_H */

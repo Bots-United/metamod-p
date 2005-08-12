@@ -43,12 +43,12 @@
 #endif /* not OPT_TYPE */
 
 
-#define VDATE 			"2005/07/27"
+#define VDATE 			"2005/08/04"
 #define VMETA_VERSION		"1.18"
 
 #define VPATCH_NAME		"Metamod-P (mm-p)"
-#define VPATCH_IVERSION		24
-#define VPATCH_VERSION		"24"
+#define VPATCH_IVERSION		25
+#define VPATCH_VERSION		"25"
 #define VPATCH_AUTHOR		"Jussi Kivilinna"
 #define VPATCH_WEBSITE		"http://koti.mbnet.fi/axh/"
 

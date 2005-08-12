@@ -55,9 +55,9 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename);
 	#define dirent my_dirent
 	#define DIR my_DIR
 	
-	DIR *my_opendir(const char *);
-	struct dirent *my_readdir(DIR *);
-	void my_closedir(DIR *);
+	DIR * DLLINTERNAL my_opendir(const char *);
+	struct dirent * DLLINTERNAL my_readdir(DIR *);
+	void DLLINTERNAL my_closedir(DIR *);
 	
 	#define opendir(x) my_opendir(x)
 	#define readdir(x) my_readdir(x)
@@ -67,5 +67,9 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename);
 #endif /* _WIN32 */
 
 DLHANDLE DLLINTERNAL get_module_handle_of_memptr(void * memptr);
+
+#ifdef linux
+	void * DLLINTERNAL get_dlsym_pointer(void);
+#endif
 
 #endif /* OSDEP_P_H */

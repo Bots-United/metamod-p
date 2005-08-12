@@ -43,15 +43,14 @@
 // documentation indicates it's actually optional.  We keep it, though, for
 // completeness. 
 // Note! 'extern "C"' needed for mingw compile.
-extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, 
-		LPVOID /* lpvReserved */)
+extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-	if (fdwReason == DLL_PROCESS_ATTACH) {
+	if (unlikely(fdwReason == DLL_PROCESS_ATTACH)) {
 		metamod_handle = hinstDLL;
-    }
-	else if (fdwReason == DLL_PROCESS_DETACH) {
+	}
+	else if (unlikely(fdwReason == DLL_PROCESS_DETACH)) {
 		/* nothing */
-    }
+	}
 	return(TRUE);
 }
 #elif defined(linux)
@@ -92,7 +91,9 @@ C_DLLEXPORT void WINAPI GiveFnptrsToDll(enginefuncs_t *pengfuncsFromEngine,
 	META_DEV("called: GiveFnptrsToDll");
 	
 	// Load plugins, load game dll.
-	metamod_startup();
+	if(unlikely(!metamod_startup())) {
+		metamod_not_loaded = 1;
+	}
 	
 	return;
 }

@@ -343,6 +343,21 @@ static int mutil_UnloadMetaPluginByHandle(plid_t plid, void *plugin_handle, PLUG
 		return((int)meta_errno);
 }
 
+// Check if player is being queried for cvar
+static const char * mutil_IsQueryingClientCvar(plid_t plid, const edict_t *player) {
+	MQueryClientCvar *qccvar;
+	
+	//try find
+	if(likely(!(qccvar=QueryClientCvars->find(player))))
+		return(NULL);
+	
+	//check and return
+	if(likely(qccvar->player == player) && likely(qccvar->name) && likely(qccvar->name[0]))
+		return(qccvar->name);
+	else
+		return(NULL);
+}
+
 #ifdef UNFINISHED
 static int mutil_HookGameEvent(plid_t plid, game_event_t event, 
 		event_func_t pfnHandle) 
@@ -397,6 +412,7 @@ mutil_funcs_t MetaUtilFunctions = {
 	mutil_LoadMetaPluginByName, // pfnLoadPlugin
 	mutil_UnloadMetaPluginByName, // pfnUnloadPlugin
 	mutil_UnloadMetaPluginByHandle, // pfnUnloadPluginByHandle
+	mutil_IsQueryingClientCvar, // pfnIsQueryingClientCvar
 #ifdef UNFINISHED
 	mutil_HookGameEvent,	// pfnGameEvent
 	mutil_HookLogTrigger,	// pfnLogTrigger

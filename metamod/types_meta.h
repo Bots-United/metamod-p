@@ -37,6 +37,8 @@
 #ifndef TYPES_META_H
 #define TYPES_META_H
 
+#include "comp_dep.h"
+
 
 // Our own boolean type, for stricter type matching.
 typedef enum mBOOL {
@@ -72,7 +74,7 @@ typedef enum {
 	ME_UNLOAD_UNLOADER,	// tried to unload unloader
 	ME_UNLOAD_SELF,		// tried to unload self
 } META_ERRNO;
-extern META_ERRNO meta_errno;
+extern META_ERRNO meta_errno DLLHIDDEN;
 
 #define RETURN_ERRNO(retval, errval) \
 	do { meta_errno=errval; return(retval); } while(0)

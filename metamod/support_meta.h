@@ -44,7 +44,7 @@
 #include "osdep.h"		// strcasecmp, S_ISREG,
 #include <enginecallback.h>		// LOAD_FILE_FOR_ME, etc
 
-void do_exit(int exitval) ATTRIBUTE(__noreturn__);
+void DLLINTERNAL do_exit(int exitval);
 
 // faster than c-lib strcmp() on short strings
 inline int DLLINTERNAL mm_strcmp(const char *s1, const char *s2) {

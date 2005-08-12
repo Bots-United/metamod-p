@@ -44,10 +44,6 @@
 #include <setjmp.h>			// sigsetjmp, longjmp, etc
 #endif /* linux */
 
-#ifndef NO_META_NEW_HANDLER
-#include <new>			// set_new_handler()
-#endif
-
 #include <string.h>			// strpbrk, etc
 
 #include <extdll.h>			// always
@@ -64,7 +60,7 @@
 // Since windows doesn't provide a verison of strtok_r(), we include one
 // here.  This may or may not operate exactly like strtok_r(), but does
 // what we need it it do.
-char * my_strtok_r(char *s, const char *delim, char **ptrptr) {
+char * DLLINTERNAL my_strtok_r(char *s, const char *delim, char **ptrptr) {
 	char *begin=NULL;
 	char *end=NULL;
 	char *rest=NULL;
@@ -88,7 +84,7 @@ char * my_strtok_r(char *s, const char *delim, char **ptrptr) {
 
 
 #ifdef linux
-char *my_strlwr(char *s) {
+char * DLLINTERNAL my_strlwr(char *s) {
 	char *c;
 	if(unlikely(!s))
 		return(0);
@@ -202,7 +198,7 @@ int DLLINTERNAL safe_snprintf(char* s, size_t n, const char* format, ...) {
 //    http://msdn.microsoft.com/library/en-us/debug/errors_0sdh.asp
 // except without FORMAT_MESSAGE_ALLOCATE_BUFFER, since we use a local
 // static buffer.
-char *str_GetLastError(void) {
+char * DLLINTERNAL str_GetLastError(void) {
 	static char buf[MAX_STRBUF_LEN];
 	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 
 			NULL, GetLastError(), 
@@ -248,7 +244,7 @@ const char * DLLINTERNAL DLFNAME(void *memptr) {
 //
 // Errno values:
 //  - ME_NOTFOUND	couldn't find a DLL that contains memory location
-const char *DLFNAME(void *memptr) {
+const char * DLLINTERNAL DLFNAME(void *memptr) {
 	MEMORY_BASIC_INFORMATION MBI;
 	static char fname[PATH_MAX];
 
@@ -283,7 +279,7 @@ const char *DLFNAME(void *memptr) {
 //      non-case-sensitive.
 //  - For linux, this requires no work, as paths uses slashes (/) natively,
 //    and pathnames are case-sensitive.
-void normalize_pathname(char *path) {
+void DLLINTERNAL normalize_pathname(char *path) {
 	char *cp;
 
 	META_DEBUG(8, ("normalize: %s", path));
@@ -299,7 +295,7 @@ void normalize_pathname(char *path) {
 
 // Buffer pointed to by resolved_name is assumed to be able to store a
 // string of PATH_MAX length.
-char * realpath(const char *file_name, char *resolved_name) {
+char * DLLINTERNAL realpath(const char *file_name, char *resolved_name) {
 	int ret;
 	ret=GetFullPathName(file_name, PATH_MAX, resolved_name, NULL);
 	if(unlikely(ret > PATH_MAX)) {
@@ -345,7 +341,7 @@ mBOOL DLLINTERNAL IS_VALID_PTR(void *memptr) {
 // Use the native windows routine IsBadCodePtr.
 // meta_errno values:
 //  - ME_BADMEMPTR	not a valid memory pointer
-mBOOL IS_VALID_PTR(void *memptr) {
+mBOOL DLLINTERNAL IS_VALID_PTR(void *memptr) {
 	if(unlikely(IsBadCodePtr((FARPROC) memptr)))
 		RETURN_ERRNO(mFALSE, ME_BADMEMPTR);
 	else
@@ -368,18 +364,3 @@ mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn) {
 	return(mTRUE);
 }
 
-#ifndef NO_META_NEW_HANDLER
-// To keep the rest of the sources clean and keep not only OS but also
-// compiler dependant differences in this file, we define a local function
-// to set the new handler.
-void DLLINTERNAL mm_set_new_handler( void ) {
-	std::set_new_handler(meta_new_handler);
-}
-
-// See comments in osdep.h.
-void MM_CDECL DLLHIDDEN meta_new_handler(void) {
-	// This merely because we don't want the program to exit if new()
-	// fails..
-	return;
-}
-#endif

@@ -37,6 +37,8 @@
 #ifndef PLINFO_H
 #define PLINFO_H
 
+#include "comp_dep.h"
+
 // Flags for plugin to indicate when it can be be loaded/unloaded.
 // NOTE: order is crucial, as greater/less comparisons are made.
 typedef enum {
@@ -58,6 +60,8 @@ typedef enum {
 //only used for 'real_reason' on MPlugin::unload()
 	PNL_PLUGIN,			// requested by plugin function call
 	PNL_PLG_FORCED,			// forced by plugin function call
+//only used internally for 'meta reload'
+	PNL_RELOAD,			// forced unload by reload()
 } PL_UNLOAD_REASON;
 
 // Information plugin provides about itself.
@@ -72,7 +76,7 @@ typedef struct {
 	PLUG_LOADTIME loadable;		// when loadable
 	PLUG_LOADTIME unloadable;	// when unloadable
 } plugin_info_t;
-extern plugin_info_t Plugin_info;
+extern plugin_info_t Plugin_info DLLHIDDEN;
 
 // Plugin identifier, passed to all Meta Utility Functions.
 typedef plugin_info_t* plid_t;

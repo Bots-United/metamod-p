@@ -39,13 +39,14 @@
 #ifndef THREAD_LOGPARSE_H
 #define THREAD_LOGPARSE_H
 
+#include "comp_dep.h"
 #include "mqueue.h"			// Queue template
 #include <osdep.h>			// THREAD_T, etc
 
-extern MLogmsgQueue *LogQueue;
-extern MFuncQueue *HookQueue;
+extern MLogmsgQueue *LogQueue DLLHIDDEN;
+extern MFuncQueue *HookQueue DLLHIDDEN;
 
-extern THREAD_T logparse_thread_id;
+extern THREAD_T logparse_thread_id DLLHIDDEN;
 
 void DLLINTERNAL startup_logparse_thread(void);
 void WINAPI logparse_handler(void);

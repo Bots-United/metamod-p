@@ -51,7 +51,7 @@
 #ifdef _WIN32
 // MSVC doesn't provide "dirent.h" header. These functions wrap opendir/readdir/closedir 
 // functions to FindFirst/FindNext/FindClose win32api-functions.
-DIR *my_opendir(const char *path)
+DIR * DLLINTERNAL my_opendir(const char *path)
 {
 	char search_path[MAX_PATH];
 	DIR *dir;
@@ -75,7 +75,7 @@ DIR *my_opendir(const char *path)
 	return(dir);
 }
 
-struct dirent *my_readdir(DIR *dir)
+struct dirent * DLLINTERNAL my_readdir(DIR *dir)
 {
 	// If not found stop
 	if(unlikely(!dir) || unlikely(dir->not_found))
@@ -90,7 +90,7 @@ struct dirent *my_readdir(DIR *dir)
 	return(&dir->ent);
 }
 
-void my_closedir(DIR *dir)
+void DLLINTERNAL my_closedir(DIR *dir)
 {
 	if(unlikely(!dir))
 		return;
@@ -112,6 +112,16 @@ static void signal_handler_sigsegv(int) {
 	longjmp(signal_jmp_buf, 1);
 }
 
+#define invalid_elf_ptr(x) (unlikely(((unsigned long)&x) > file_end - 1))
+#define invalid_elf_offset(x) (unlikely(((unsigned long)x) > filesize - 1))
+#define elf_error_exit() \
+	do { \
+		sigaction(SIGSEGV, &oldaction, 0); \
+		META_DEBUG(3, ("is_gamedll(%s): Invalid ELF.", filename)); \
+		munmap(ehdr, filesize); \
+		return(mFALSE); \
+	} while(0)
+
 mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	static struct sigaction action;
 	static struct sigaction oldaction;
@@ -124,6 +134,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	static unsigned long strtab_size = 0;
 	static unsigned long nsyms = 0;
 	static unsigned long i = 0;
+	static unsigned long file_end = 0;
 	static char        * funcname = 0;
 	static int           has_GiveFnptrsToDll = 0;
 	static int           has_GetEntityAPI2 = 0;
@@ -135,6 +146,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	strtab = 0;
 	pf = 0;
 	filesize = 0;
+	file_end = 0;
 	strtab_size = 0;
 	nsyms = 0;
 	i = 0;
@@ -168,6 +180,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	
 	// mmap library for easy reading
 	ehdr = (ElfW(Ehdr) *)mmap(0, filesize, PROT_READ|PROT_WRITE, MAP_PRIVATE, fileno(pf), 0);
+	file_end = (unsigned long)ehdr + filesize;
 	
 	// not needed anymore
 	fclose(pf);
@@ -239,12 +252,22 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 		return(mFALSE);
 	}
 #endif
-	
+
 	//Get symtab and strtab info
 	shdr = (ElfW(Shdr) *)((char *)ehdr + ehdr->e_shoff);
+	if(invalid_elf_ptr(shdr[ehdr->e_shnum]))
+		elf_error_exit();
+	
 	for(i = 0; likely(i < ehdr->e_shnum); i++) {
 		// searching for dynamic linker symbol table
 		if(unlikely(shdr[i].sh_type == SHT_DYNSYM)) {
+			if(invalid_elf_offset(shdr[i].sh_offset) ||
+			   invalid_elf_ptr(shdr[shdr[i].sh_link]) ||
+			   invalid_elf_offset(shdr[shdr[i].sh_link].sh_offset) ||
+			   invalid_elf_ptr(strtab[strtab_size]) ||
+			   invalid_elf_ptr(symtab[nsyms]))
+				elf_error_exit();
+				
 			symtab      = (ElfW(Sym) *)((char *)ehdr + shdr[i].sh_offset);
 			strtab      = (char *)((char *)ehdr + shdr[shdr[i].sh_link].sh_offset);
 			strtab_size = shdr[shdr[i].sh_link].sh_size;
@@ -258,6 +281,13 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 		//Another method for finding symtab
 		for(i = 0; likely(i < ehdr->e_shnum); i++) {
 			if(unlikely(shdr[i].sh_type == SHT_SYMTAB)) {
+				if(invalid_elf_offset(shdr[i].sh_offset) ||
+				   invalid_elf_ptr(shdr[shdr[i].sh_link]) ||
+				   invalid_elf_offset(shdr[shdr[i].sh_link].sh_offset) ||
+				   invalid_elf_ptr(strtab[strtab_size]) ||
+				   invalid_elf_ptr(symtab[nsyms]))
+					elf_error_exit();
+				
 				symtab      = (ElfW(Sym) *)((char *)ehdr + shdr[i].sh_offset);
 				strtab      = (char *)((char *)ehdr + shdr[shdr[i].sh_link].sh_offset);
 				strtab_size = shdr[shdr[i].sh_link].sh_size;
@@ -354,7 +384,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 // LoadLibraryEx with DONT_RESOLVE_DLL_REFERENCES prevents execution of
 // DllMain but still allows us to check dll-exports for functions.
 //  --Jussi Kivilinna
-mBOOL is_gamedll(const char *filename)
+mBOOL DLLINTERNAL is_gamedll(const char *filename)
 {
 	HINSTANCE dll_handle;
 	mBOOL loaded_dll;
@@ -417,7 +447,7 @@ DLHANDLE DLLINTERNAL get_module_handle_of_memptr(void * memptr)
 		return((void*)0);
 }
 #else
-DLHANDLE get_module_handle_of_memptr(void * memptr)
+DLHANDLE DLLINTERNAL get_module_handle_of_memptr(void * memptr)
 {
 	MEMORY_BASIC_INFORMATION MBI;
 	

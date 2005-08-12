@@ -304,6 +304,9 @@ typedef struct enginefuncs_s
 	void		(*pfnProcessTutorMessageDecayBuffer)	(int *buffer, int bufferLength);
 	void		(*pfnConstructTutorMessageDecayBuffer)	(int *buffer, int bufferLength);
 	void		(*pfnResetTutorMessageDecayData)		( void );
+	
+	// Added 2005/08/11 (no SDK update):
+	void		(*pfnQueryClientCvarValue)		( const edict_t *player, const char *cvarName );  
 
 #ifdef __METAMOD_BUILD__
 	//extra (future updates)
@@ -537,6 +540,9 @@ typedef struct
 	void			(*pfnOnFreeEntPrivateData)(edict_t *pEnt);
 	void			(*pfnGameShutdown)(void);
 	int				(*pfnShouldCollide)( edict_t *pentTouched, edict_t *pentOther );
+	
+	// Added 2005/08/11 (no SDK update):
+	void			(*pfnCvarValue)( const edict_t *pEnt, const char *value ); 
 } NEW_DLL_FUNCTIONS;
 typedef int	(*NEW_DLL_FUNCTIONS_FN)( NEW_DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion );
 

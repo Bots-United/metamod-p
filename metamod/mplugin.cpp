@@ -51,6 +51,7 @@
 #include "types_meta.h"			// mBOOL
 #include "log_meta.h"			// logging functions, etc
 #include "osdep.h"				// win32 snprintf, is_absolute_path,
+#include "mm_pextensions.h"
 
 
 // Parse a line from plugins.ini into a plugin.
@@ -636,6 +637,8 @@ mBOOL DLLINTERNAL MPlugin::load(PLUG_LOADTIME now) {
 //  - ME_DLERROR	plugin query() returned error
 //  - ME_NULLDATA	info struct from query() was null
 mBOOL DLLINTERNAL MPlugin::query(void) {
+	int plugin_pext_version;
+	META_GIVE_PEXT_FUNCTIONS_FN pfn_give_pext_funcs;
 	META_INIT_FN pfn_init;
 	GIVE_ENGINE_FUNCTIONS_FN pfn_give_engfuncs;
 	META_QUERY_FN pfn_query;
@@ -770,7 +773,23 @@ mBOOL DLLINTERNAL MPlugin::query(void) {
 	// Replace temporary desc with plugin's internal name.
 	if(unlikely(desc[0] == '<'))
 		STRNCPY(desc, info->name, sizeof(desc));
+	
+	//
+	// Give plugin the p-series extension function table. 	 
+	// Check for version differences! 	 
+	//
+	if(likely(NULL!=(pfn_give_pext_funcs=(META_GIVE_PEXT_FUNCTIONS_FN) DLSYM(handle, "Meta_PExtGiveFnptrs")))) { 	 
+		plugin_pext_version = (*pfn_give_pext_funcs)(META_PEXT_VERSION, (pextension_funcs_t*)(&(mutil_funcs.pfnLoadPlugin)));
 		
+		//if plugin is newer, we got incompatibility problem!
+		if(unlikely(plugin_pext_version > META_PEXT_VERSION)) {
+			META_WARNING("dll: Plugin '%s' requires a newer version of Metamod-P (extension interface needs to be at least %d not the current %d)",
+			desc,
+			plugin_pext_version,
+			META_PEXT_VERSION);
+		}
+	}
+	
 	META_DEBUG(6, ("dll: Plugin '%s': Query successful", desc));
 	
 	return(mTRUE);
@@ -962,7 +981,7 @@ mBOOL DLLINTERNAL MPlugin::plugin_unload(plid_t plid, PLUG_LOADTIME now, PL_UNLO
 	// try unload
 	old_action=action;
 	action=PA_UNLOAD;
-	if(unlikely(unload(now, reason, (unlikely(reason==PNL_CMD_FORCED))?PNL_PLG_FORCED:PNL_PLG_FORCED))) {
+	if(unlikely(unload(now, reason, (unlikely(reason==PNL_CMD_FORCED)) ? PNL_PLG_FORCED : PNL_PLUGIN))) {
 		META_DEBUG(1,("Unloaded plugin '%s'", desc));
 		pl_unloader->is_unloader = mFALSE;
 		return(mTRUE);
@@ -994,8 +1013,10 @@ mBOOL DLLINTERNAL MPlugin::unload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason, PL
 		RETURN_ERRNO(mFALSE, ME_ARGUMENT);
 	}
 	if(unlikely(status < PL_RUNNING)) {
-		META_WARNING("dll: Not unloading plugin '%s'; already unloaded (status=%s)", desc, str_status());
-		RETURN_ERRNO(mFALSE, ME_ALREADY);
+		if(likely(reason != PNL_CMD_FORCED) && likely(reason != PNL_RELOAD)) {
+			META_WARNING("dll: Not unloading plugin '%s'; already unloaded (status=%s)", desc, str_status());
+			RETURN_ERRNO(mFALSE, ME_ALREADY);
+		}
 	}
 	if(unlikely(action != PA_UNLOAD) && unlikely(action != PA_RELOAD)) {
 		META_WARNING("dll: Not unloading plugin '%s'; not marked for unload (action=%s)", desc, str_action());
@@ -1004,7 +1025,7 @@ mBOOL DLLINTERNAL MPlugin::unload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason, PL
 
 	// Are we allowed to detach this plugin at this time?
 	// If forcing unload, we disregard when plugin wants to be unloaded.
-	if(unlikely(info->unloadable < now)) {
+	if(likely(info) && unlikely(info->unloadable < now)) {
 		if(unlikely(reason == PNL_CMD_FORCED)) {
 			META_DEBUG(2, ("dll: Forced unload plugin '%s' overriding allowed times: allowed=%s; now=%s", desc, str_unloadable(), str_loadtime(now, SL_SIMPLE)));
 		}
@@ -1031,8 +1052,11 @@ mBOOL DLLINTERNAL MPlugin::unload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason, PL
 
 	// detach plugin
 	if(unlikely(!detach(now, reason))) {
-		if(unlikely(reason == PNL_CMD_FORCED)) {
-			META_DEBUG(2, ("dll: Forced unload plugin '%s' overriding failed detach"));
+		if(unlikely(reason == PNL_RELOAD)) {
+			META_DEBUG(2, ("dll: Reload plugin '%s' overriding failed detach", desc));
+		}
+		else if(unlikely(reason == PNL_CMD_FORCED)) {
+			META_DEBUG(2, ("dll: Forced unload plugin '%s' overriding failed detach", desc));
 		}
 		else {
 			META_WARNING("dll: Failed to detach plugin '%s'; ", desc);
@@ -1044,7 +1068,7 @@ mBOOL DLLINTERNAL MPlugin::unload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason, PL
 	// successful detach, or forced unload
 	
 	// clear source_plugin_index for all plugins that this plugin has loaded
-	Plugins->clear_source_plugin_plugin(index);
+	Plugins->clear_source_plugin_index(index);
 
 	// Unmark registered commands for this plugin (by index number).
 	RegCmds->disable(index);
@@ -1060,8 +1084,11 @@ mBOOL DLLINTERNAL MPlugin::unload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason, PL
 	// locations in the file will produce a segfault.
 	if(unlikely(DLCLOSE(handle) != 0)) {
 		META_WARNING("dll: Couldn't close plugin file '%s': %s", file, DLERROR());
-		status=PL_FAILED;
-		RETURN_ERRNO(mFALSE, ME_DLERROR);
+		// status=PL_FAILED;
+		// RETURN_ERRNO(mFALSE, ME_DLERROR);
+		
+		// If dlclose fails, either handle is invalid or OS is having some issues.
+		// So in either case we shouldn't return here, but instead let metamod clear this plugin slot.
 	}
 	handle=NULL;
 
@@ -1129,8 +1156,13 @@ mBOOL DLLINTERNAL MPlugin::reload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
 			RETURN_ERRNO(mFALSE, ME_NOTALLOWED);
 		}
 	}
-
-	if(likely(status>=PL_RUNNING) && unlikely(!unload(now, reason, reason))) {
+	
+	//this is to fix unloading
+	if(unlikely(status < PL_RUNNING)) {
+		META_WARNING("dll: Plugin '%s' isn't running; Forcing unload plugin for reloading", desc);
+		reason = PNL_RELOAD;
+	}
+	if(unlikely(!unload(now, reason, reason))) {
 		META_WARNING("dll: Failed to unload plugin '%s' for reloading", desc);
 		// meta_errno should be set already in unload()
 		return(mFALSE);
@@ -1498,6 +1530,8 @@ const char * DLLINTERNAL MPlugin::str_reason(PL_UNLOAD_REASON preason, PL_UNLOAD
 		case PNL_PLG_FORCED:
 			STRNCPY(buf, str_reason(PNL_NULL, preason), sizeof(buf));
 			return(META_UTIL_VarArgs("%s (forced request from plugin[%d])", buf, unloader_index));
+		case PNL_RELOAD:
+			return("server command, reload");
 		default:
 			return(META_UTIL_VarArgs("unknown (%d)", preal_reason));
 	}

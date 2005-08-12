@@ -182,20 +182,20 @@ class MPlugin : public class_metamod_new {
 		const char * DLLINTERNAL str_reason(PL_UNLOAD_REASON preason, PL_UNLOAD_REASON preal_reason);
 		const char * DLLINTERNAL str_loadtime(PLUG_LOADTIME pallow, STR_LOADTIME fmt);
 
-		inline const char *str_status(void)		{ return(str_status(ST_SIMPLE)); };
-		inline const char *str_action(void)		{ return(str_action(SA_SIMPLE)); };
-		inline const char *str_source(void)		{ return(str_source(SO_SIMPLE)); };
+		inline const char * DLLINTERNAL str_status(void)		{ return(str_status(ST_SIMPLE)); };
+		inline const char * DLLINTERNAL str_action(void)		{ return(str_action(SA_SIMPLE)); };
+		inline const char * DLLINTERNAL str_source(void)		{ return(str_source(SO_SIMPLE)); };
 
-		inline const char *str_loadable(void) { 
+		inline const char * DLLINTERNAL str_loadable(void) { 
 			return(likely(info)?str_loadtime(info->loadable, SL_SIMPLE):" -");
 		};
-		inline const char *str_unloadable(void) { 
+		inline const char * DLLINTERNAL str_unloadable(void) { 
 			return(likely(info)?str_loadtime(info->unloadable, SL_SIMPLE):" -");
 		};
-		inline const char *str_loadable(STR_LOADTIME fmt) { 
+		inline const char * DLLINTERNAL str_loadable(STR_LOADTIME fmt) { 
 			return(likely(info)?str_loadtime(info->loadable, fmt):" -");
 		};
-		inline const char *str_unloadable(STR_LOADTIME fmt) { 
+		inline const char * DLLINTERNAL str_unloadable(STR_LOADTIME fmt) { 
 			return(likely(info)?str_loadtime(info->unloadable, fmt):" -");
 		};
 	private:

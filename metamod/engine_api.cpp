@@ -54,14 +54,14 @@
 #define META_ENGINE_HANDLE_void(FN_TYPE, pfnName, pack_args_type, pfn_args) \
 	API_START_TSC_TRACKING(); \
 	API_PACK_ARGS(pack_args_type, pfn_args); \
-	main_hook_function_void(&engine_info.pfnName, e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args); \
+	main_hook_function_void(offsetof(engine_info_t, pfnName), e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args); \
 	API_END_TSC_TRACKING()
 
 // Engine routines, functions returning an actual value.
 #define META_ENGINE_HANDLE(ret_t, ret_init, FN_TYPE, pfnName, pack_args_type, pfn_args) \
 	API_START_TSC_TRACKING(); \
 	API_PACK_ARGS(pack_args_type, pfn_args); \
-	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), &engine_info.pfnName, e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args)); \
+	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), offsetof(engine_info_t, pfnName), e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args)); \
 	API_END_TSC_TRACKING()
 
 // For varargs functions
@@ -95,7 +95,7 @@
 	MAKE_FORMATED_STRING(fmt_arg); \
 	META_DEBUG(engine_info.pfnName.loglevel, ("In %s: fmt=%s", engine_info.pfnName.name, fmt_arg)); \
 	API_PACK_ARGS(pack_args_type, (pfn_arg, "%s", buf)); \
-	main_hook_function_void(&engine_info.pfnName, e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args); \
+	main_hook_function_void(offsetof(engine_info_t, pfnName), e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args); \
 	CLEAN_FORMATED_STRING() \
 	API_END_TSC_TRACKING()
 
@@ -105,7 +105,7 @@
 	MAKE_FORMATED_STRING(fmt_arg); \
 	META_DEBUG(engine_info.pfnName.loglevel, ("In %s: fmt=%s", engine_info.pfnName.name, fmt_arg)); \
 	API_PACK_ARGS(pack_args_type, (pfn_arg, "%s", buf)); \
-	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), &engine_info.pfnName, e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args)); \
+	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), offsetof(engine_info_t, pfnName), e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args)); \
 	CLEAN_FORMATED_STRING() \
 	API_END_TSC_TRACKING()
 
@@ -859,6 +859,17 @@ static void mm_ResetTutorMessageDecayData(void) {
 	RETURN_API_void()
 }
 
+static void mm_QueryClientCvarValue(const edict_t *player, const char *cvarName) {
+	// Engine version didn't change when this API was added. We need to check if pointer is valid.
+	if(likely(g_engfuncs.pfnGetPlayerUserId) && unlikely(!IS_VALID_PTR((void*)g_engfuncs.pfnGetPlayerUserId)))
+		g_engfuncs.pfnGetPlayerUserId = 0;
+	
+	// record queries
+	QueryClientCvars->add(player, cvarName);
+	
+	META_ENGINE_HANDLE_void(FN_QUERYCLIENTCVARVALUE, pfnQueryClientCvarValue, 2p, (player, cvarName));
+	RETURN_API_void()
+}
 
 enginefuncs_t meta_engfuncs = {
 	mm_PrecacheModel,			// pfnPrecacheModel()
@@ -1063,6 +1074,9 @@ enginefuncs_t meta_engfuncs = {
 	mm_ProcessTutorMessageDecayBuffer,	// pfnProcessTutorMessageDecayBuffer()
 	mm_ConstructTutorMessageDecayBuffer,	// pfnConstructTutorMessageDecayBuffer()
 	mm_ResetTutorMessageDecayData,		// pfnResetTutorMessageDecayData()
+	
+	// Added 2005/08/11 (no SDK update):
+	mm_QueryClientCvarValue,
 	
 	{0,}
 };

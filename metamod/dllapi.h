@@ -113,5 +113,6 @@ typedef int (*FN_ALLOWLAGCOMPENSATION) ( void );
 typedef void (*FN_ONFREEENTPRIVATEDATA) (edict_t *pEnt);
 typedef void (*FN_GAMESHUTDOWN) (void);
 typedef int (*FN_SHOULDCOLLIDE) (edict_t *pentTouched, edict_t *pentOther);
+typedef void (*FN_CVARVALUE)(const edict_t *pEnt, const char *value);
 
 #endif /* DLLAPI_H */

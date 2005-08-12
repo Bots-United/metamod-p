@@ -105,36 +105,36 @@ typedef long long int int64bit;
 	#include <dlfcn.h>
 	typedef void* DLHANDLE;
 	typedef void* DLFUNC;
-	inline DLHANDLE DLOPEN(const char *filename) {
+	inline DLHANDLE DLLINTERNAL DLOPEN(const char *filename) {
 		return(dlopen(filename, RTLD_NOW));
 	}
-	inline DLFUNC DLSYM(DLHANDLE handle, const char *string) {
+	inline DLFUNC DLLINTERNAL DLSYM(DLHANDLE handle, const char *string) {
 		return(dlsym(handle, string));
 	}
-	inline int DLCLOSE(DLHANDLE handle) {
+	inline int DLLINTERNAL DLCLOSE(DLHANDLE handle) {
 		return(dlclose(handle));
 	}
-	inline const char *DLERROR(void) {
+	inline const char * DLLINTERNAL DLERROR(void) {
 		return(dlerror());
 	}
 #elif defined(_WIN32)
 	typedef HINSTANCE DLHANDLE;
 	typedef FARPROC DLFUNC;
-	inline DLHANDLE DLOPEN(const char *filename) {
+	inline DLHANDLE DLLINTERNAL DLOPEN(const char *filename) {
 		return(LoadLibrary(filename));
 	}
-	inline DLFUNC DLSYM(DLHANDLE handle, const char *string) {
+	inline DLFUNC DLLINTERNAL DLSYM(DLHANDLE handle, const char *string) {
 		return(GetProcAddress(handle, string));
 	}
-	inline int DLCLOSE(DLHANDLE handle) {
+	inline int DLLINTERNAL DLCLOSE(DLHANDLE handle) {
 		// NOTE: Windows FreeLibrary returns success=nonzero, fail=zero,
 		// which is the opposite of the unix convention, thus the '!'.
 		return(!FreeLibrary(handle));
 	}
 	// Windows doesn't provide a function corresponding to dlerror(), so
 	// we make our own.
-	char *str_GetLastError(void);
-	inline const char *DLERROR(void) {
+	char * DLLINTERNAL str_GetLastError(void);
+	inline const char * DLLINTERNAL DLERROR(void) {
 		return(str_GetLastError());
 	}
 #endif /* _WIN32 */
@@ -149,7 +149,7 @@ mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn);
 // Windows doesn't have an strtok_r() routine, so we write our own.
 #ifdef _WIN32
 	#define strtok_r(s, delim, ptrptr)	my_strtok_r(s, delim, ptrptr)
-	char *my_strtok_r(char *s, const char *delim, char **ptrptr);
+	char * DLLINTERNAL my_strtok_r(char *s, const char *delim, char **ptrptr);
 #endif /* _WIN32 */
 
 
@@ -225,36 +225,6 @@ int DLLINTERNAL safe_snprintf(char* s, size_t n, const char* format, ...);
     #endif
 #endif /* _WIN32 */
 
-#ifndef NO_META_NEW_HANDLER
-// Our handler for new().
-//
-// Thanks to notes from:
-//    http://dragon.klte.hu/~kollarl/C++/node45.html
-//
-// At one point it appeared MSVC++ was no longer different from gcc, according 
-// to:
-//    http://msdn.microsoft.com/library/en-us/vclang98/stdlib/info/NEW.asp
-//
-// However, this page is apparently no longer available from MSDN.  The
-// only thing now is:
-//    http://msdn.microsoft.com/library/en-us/vccore98/HTML/_crt_malloc.asp
-//
-// According to Fritz Elfert <felfert@to.com>:
-//    set_new_handler() is just a stub which (according to comments in the
-//    MSVCRT debugging sources) should never be used. It is just an ugly
-//    hack to make STL compile. It does _not_ set the new handler but
-//    always calls _set_new_handler(0) instead. _set_new_handler is the
-//    "real" function and uses the "old" semantic; handler-type is: 
-//       int newhandler(size_t)
-//
-void MM_CDECL DLLHIDDEN meta_new_handler(void);
-
-// To keep the rest of the sources clean and keep not only OS but also
-// compiler dependant differences in this file, we define a local function
-// to set the new handler.
-void DLLINTERNAL mm_set_new_handler( void );
-#endif
-
 
 #ifdef UNFINISHED
 
@@ -263,7 +233,7 @@ void DLLINTERNAL mm_set_new_handler( void );
 	#include <pthread.h>
 	typedef	pthread_t 	THREAD_T;
 	// returns 0==success, non-zero==failure
-	inline int THREAD_CREATE(THREAD_T *tid, void (*func)(void)) {
+	inline int DLLINTERNAL THREAD_CREATE(THREAD_T *tid, void (*func)(void)) {
 		int ret;
 		ret=pthread_create(tid, NULL, (void *(*)(void*)) func, NULL);
 		if(ret != 0) {
@@ -280,7 +250,7 @@ void DLLINTERNAL mm_set_new_handler( void );
 	//    http://msdn.microsoft.com/library/en-us/dllproc/prothred_4084.asp
 	typedef	DWORD 		THREAD_T;
 	// returns 0==success, non-zero==failure
-	inline int THREAD_CREATE(THREAD_T *tid, void (*func)(void)) {
+	inline int DLLINTERNAL THREAD_CREATE(THREAD_T *tid, void (*func)(void)) {
 		HANDLE ret;
 		// win32 returns NULL==failure, non-NULL==success
 		ret=CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) func, NULL, 0, tid);
@@ -295,21 +265,21 @@ void DLLINTERNAL mm_set_new_handler( void );
 // Mutex handling...
 #ifdef linux
 	typedef pthread_mutex_t		MUTEX_T;
-	inline int MUTEX_INIT(MUTEX_T *mutex) {
+	inline int DLLINTERNAL MUTEX_INIT(MUTEX_T *mutex) {
 		int ret;
 		ret=pthread_mutex_init(mutex, NULL);
 		if(ret!=THREAD_OK)
 			META_WARNING("mutex_init failed: %s", strerror(ret));
 		return(ret);
 	}
-	inline int MUTEX_LOCK(MUTEX_T *mutex) {
+	inline int DLLINTERNAL MUTEX_LOCK(MUTEX_T *mutex) {
 		int ret;
 		ret=pthread_mutex_lock(mutex);
 		if(ret!=THREAD_OK)
 			META_WARNING("mutex_lock failed: %s", strerror(ret));
 		return(ret);
 	}
-	inline int MUTEX_UNLOCK(MUTEX_T *mutex) {
+	inline int DLLINTERNAL MUTEX_UNLOCK(MUTEX_T *mutex) {
 		int ret;
 		ret=pthread_mutex_unlock(mutex);
 		if(ret!=THREAD_OK)
@@ -322,15 +292,15 @@ void DLLINTERNAL mm_set_new_handler( void );
 	//    http://msdn.microsoft.com/library/en-us/dllproc/synchro_2a2b.asp
 	typedef CRITICAL_SECTION	MUTEX_T;
 	// Note win32 routines don't return any error (return void).
-	inline int MUTEX_INIT(MUTEX_T *mutex) {
+	inline int DLLINTERNAL MUTEX_INIT(MUTEX_T *mutex) {
 		InitializeCriticalSection(mutex);
 		return(THREAD_OK);
 	}
-	inline int MUTEX_LOCK(MUTEX_T *mutex) {
+	inline int DLLINTERNAL MUTEX_LOCK(MUTEX_T *mutex) {
 		EnterCriticalSection(mutex);
 		return(THREAD_OK);
 	}
-	inline int MUTEX_UNLOCK(MUTEX_T *mutex) {
+	inline int DLLINTERNAL MUTEX_UNLOCK(MUTEX_T *mutex) {
 		LeaveCriticalSection(mutex);
 		return(THREAD_OK);
 	}
@@ -340,21 +310,21 @@ void DLLINTERNAL mm_set_new_handler( void );
 // Condition variables...
 #ifdef linux
 	typedef pthread_cond_t	COND_T;
-	inline int COND_INIT(COND_T *cond) {
+	inline int DLLINTERNAL COND_INIT(COND_T *cond) {
 		int ret;
 		ret=pthread_cond_init(cond, NULL);
 		if(ret!=THREAD_OK)
 			META_WARNING("cond_init failed: %s", strerror(ret));
 		return(ret);
 	}
-	inline int COND_WAIT(COND_T *cond, MUTEX_T *mutex) {
+	inline int DLLINTERNAL COND_WAIT(COND_T *cond, MUTEX_T *mutex) {
 		int ret;
 		ret=pthread_cond_wait(cond, mutex);
 		if(ret!=THREAD_OK)
 			META_WARNING("cond_wait failed: %s", strerror(ret));
 		return(ret);
 	}
-	inline int COND_SIGNAL(COND_T *cond) {
+	inline int DLLINTERNAL COND_SIGNAL(COND_T *cond) {
 		int ret;
 		ret=pthread_cond_signal(cond);
 		if(ret!=THREAD_OK)
@@ -376,7 +346,7 @@ void DLLINTERNAL mm_set_new_handler( void );
 	// See also:
 	//    http://msdn.microsoft.com/library/en-us/dllproc/synchro_8ann.asp
 	typedef HANDLE COND_T; 
-	inline int COND_INIT(COND_T *cond) {
+	inline int DLLINTERNAL COND_INIT(COND_T *cond) {
 		*cond = CreateEvent(NULL,	// security attributes (none)
 							FALSE,	// manual-reset type (false==auto-reset)
 							FALSE,	// initial state (unsignaled)
@@ -389,7 +359,7 @@ void DLLINTERNAL mm_set_new_handler( void );
 		else
 			return(0);
 	}
-	inline int COND_WAIT(COND_T *cond, MUTEX_T *mutex) {
+	inline int DLLINTERNAL COND_WAIT(COND_T *cond, MUTEX_T *mutex) {
 		DWORD ret;
 		LeaveCriticalSection(mutex);
 		ret=WaitForSingleObject(*cond, INFINITE);
@@ -403,7 +373,7 @@ void DLLINTERNAL mm_set_new_handler( void );
 			return(-1);
 		}
 	}
-	inline int COND_SIGNAL(COND_T *cond) {
+	inline int DLLINTERNAL COND_SIGNAL(COND_T *cond) {
 		BOOL ret;
 		ret=SetEvent(*cond);
 		// returns zero on failure
@@ -430,7 +400,7 @@ void DLLINTERNAL mm_set_new_handler( void );
 #ifdef linux
 #define normalize_pathname(a)
 #elif defined(_WIN32)
-void normalize_pathname(char *path);
+void DLLINTERNAL normalize_pathname(char *path);
 #endif /* _WIN32 */
 
 // Indicate if pathname appears to be an absolute-path.  Under linux this
@@ -451,7 +421,7 @@ inline mBOOL DLLINTERNAL is_absolute_path(const char *path) {
 #ifdef _WIN32
 // Buffer pointed to by resolved_name is assumed to be able to store a
 // string of PATH_MAX length.
-char * realpath(const char *file_name, char *resolved_name);
+char * DLLINTERNAL realpath(const char *file_name, char *resolved_name);
 #endif /* _WIN32 */
 
 // Generic "error string" from a recent OS call.  For linux, this is based

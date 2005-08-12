@@ -77,10 +77,6 @@ unsigned short DLLINTERNAL FixedUnsigned16(float value, float scale)
 	return((unsigned short)output);
 }
 
-inline int DLLINTERNAL fast_FNullEnt(const edict_t* pent) {
-	return(unlikely(!pent) || unlikely(!(*g_engfuncs.pfnEntOffsetOfPEntity)(pent)));
-}
-
 
 void DLLINTERNAL META_UTIL_HudMessage(edict_t *pEntity, const hudtextparms_t &textparms, const char *pMessage)
 {

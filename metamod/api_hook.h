@@ -41,10 +41,10 @@
 #define _COMBINE2(x,y) x##y
 
 // simplified 'void' version of main hook function
-extern void DLLINTERNAL main_hook_function_void(const api_info_t * api_info, enum_api_t api, unsigned long func_offset, const void * packed_args);
+void DLLINTERNAL main_hook_function_void(unsigned long api_info_offset, enum_api_t api, unsigned long func_offset, const void * packed_args);
 
 // full return typed version of main hook function
-extern void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, const api_info_t * api_info, enum_api_t api, unsigned long func_offset, const void * packed_args);
+void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned long api_info_offset, enum_api_t api, unsigned long func_offset, const void * packed_args);
 
 //
 // API function args structures
@@ -52,7 +52,7 @@ extern void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, const a
 #define API_PACK_ARGS(type, args) \
 	_COMBINE2(pack_args_type_, type) packed_args = { OPEN_ARGS args }
 
-typedef struct { 				} pack_args_type_void;
+typedef struct {                                } pack_args_type_void;
 typedef struct { int i1; 			} pack_args_type_i;
 typedef struct { int i1,i2; 			} pack_args_type_2i;
 typedef struct { int i1,i2,i3; 			} pack_args_type_3i;
@@ -176,7 +176,7 @@ typedef struct { const void *p1;
 		void * DLLINTERNAL _COMBINE4(api_caller_, ret_type, _args_, args_code)(const void * func, const void * packed_args)
 #else
 	#define EXTERN_API_CALLER_FUNCTION(ret_type, args_code) \
-		const api_caller_func_t _COMBINE4(api_caller_, ret_type, _args_, args_code) DLLINTERNAL = (api_caller_func_t)0
+		static const api_caller_func_t _COMBINE4(api_caller_, ret_type, _args_, args_code) DLLHIDDEN = (api_caller_func_t)0
 #endif
 
 EXTERN_API_CALLER_FUNCTION(void, ipV);

@@ -33,7 +33,7 @@
 #include "osdep.h"
 
 #include "log_meta.h"			// META_LOG, etc
-#include "support_meta.h"		// do_exit, etc
+#include "support_meta.h"
 
 
 //
@@ -59,7 +59,7 @@ typedef struct sort_names_s {
 //
 // Checks module signatures and return ntheaders pointer for valid module
 //
-static IMAGE_NT_HEADERS * get_ntheaders(HMODULE module)
+static IMAGE_NT_HEADERS * DLLINTERNAL_NOVIS get_ntheaders(HMODULE module)
 {
 	union { 
 		unsigned long      mem;
@@ -83,7 +83,7 @@ static IMAGE_NT_HEADERS * get_ntheaders(HMODULE module)
 //
 // Returns export table for valid module
 //
-static IMAGE_EXPORT_DIRECTORY * get_export_table(HMODULE module)
+static IMAGE_EXPORT_DIRECTORY * DLLINTERNAL_NOVIS get_export_table(HMODULE module)
 {
 	union { 
 		unsigned long            mem;
@@ -123,7 +123,7 @@ static int sort_names_list(const sort_names_t * A, const sort_names_t * B)
 //
 // Combines moduleMM and moduleGame export tables and replaces moduleMM table with new one
 //
-static int combine_module_export_tables(HMODULE moduleMM, HMODULE moduleGame)
+static int DLLINTERNAL_NOVIS combine_module_export_tables(HMODULE moduleMM, HMODULE moduleGame)
 {
 	IMAGE_EXPORT_DIRECTORY * exportMM;
 	IMAGE_EXPORT_DIRECTORY * exportGame;
@@ -147,7 +147,7 @@ static int combine_module_export_tables(HMODULE moduleMM, HMODULE moduleGame)
 	if(unlikely(!exportMM) || unlikely(!exportGame))
 	{
 		META_ERROR("Couldn't initialize dynamic linkents, exportMM: %i, exportGame: %i.  Exiting...", exportMM, exportGame);
-		do_exit(1);
+		return(0);
 	}
 	
 	//setup new export table
@@ -222,7 +222,7 @@ static int combine_module_export_tables(HMODULE moduleMM, HMODULE moduleGame)
 	if(unlikely(!VirtualProtect(exportMM, sizeof(*exportMM), PAGE_READWRITE, &OldProtect)))
 	{
 		META_ERROR("Couldn't initialize dynamic linkents, VirtualProtect failed: %i.  Exiting...", GetLastError());
-		do_exit(1);
+		return(0);
 	}
 	
 	exportMM->Base              = 1;
@@ -239,7 +239,7 @@ static int combine_module_export_tables(HMODULE moduleMM, HMODULE moduleGame)
 //
 // ...
 //
-int init_linkent_replacement(DLHANDLE moduleMetamod, DLHANDLE moduleGame)
+int DLLINTERNAL init_linkent_replacement(DLHANDLE moduleMetamod, DLHANDLE moduleGame)
 {
 	return(combine_module_export_tables(moduleMetamod, moduleGame));
 }

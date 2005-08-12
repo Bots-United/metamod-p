@@ -58,6 +58,9 @@
 // Max number of registered user msgs we can manage.
 #define MAX_REG_MSGS	256
 
+// Max number of clients on server
+#define MAX_CLIENTS_CONNECTED 32
+
 // Flags to indicate if given cvar or func is part of a loaded plugin.
 typedef enum {
 	RG_INVALID,
@@ -174,7 +177,6 @@ class MRegMsgList : public class_metamod_new {
 	// data:
 		MRegMsg mlist[MAX_REG_MSGS];	// array of registered msgs
 		MRegMsg *flist[MAX_REG_MSGS];	// fast access list
-		//int size;			// size of list, ie MAX_REG_MSGS
 		enum {size = MAX_REG_MSGS };	// size of list, ie MAX_REG_MSGS
 		int endlist;			// index of last used entry
 
@@ -190,6 +192,35 @@ class MRegMsgList : public class_metamod_new {
 		void DLLINTERNAL show(void);	// list all msgs to console
 		void DLLINTERNAL reset_counts(void);
 		void DLLINTERNAL sort_flist(void);
+};
+
+// An individual query client cvar record.
+class MQueryClientCvar : public class_metamod_new {
+	friend class MQueryClientCvarList;
+	private:
+	// data:
+		int index;				// 1-based
+	public:
+		const edict_t * player;			// player that is being queried
+		char * name;				// name of client cvar
+};
+
+// A list of query client cvars.
+class MQueryClientCvarList : public class_metamod_new {
+	private:
+	// data:
+		MQueryClientCvar mlist[MAX_CLIENTS_CONNECTED];	// array of registered msgs
+		enum {size = MAX_CLIENTS_CONNECTED };		// size of list, ie MAX_REG_MSGS
+
+	public:
+	// constructor:
+		MQueryClientCvarList(void) DLLINTERNAL;
+
+	// functions:
+		MQueryClientCvar * DLLINTERNAL add(const edict_t *player, const char *name);
+		MQueryClientCvar * DLLINTERNAL find(const edict_t *player);
+		mBOOL DLLINTERNAL remove(const edict_t *player);
+		void DLLINTERNAL reset(void);
 };
 
 #endif /* MREG_H */

@@ -154,8 +154,8 @@ else
 		#hlds requires 486 or newer
 		CCOPT_ARCH = -march=i486
 	else
-		#default: pentium pro or athlon or newer
-		CCOPT_ARCH = -march=i686
+		#default: pentium or newer
+		CCOPT_ARCH = -march=i586 -mcpu=i686
 	endif
 endif
 
@@ -231,7 +231,7 @@ $(STLOBJ): CFLAGS += -Wno-error
 
 # linux .so compile commands
 DO_CC_LINUX=$(CC) $(CFLAGS) -fPIC $(INCLUDEDIRS) -o $@ -c $< $(FILTER)
-LINK_LINUX=$(CC) $(CFLAGS) -shared -ldl -lm $(EXTRA_LINK) $(OBJ_LINUX) -o $@
+LINK_LINUX=$(CC) $(CFLAGS) -shared -ldl -lm -static-libgcc $(EXTRA_LINK) $(OBJ_LINUX) -o $@
 
 # sort by date
 SRCFILES := $(shell ls -t $(SRCFILES))

@@ -74,7 +74,7 @@ class MPluginList : public class_metamod_new {
 		MPlugin * DLLINTERNAL add(MPlugin *padd);
 				
 		mBOOL DLLINTERNAL found_child_plugins(int source_index);
-		void DLLINTERNAL clear_source_plugin_plugin(int source_index);
+		void DLLINTERNAL clear_source_plugin_index(int source_index);
 		void DLLINTERNAL trim_list(void);
 				
 		mBOOL DLLINTERNAL ini_startup(void);			// read inifile at startup

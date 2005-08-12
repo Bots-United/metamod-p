@@ -114,7 +114,7 @@ MPlugin * DLLINTERNAL MPluginList::find(DLHANDLE handle) {
 }
 
 // Clear source_plugin_index on all matching plugins
-void DLLINTERNAL MPluginList::clear_source_plugin_plugin(int source_index) {
+void DLLINTERNAL MPluginList::clear_source_plugin_index(int source_index) {
 	int i;
 	
 	if(unlikely(source_index <= 0))

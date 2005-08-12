@@ -37,6 +37,7 @@
 #ifndef MUTIL_H
 #define MUTIL_H
 
+#include "comp_dep.h"
 #include "plinfo.h"		// plugin_info_t, etc
 #include "mhook.h"		// game_event_t, etc
 #include "sdk_util.h"	// hudtextparms_t, etc
@@ -71,9 +72,12 @@ typedef struct meta_util_funcs_s {
 	const char *(*pfnGetUserMsgName)	(plid_t plid, int msgid, int *size);
 	const char *(*pfnGetPluginPath)		(plid_t plid);
 	const char *(*pfnGetGameInfo)		(plid_t plid, ginfo_t tag);
+	
 	int (*pfnLoadPlugin)(plid_t plid, const char *cmdline, PLUG_LOADTIME now, void **plugin_handle);
 	int (*pfnUnloadPlugin)(plid_t plid, const char *cmdline, PLUG_LOADTIME now, PL_UNLOAD_REASON reason);
 	int (*pfnUnloadPluginByHandle)(plid_t plid, void *plugin_handle, PLUG_LOADTIME now, PL_UNLOAD_REASON reason);
+	
+	const char *(*pfnIsQueryingClientCvar)	(plid_t plid, const edict_t *player);
 #ifdef UNFINISHED
 	int			(*pfnHookGameEvent)		(plid_t plid, game_event_t event, 
 											event_func_t pfnHandle);
@@ -87,7 +91,7 @@ typedef struct meta_util_funcs_s {
 	int			(*pfnRemoveHookAll)		(plid_t plid);
 #endif /* UNFINISHED */
 } mutil_funcs_t;
-extern mutil_funcs_t MetaUtilFunctions;
+extern mutil_funcs_t MetaUtilFunctions DLLHIDDEN;
 
 // Convenience macros for MetaUtil functions
 #define LOG_CONSOLE			(*gpMetaUtilFuncs->pfnLogConsole)

@@ -37,6 +37,7 @@
 #ifndef META_API_H
 #define META_API_H
 
+#include "comp_dep.h"
 #include "dllapi.h"				// GETENTITYAPI_FN, etc
 #include "engine_api.h"			// GET_ENGINE_FUNCTIONS_FN, etc
 #include "plinfo.h"				// plugin_info_t, etc
@@ -86,7 +87,7 @@ typedef struct meta_globals_s {
 	void *override_ret;		// readable; return value from overriding/superceding plugin
 } meta_globals_t;
 
-extern meta_globals_t *gpMetaGlobals;
+extern meta_globals_t *gpMetaGlobals DLLHIDDEN;
 #define SET_META_RESULT(result)			gpMetaGlobals->mres=result
 #define RETURN_META(result) \
 	do { gpMetaGlobals->mres=result; return; } while(0)
@@ -116,8 +117,8 @@ typedef struct {
 } gamedll_funcs_t;
 
 // Declared in plugin; referenced in macros.
-extern gamedll_funcs_t *gpGamedllFuncs;
-extern mutil_funcs_t *gpMetaUtilFuncs;
+extern gamedll_funcs_t *gpGamedllFuncs DLLHIDDEN;
+extern mutil_funcs_t *gpMetaUtilFuncs DLLHIDDEN;
 
 // Tell the dll that we'll be loading it as a metamod plugin, in case it
 // needs to do something special prior to the standard query/attach

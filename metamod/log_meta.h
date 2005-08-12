@@ -37,6 +37,7 @@
 #ifndef LOG_META_H
 #define LOG_META_H
 
+#include "comp_dep.h"
 #include "osdep.h"	//unlikely, OPEN_ARGS
 
 // Debug logging.  
@@ -95,10 +96,10 @@
 // max buffer size for client messages
 #define MAX_CLIENTMSG_LEN 128
 
-extern cvar_t meta_debug;
+extern cvar_t meta_debug DLLHIDDEN;
 
 #ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
-extern int meta_debug_value;
+extern int meta_debug_value DLLHIDDEN;
 #endif
 
 // META_DEV provides debug logging via the cvar "developer" (when set to 1)

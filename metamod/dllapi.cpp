@@ -50,28 +50,28 @@
 #define META_DLLAPI_HANDLE_void(FN_TYPE, pfnName, pack_args_type, pfn_args) \
 	API_START_TSC_TRACKING(); \
 	API_PACK_ARGS(pack_args_type, pfn_args); \
-	main_hook_function_void(&dllapi_info.pfnName, e_api_dllapi, offsetof(DLL_FUNCTIONS, pfnName), &packed_args); \
+	main_hook_function_void(offsetof(dllapi_info_t, pfnName), e_api_dllapi, offsetof(DLL_FUNCTIONS, pfnName), &packed_args); \
 	API_END_TSC_TRACKING()
 
 // Original DLL routines, functions returning an actual value.
 #define META_DLLAPI_HANDLE(ret_t, ret_init, FN_TYPE, pfnName, pack_args_type, pfn_args) \
 	API_START_TSC_TRACKING(); \
 	API_PACK_ARGS(pack_args_type, pfn_args); \
-	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), &dllapi_info.pfnName, e_api_dllapi, offsetof(DLL_FUNCTIONS, pfnName), &packed_args)); \
+	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), offsetof(dllapi_info_t, pfnName), e_api_dllapi, offsetof(DLL_FUNCTIONS, pfnName), &packed_args)); \
 	API_END_TSC_TRACKING()
 
 // The "new" api routines (just 3 right now), functions returning "void".
 #define META_NEWAPI_HANDLE_void(FN_TYPE, pfnName, pack_args_type, pfn_args) \
 	API_START_TSC_TRACKING(); \
 	API_PACK_ARGS(pack_args_type, pfn_args); \
-	main_hook_function_void(&newapi_info.pfnName, e_api_newapi, offsetof(NEW_DLL_FUNCTIONS, pfnName), &packed_args); \
+	main_hook_function_void(offsetof(newapi_info_t, pfnName), e_api_newapi, offsetof(NEW_DLL_FUNCTIONS, pfnName), &packed_args); \
 	API_END_TSC_TRACKING()
 
 // The "new" api routines (just 3 right now), functions returning an actual value.
 #define META_NEWAPI_HANDLE(ret_t, ret_init, FN_TYPE, pfnName, pack_args_type, pfn_args) \
 	API_START_TSC_TRACKING(); \
 	API_PACK_ARGS(pack_args_type, pfn_args); \
-	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), &newapi_info.pfnName, e_api_newapi, offsetof(NEW_DLL_FUNCTIONS, pfnName), &packed_args)); \
+	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), offsetof(newapi_info_t, pfnName), e_api_newapi, offsetof(NEW_DLL_FUNCTIONS, pfnName), &packed_args)); \
 	API_END_TSC_TRACKING()
 
 
@@ -145,10 +145,12 @@ static void mm_ResetGlobalState(void) {
 
 // From SDK dlls/client.cpp:
 static qboolean mm_ClientConnect(edict_t *pEntity, const char *pszName, const char *pszAddress, char szRejectReason[128]) {
+	QueryClientCvars->remove(pEntity);
 	META_DLLAPI_HANDLE(qboolean, TRUE, FN_CLIENTCONNECT, pfnClientConnect, 4p, (pEntity, pszName, pszAddress, szRejectReason));
 	RETURN_API(qboolean);
 }
 static void mm_ClientDisconnect(edict_t *pEntity) {
+	QueryClientCvars->remove(pEntity);
 	META_DLLAPI_HANDLE_void(FN_CLIENTDISCONNECT, pfnClientDisconnect, p, (pEntity));
 	RETURN_API_void();
 }
@@ -194,6 +196,7 @@ static void mm_ServerDeactivate(void) {
 	Plugins->unpause_all();
 	// Plugins->retry_all(PT_CHANGELEVEL);
 	RegMsgs->reset_counts();
+	QueryClientCvars->reset();
 	RETURN_API_void();
 }
 static void mm_PlayerPreThink(edict_t *pEntity) {
@@ -327,6 +330,11 @@ static int mm_ShouldCollide(edict_t *pentTouched, edict_t *pentOther) {
 	META_NEWAPI_HANDLE(int, 1, FN_SHOULDCOLLIDE, pfnShouldCollide, 2p, (pentTouched, pentOther));
 	RETURN_API(int);
 }
+static void mm_CvarValue(const edict_t *pEnt, const char *value) {
+	QueryClientCvars->remove(pEnt);
+	META_NEWAPI_HANDLE_void(FN_CVARVALUE, pfnCvarValue, 2p, (pEnt, value));
+	RETURN_API_void();
+}
 
 
 // From SDK dlls/cbase.cpp:
@@ -414,7 +422,7 @@ static DLL_FUNCTIONS gFunctionTable =
 C_DLLEXPORT int GetEntityAPI(DLL_FUNCTIONS *pFunctionTable, int interfaceVersion)
 {
 	META_DEBUG(3, ("called: GetEntityAPI; version=%d", interfaceVersion));
-	if(unlikely(!pFunctionTable)) {
+	if(unlikely(!pFunctionTable) || unlikely(metamod_not_loaded)) {
 		META_WARNING("GetEntityAPI called with null pFunctionTable");
 		return(FALSE);
 	}
@@ -429,7 +437,7 @@ C_DLLEXPORT int GetEntityAPI(DLL_FUNCTIONS *pFunctionTable, int interfaceVersion
 C_DLLEXPORT int GetEntityAPI2(DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion)
 {
 	META_DEBUG(3, ("called: GetEntityAPI2; version=%d", *interfaceVersion));
-	if(unlikely(!pFunctionTable)) {
+	if(unlikely(!pFunctionTable) || unlikely(metamod_not_loaded)) {
 		META_WARNING("GetEntityAPI2 called with null pFunctionTable");
 		return(FALSE);
 	}
@@ -460,6 +468,9 @@ static NEW_DLL_FUNCTIONS gNewFunctionTable =
 	mm_OnFreeEntPrivateData,		//! pfnOnFreeEntPrivateData()	Called right before the object's memory is freed.  Calls its destructor.
 	mm_GameShutdown,				//! pfnGameShutdown()
 	mm_ShouldCollide,				//! pfnShouldCollide()
+	
+	// Added 2005/08/11 (no SDK update):
+	mm_CvarValue,
 };
 
 C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *interfaceVersion) 
@@ -471,7 +482,7 @@ C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *in
 	if(unlikely(!GameDLL.funcs.newapi_table))
 		return(FALSE);
 
-	if(unlikely(!pNewFunctionTable)) {
+	if(unlikely(!pNewFunctionTable) || unlikely(metamod_not_loaded)) {
 		META_WARNING("GetNewDLLFunctions called with null pNewFunctionTable");
 		return(FALSE);
 	}
@@ -481,6 +492,12 @@ C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *in
 		*interfaceVersion = NEW_DLL_FUNCTIONS_VERSION;
 		return(FALSE);
 	}
-	memcpy(pNewFunctionTable, &gNewFunctionTable, sizeof(NEW_DLL_FUNCTIONS));
+	
+	// Detect old engine
+	if(!IS_VALID_PTR((void*)g_engfuncs.pfnGetPlayerUserId))
+		memcpy(pNewFunctionTable, &gNewFunctionTable, sizeof(NEW_DLL_FUNCTIONS) - sizeof(void*)); // old engine without query client cvar API
+	else
+		memcpy(pNewFunctionTable, &gNewFunctionTable, sizeof(NEW_DLL_FUNCTIONS));
+	
 	return(TRUE);
 }
