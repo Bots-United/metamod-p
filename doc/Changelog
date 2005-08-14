@@ -1,6 +1,6 @@
 # vim: set tw=75 ft=none :
 
-2005/08/10      1.18p25
+2005/08/20      1.18p25
 [Patch: Metamod-P v25 by Jussi Kivilinna]
  - Added mutil::IsQueryingClientCvar().
  - Added support for new HLSDK-API functions: 
@@ -11,6 +11,7 @@
  - Minor performance tweaks.
  - Fixes to reloading and unloading plugins that haven't been loaded 
    correctly.
+ - Raised META_INTERFACE_VERSION to "5:12".
  - Fixed metamod_version cvar to show "1.18p25" instead of "1.18.0p25".
  - [linux] Improved dynamic linkent code.
  - [linux] Static linked libgcc.
