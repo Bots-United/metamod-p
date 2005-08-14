@@ -56,6 +56,8 @@
 #include "limits.h"		// INT_MAX
 
 
+mBOOL dlclose_handle_invalid;
+
 #ifdef _WIN32
 // Since windows doesn't provide a verison of strtok_r(), we include one
 // here.  This may or may not operate exactly like strtok_r(), but does

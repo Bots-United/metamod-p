@@ -223,6 +223,7 @@ typedef int (*FN_GETTIMESTUTORMESSAGESHOWN) (int mid);
 typedef void (*FN_PROCESSTUTORMESSAGEDECAYBUFFER) (int *buffer, int bufferLength);
 typedef void (*FN_CONSTRUCTTUTORMESSAGEDECAYBUFFER) (int *buffer, int bufferLength);
 typedef void (*FN_RESETTUTORMESSAGEDECAYDATA) (void);
+// Added 2005/08/11 (no SDK update):
 typedef void (*FN_QUERYCLIENTCVARVALUE) ( const edict_t *player, const char *cvarName );  
 
 #endif /* ENGINE_API_H */

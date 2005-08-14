@@ -36,6 +36,7 @@
 
 #include <stdio.h>			// vsnprintf(), etc
 #include <stdarg.h>			// vs_start(), etc
+#include <stdlib.h>			// strtol()
 
 #include <extdll.h>			// always
 
@@ -289,6 +290,10 @@ static const char *mutil_GetGameInfo(plid_t plid, ginfo_t type) {
 static int mutil_LoadMetaPluginByName(plid_t plid, const char *cmdline, PLUG_LOADTIME now, void **plugin_handle) {
 	MPlugin * pl_loaded;
 	
+	if(unlikely(!cmdline)) {
+		return((int)ME_ARGUMENT);
+	}
+	
 	//try load plugin
 	meta_errno = ME_NOERROR;
 	if(unlikely(!(pl_loaded=Plugins->plugin_addload(plid, cmdline, now)))) {
@@ -308,10 +313,17 @@ static int mutil_LoadMetaPluginByName(plid_t plid, const char *cmdline, PLUG_LOA
 // If loading fails, plugin is still loaded.
 static int mutil_UnloadMetaPluginByName(plid_t plid, const char *cmdline, PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
 	MPlugin *findp = 0;
+	int pindex;
+	char *endptr;
+	
+	if(unlikely(!cmdline)) {
+		return((int)ME_ARGUMENT);
+	}
 	
 	// try to match plugin id first
-	if(unlikely(isdigit(cmdline[0])))
-		findp=Plugins->find(atoi(cmdline));
+	pindex = strtol(cmdline, &endptr, 10);
+	if(likely(*cmdline) && likely(!*endptr))
+		findp=Plugins->find(pindex);
 	// else try to match some string (prefix)
 	else
 		findp=Plugins->find_match(cmdline);
@@ -330,6 +342,10 @@ static int mutil_UnloadMetaPluginByName(plid_t plid, const char *cmdline, PLUG_L
 // Unload plugin by handle. If loading fails, plugin is still loaded.
 static int mutil_UnloadMetaPluginByHandle(plid_t plid, void *plugin_handle, PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
 	MPlugin *findp;
+	
+	if(unlikely(!plugin_handle)) {
+		return((int)ME_ARGUMENT);
+	}
 	
 	// try to match plugin handle
 	if(unlikely(!(findp=Plugins->find((DLHANDLE)plugin_handle))))
@@ -352,7 +368,7 @@ static const char * mutil_IsQueryingClientCvar(plid_t plid, const edict_t *playe
 		return(NULL);
 	
 	//check and return
-	if(likely(qccvar->player == player) && likely(qccvar->name) && likely(qccvar->name[0]))
+	if(likely(qccvar->name) && likely(qccvar->name[0]))
 		return(qccvar->name);
 	else
 		return(NULL);

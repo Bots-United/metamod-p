@@ -330,6 +330,7 @@ static int mm_ShouldCollide(edict_t *pentTouched, edict_t *pentOther) {
 	META_NEWAPI_HANDLE(int, 1, FN_SHOULDCOLLIDE, pfnShouldCollide, 2p, (pentTouched, pentOther));
 	RETURN_API(int);
 }
+// Added 2005/08/11 (no SDK update):
 static void mm_CvarValue(const edict_t *pEnt, const char *value) {
 	QueryClientCvars->remove(pEnt);
 	META_NEWAPI_HANDLE_void(FN_CVARVALUE, pfnCvarValue, 2p, (pEnt, value));
@@ -468,9 +469,8 @@ static NEW_DLL_FUNCTIONS gNewFunctionTable =
 	mm_OnFreeEntPrivateData,		//! pfnOnFreeEntPrivateData()	Called right before the object's memory is freed.  Calls its destructor.
 	mm_GameShutdown,				//! pfnGameShutdown()
 	mm_ShouldCollide,				//! pfnShouldCollide()
-	
 	// Added 2005/08/11 (no SDK update):
-	mm_CvarValue,
+	mm_CvarValue,				//! pfnCvarValue()
 };
 
 C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *interfaceVersion) 
@@ -494,7 +494,7 @@ C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *in
 	}
 	
 	// Detect old engine
-	if(!IS_VALID_PTR((void*)g_engfuncs.pfnGetPlayerUserId))
+	if(unlikely(!IS_VALID_PTR((void*)g_engfuncs.pfnQueryClientCvarValue)))
 		memcpy(pNewFunctionTable, &gNewFunctionTable, sizeof(NEW_DLL_FUNCTIONS) - sizeof(void*)); // old engine without query client cvar API
 	else
 		memcpy(pNewFunctionTable, &gNewFunctionTable, sizeof(NEW_DLL_FUNCTIONS));

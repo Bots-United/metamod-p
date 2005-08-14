@@ -101,6 +101,7 @@
 typedef long long int int64bit;
 
 // Functions & types for DLL open/close/etc operations.
+extern mBOOL dlclose_handle_invalid DLLHIDDEN;
 #ifdef linux
 	#include <dlfcn.h>
 	typedef void* DLHANDLE;
@@ -111,10 +112,19 @@ typedef long long int int64bit;
 	inline DLFUNC DLLINTERNAL DLSYM(DLHANDLE handle, const char *string) {
 		return(dlsym(handle, string));
 	}
+	//dlclose crashes if handle is null.
 	inline int DLLINTERNAL DLCLOSE(DLHANDLE handle) {
+		if(unlikely(!handle)) {
+			dlclose_handle_invalid = mTRUE;
+			return(1);
+		}
+		
+		dlclose_handle_invalid = mFALSE;
 		return(dlclose(handle));
 	}
 	inline const char * DLLINTERNAL DLERROR(void) {
+		if(unlikely(dlclose_handle_invalid))
+			return("Invalid handle.");
 		return(dlerror());
 	}
 #elif defined(_WIN32)
@@ -127,6 +137,13 @@ typedef long long int int64bit;
 		return(GetProcAddress(handle, string));
 	}
 	inline int DLLINTERNAL DLCLOSE(DLHANDLE handle) {
+		if(unlikely(!handle)) {
+			dlclose_handle_invalid = mTRUE;
+			return(1);
+		}
+		
+		dlclose_handle_invalid = mFALSE;
+		
 		// NOTE: Windows FreeLibrary returns success=nonzero, fail=zero,
 		// which is the opposite of the unix convention, thus the '!'.
 		return(!FreeLibrary(handle));
@@ -135,6 +152,8 @@ typedef long long int int64bit;
 	// we make our own.
 	char * DLLINTERNAL str_GetLastError(void);
 	inline const char * DLLINTERNAL DLERROR(void) {
+		if(unlikely(dlclose_handle_invalid))
+			return("Invalid handle.");
 		return(str_GetLastError());
 	}
 #endif /* _WIN32 */

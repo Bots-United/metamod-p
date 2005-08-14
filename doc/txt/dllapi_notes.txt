@@ -78,6 +78,10 @@ int DispatchSpawn(edict_t *pent);
 
 comments:
 
+    Called when entity defined in mapfile is being created.
+    First entity has classname "worldcraft" and can be used to detect
+    map start.
+    
     0==Success, -1==Failure ?
 
 --------------------------------------------------------------------------
@@ -86,6 +90,8 @@ DispatchThink
 
 from dlls/cbase.cpp
 void DispatchThink(edict_t *pent);
+    Called when pent->v.nextthink is first time less or equal as 
+    server time. 
 
 --------------------------------------------------------------------------
 
@@ -93,6 +99,7 @@ DispatchUse
 
 from dlls/cbase.cpp
 void DispatchUse(edict_t *pentUsed, edict_t *pentOther);
+    Unused. Use is dispatched internally inside gamedll.
 
 --------------------------------------------------------------------------
 
@@ -100,6 +107,7 @@ DispatchTouch
 
 from dlls/cbase.cpp
 void DispatchTouch(edict_t *pentTouched, edict_t *pentOther);
+    Called when other entity collides touched entity.
 
 --------------------------------------------------------------------------
 
@@ -107,6 +115,7 @@ DispatchBlocked
 
 from dlls/cbase.cpp
 void DispatchBlocked(edict_t *pentBlocked, edict_t *pentOther);
+    Unknown.
 
 --------------------------------------------------------------------------
 
@@ -114,6 +123,9 @@ DispatchKeyValue
 
 from dlls/cbase.cpp
 void DispatchKeyValue(edict_t *pentKeyvalue, KeyValueData *pkvd);
+    Client uses 'setinfo' command.
+     - pentKeyvalue 	Client edict
+     - pkvd		Client key values
 
 --------------------------------------------------------------------------
 
@@ -121,6 +133,7 @@ DispatchSave
 
 from dlls/cbase.cpp
 void DispatchSave(edict_t *pent, SAVERESTOREDATA *pSaveData);
+    Save game?
 
 --------------------------------------------------------------------------
 
@@ -131,6 +144,7 @@ int DispatchRestore(edict_t *pent, SAVERESTOREDATA *pSaveData, int
 globalEntity);
 
 comments:
+    Load game?
 
     0==Success, -1==Failure ?
 

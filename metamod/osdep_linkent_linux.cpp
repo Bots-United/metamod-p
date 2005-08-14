@@ -144,35 +144,35 @@ static struct link_map * DLLINTERNAL_NOVIS get_link_map(void) {
 }
 
 //
-static int DLLINTERNAL_NOVIS get_tables(struct link_map * map, unsigned long * symtab, unsigned long * strtab, int * nchains) {
+static int DLLINTERNAL_NOVIS get_tables(struct link_map * l_map, void *& symtab, void *& strtab, int & nchains) {
 	ElfW(Dyn) * dyn;
 	
-	dyn = map->l_ld;
+	dyn = l_map->l_ld;
 	
-	*strtab = 0;
-	*symtab = 0;
-	*nchains = 0;
+	strtab = 0;
+	symtab = 0;
+	nchains = 0;
 	
 	for(int i = 0; likely(dyn[i].d_tag != DT_NULL); i++) {
 		if(unlikely(dyn[i].d_tag == DT_HASH)) {
-			*nchains = *(int*)(dyn[i].d_un.d_ptr+4);
+			nchains = *(int*)(dyn[i].d_un.d_ptr+4);
 		} 
 		else if(unlikely(dyn[i].d_tag == DT_STRTAB)) {
-			*strtab = dyn[i].d_un.d_ptr;
+			strtab = (void*)dyn[i].d_un.d_ptr;
 		}
 		else if(unlikely(dyn[i].d_tag == DT_SYMTAB)) {
-			*symtab = dyn[i].d_un.d_ptr;
+			symtab = (void*)dyn[i].d_un.d_ptr;
 		}
 		
-		if(unlikely(*nchains) && unlikely(*strtab) && unlikely(*symtab))
+		if(unlikely(nchains) && unlikely(strtab) && unlikely(symtab))
 			break;
 	}
 	
-	return(likely(*nchains) && likely(*strtab) && likely(*symtab));
+	return(likely(nchains) && likely(strtab) && likely(symtab));
 }
 
 //
-static void * DLLINTERNAL_NOVIS find_symbol(struct link_map * map, const char * name, int stt_type, int stb_type, unsigned long symtab, unsigned long strtab, int nchains) {
+static void * DLLINTERNAL_NOVIS find_symbol(struct link_map * l_map, const char * name, int stt_type, int stb_type, void * symtab, void * strtab, int nchains) {
 	ElfW(Sym) * sym;
 	char * str;
 	size_t name_len;
@@ -188,11 +188,11 @@ static void * DLLINTERNAL_NOVIS find_symbol(struct link_map * map, const char * 
 		if(likely(ELF32_ST_TYPE(sym[i].st_info) != stt_type) || likely(ELF32_ST_BIND(sym[i].st_info) != stb_type))
 			continue;
 #endif		
-		str = (char*)(strtab + sym[i].st_name);
+		str = (char*)((unsigned long)strtab + sym[i].st_name);
 		
 		if(unlikely(mm_strncmp(str, name, name_len) == 0)) {
 			if(likely(str[name_len]==0)) {
-				return((void*)(map->l_addr + sym[i].st_value));
+				return((void*)(l_map->l_addr + sym[i].st_value));
 			}
 		}
 	}
@@ -203,18 +203,18 @@ static void * DLLINTERNAL_NOVIS find_symbol(struct link_map * map, const char * 
 // 
 static void * DLLINTERNAL_NOVIS get_real_func_ptr(const char * lib, const char * name, int * errorcode) {
 	struct link_map * l_map;
-	unsigned long symtab;
-	unsigned long strtab;
+	void * symtab;
+	void * strtab;
 	int nchains;
 	void * sym_ptr;
 	
 	if(errorcode)
-		errorcode[0] = 0;
+		*errorcode = 0;
 	
 	l_map = get_link_map();
 	if(unlikely(!l_map)) {
 		if(errorcode)
-			errorcode[0] = 1;
+			*errorcode = 1;
 		return(0);
 	}
 	
@@ -223,7 +223,7 @@ static void * DLLINTERNAL_NOVIS get_real_func_ptr(const char * lib, const char *
 		if(likely(!strstr(l_map->l_name, lib)))
 			continue;
 		
-		if(unlikely(!get_tables(l_map, &symtab, &strtab, &nchains))) {
+		if(unlikely(!get_tables(l_map, symtab, strtab, nchains))) {
 			continue;
 		}
 		
@@ -234,7 +234,7 @@ static void * DLLINTERNAL_NOVIS get_real_func_ptr(const char * lib, const char *
 	} while(likely(l_map = l_map->l_next));
 	
 	if(errorcode)
-		errorcode[0] = 2;
+		*errorcode = 2;
 	
 	return(0);
 }

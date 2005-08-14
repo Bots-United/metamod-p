@@ -1,5 +1,20 @@
 # vim: set tw=75 ft=none :
 
+2005/08/10      1.18p25
+[Patch: Metamod-P v25 by Jussi Kivilinna]
+ - Added mutil::IsQueryingClientCvar().
+ - Added support for new HLSDK-API functions: 
+      - enginefuncs_t::pfnQueryClientCvarValue()
+      - NEW_DLL_FUNCTIONS::pfnCvarValue()
+ - Linux x86 and Windows binaries are now compiled for i586 since there is not
+   performance difference compared to i686.
+ - Minor performance tweaks.
+ - Fixes to reloading and unloading plugins that haven't been loaded 
+   correctly.
+ - Fixed metamod_version cvar to show "1.18p25" instead of "1.18.0p25".
+ - [linux] Improved dynamic linkent code.
+ - [linux] Static linked libgcc.
+
 2005/07/27      1.18p24
 [Patch: Metamod-P v24 by Jussi Kivilinna]
  - Updated to match latest metamod.org version.

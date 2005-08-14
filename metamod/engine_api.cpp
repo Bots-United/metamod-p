@@ -859,10 +859,12 @@ static void mm_ResetTutorMessageDecayData(void) {
 	RETURN_API_void()
 }
 
+// Added 2005/08/11 (no SDK update):
+
 static void mm_QueryClientCvarValue(const edict_t *player, const char *cvarName) {
 	// Engine version didn't change when this API was added. We need to check if pointer is valid.
-	if(likely(g_engfuncs.pfnGetPlayerUserId) && unlikely(!IS_VALID_PTR((void*)g_engfuncs.pfnGetPlayerUserId)))
-		g_engfuncs.pfnGetPlayerUserId = 0;
+	if(likely(g_engfuncs.pfnQueryClientCvarValue) && unlikely(!IS_VALID_PTR((void*)g_engfuncs.pfnQueryClientCvarValue)))
+		g_engfuncs.pfnQueryClientCvarValue = 0;
 	
 	// record queries
 	QueryClientCvars->add(player, cvarName);
@@ -1076,7 +1078,7 @@ enginefuncs_t meta_engfuncs = {
 	mm_ResetTutorMessageDecayData,		// pfnResetTutorMessageDecayData()
 	
 	// Added 2005/08/11 (no SDK update):
-	mm_QueryClientCvarValue,
+	mm_QueryClientCvarValue,		// pfnQueryClientCvarValue()
 	
 	{0,}
 };

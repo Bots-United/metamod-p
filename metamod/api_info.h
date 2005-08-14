@@ -126,6 +126,7 @@ typedef struct newapi_info_s {
 	api_info_t pfnOnFreeEntPrivateData;
 	api_info_t pfnGameShutdown;
 	api_info_t pfnShouldCollide;
+	// Added 2005/08/11 (no SDK update):
 	api_info_t pfnCvarValue;
 	api_info_t END;
 } newapi_info_t;
@@ -291,6 +292,7 @@ typedef struct engine_info_s {
 	api_info_t pfnProcessTutorMessageDecayBuffer;
 	api_info_t pfnConstructTutorMessageDecayBuffer;
 	api_info_t pfnResetTutorMessageDecayData;
+	// Added 2005/08/11 (no SDK update):
 	api_info_t pfnQueryClientCvarValue;
 	// end
 	api_info_t END;

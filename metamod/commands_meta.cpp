@@ -34,7 +34,7 @@
  *
  */
 
-#include <ctype.h>		// isdigit()
+#include <stdlib.h>		// strtol()
 
 #include <extdll.h>		// always
 
@@ -392,11 +392,15 @@ void DLLINTERNAL cmd_doplug(PLUG_CMD pcmd) {
 	}
 	// i=2 to skip first arg, as that's the "cmd"
 	for(i=2; likely(i < argc); i++) {
+		int pindex;
+		char *endptr;
+		
 		arg=CMD_ARGV(i);
-
+		
 		// try to match plugin id first
-		if(likely(isdigit(arg[0])))
-			findp=Plugins->find(atoi(arg));
+		pindex = strtol(arg, &endptr, 10);
+		if(likely(*arg) && likely(!*endptr))
+			findp=Plugins->find(pindex);
 		// else try to match some string (prefix)
 		else
 			findp=Plugins->find_match(arg);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004 Jussi Kivilinna
+ * Copyright (c) 2004-2005 Jussi Kivilinna
  *
  *    This file is part of "Metamod All-Mod-Support"-patch for Metamod.
  *

@@ -1083,12 +1083,9 @@ mBOOL DLLINTERNAL MPlugin::unload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason, PL
 	// Close the file.  Note: after this, attempts to reference any memory
 	// locations in the file will produce a segfault.
 	if(unlikely(DLCLOSE(handle) != 0)) {
-		META_WARNING("dll: Couldn't close plugin file '%s': %s", file, DLERROR());
-		// status=PL_FAILED;
-		// RETURN_ERRNO(mFALSE, ME_DLERROR);
-		
-		// If dlclose fails, either handle is invalid or OS is having some issues.
-		// So in either case we shouldn't return here, but instead let metamod clear this plugin slot.
+		// If DLL cannot be closed, OS is badly broken or we are giving invalid handle.
+		// So we don't return here but instead remove plugin from our listings.
+		META_WARNING("dll: Couldn't dlclose plugin file '%s': %s", file, DLERROR());
 	}
 	handle=NULL;
 
