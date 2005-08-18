@@ -8,6 +8,7 @@
       - NEW_DLL_FUNCTIONS::pfnCvarValue()
  - Linux x86 and Windows binaries are now compiled for i586 since there is not
    performance difference compared to i686.
+ - Fixes to improve stability.
  - Minor performance tweaks.
  - Fixes to reloading and unloading plugins that haven't been loaded 
    correctly.
