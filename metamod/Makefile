@@ -16,6 +16,10 @@
 # is symlinked into each subdir.  Per-module config statements are in
 # Config.mak in each subdir.
 
+ifeq "$(shell uname | cut -d _ -f1)" "CYGWIN"
+	HOST=cygwin
+endif
+
 ifdef COMSPEC
 	ifeq "$(HOST)" "cygwin"
 		OS=linux
@@ -95,6 +99,9 @@ OBJDIR_WIN_DBG=debug.win32
 # COMPILE OPTIONS - ARCHITECTURE AND OPTIMIZATIONS
 #############################################################################
 
+GCCMAJ = $(shell $(CC) -dumpversion | sed -e 's/\.[0-9][0-9]*\.[0-9]//')
+GCCMIN = $(shell $(CC) -dumpversion | sed -e 's/[0-9]\.//;s/\.[0-9]//')
+
 ifeq "$(HOST)" "cygwin"
 	ifeq "$(TARGETTYPE)" "amd64"
 		CC=gcc-linux-x86_64
@@ -115,6 +122,17 @@ else
 			CC=gcc
 		endif
 	endif
+endif
+
+MCPU=-mcpu
+
+ifeq "$(GCCMAJ)" "3"
+	ifeq "$(GCCMIN)" "4"
+		MCPU=-mtune
+	endif
+endif
+ifeq "$(GCCMAJ)" "4"
+	MCPU=-mtune
 endif
 
 # Note! About gcc optimization levels.
@@ -140,11 +158,10 @@ endif
 # "WONT WORK WITH omit-frame-pointer"?
 # - disable (unneeded) C++ exceptions and rtti code to save some space ?
 
-CCOPT = $(CCO) $(CCOPT_ARCH) -ffast-math -fomit-frame-pointer -fno-exceptions -fno-rtti \
-	-fno-inline-functions
+CCOPT = $(CCO) $(CCOPT_ARCH) -fno-exceptions -fno-rtti
 
 # optimization level; overridden for certain problematic files
-CCO = -O3
+CCO = -O2 -fomit-frame-pointer 
 
 # architecture tuning by target type
 ifeq "$(TARGETTYPE)" "amd64"
@@ -155,7 +172,7 @@ else
 		CCOPT_ARCH = -march=i486
 	else
 		#default: pentium or newer
-		CCOPT_ARCH = -march=i586 -mcpu=i686
+		CCOPT_ARCH = -march=i586 $(MCPU)=i686
 	endif
 endif
 
