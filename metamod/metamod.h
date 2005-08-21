@@ -44,6 +44,7 @@
 #include "conf_meta.h"			// MConfig
 #include "osdep.h"				// NAME_MAX, etc
 #include "types_meta.h"			// mBOOL
+#include "mplayer.h"                    // mplayer
 
 // file that lists plugins to load at startup
 #define PLUGINS_INI			"addons/metamod/plugins.ini"
@@ -58,6 +59,8 @@
 
 // generic config file
 #define CONFIG_INI			"addons/metamod/config.ini"
+
+#define MAX_PLAYERS                     32
 
 // metamod module handle
 extern DLHANDLE metamod_handle DLLHIDDEN;
@@ -108,9 +111,6 @@ extern MRegCvarList *RegCvars DLLHIDDEN;
 // List of user messages registered by gamedll.
 extern MRegMsgList *RegMsgs DLLHIDDEN;
 
-// List of query client cvars by plugins.
-extern MQueryClientCvarList * QueryClientCvars DLLHIDDEN;
-
 #ifdef UNFINISHED
 // List of event/logline hooks requested by plugins.
 extern MHookList *Hooks DLLHIDDEN;
@@ -123,6 +123,10 @@ extern meta_globals_t PublicMetaGlobals DLLHIDDEN;
 extern meta_globals_t PrivateMetaGlobals DLLHIDDEN;
 
 extern int metamod_not_loaded DLLHIDDEN;
+
+// Holds cached player info, right now only things for querying cvars
+// Max players is always 32, small enough that we can use a static array
+extern mplayer g_Players[MAX_PLAYERS] DLLHIDDEN;
 
 int DLLINTERNAL metamod_startup(void);
 

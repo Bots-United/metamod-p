@@ -194,33 +194,4 @@ class MRegMsgList : public class_metamod_new {
 		void DLLINTERNAL sort_flist(void);
 };
 
-// An individual query client cvar record.
-class MQueryClientCvar : public class_metamod_new {
-	friend class MQueryClientCvarList;
-	private:
-	// data:
-		int index;				// 1-based
-	public:
-		const edict_t * player;			// player that is being queried
-		char * name;				// name of client cvar
-};
-
-// A list of query client cvars.
-class MQueryClientCvarList : public class_metamod_new {
-	private:
-	// data:
-		MQueryClientCvar mlist[MAX_CLIENTS_CONNECTED];	// array of registered msgs
-		enum {size = MAX_CLIENTS_CONNECTED };		// size of list, ie MAX_REG_MSGS
-
-	public:
-	// constructor:
-		MQueryClientCvarList(void) DLLINTERNAL;
-
-	// functions:
-		MQueryClientCvar * DLLINTERNAL add(const edict_t *player, const char *name);
-		MQueryClientCvar * DLLINTERNAL find(const edict_t *player);
-		mBOOL DLLINTERNAL remove(const edict_t *player);
-		void DLLINTERNAL reset(void);
-};
-
 #endif /* MREG_H */

@@ -83,7 +83,8 @@ MPluginList *Plugins;
 MRegCmdList *RegCmds;
 MRegCvarList *RegCvars;
 MRegMsgList *RegMsgs;
-MQueryClientCvarList * QueryClientCvars;
+
+mplayer g_Players[MAX_PLAYERS];	 
 
 DLHANDLE metamod_handle;
 int metamod_not_loaded = 0;
@@ -212,9 +213,6 @@ int DLLINTERNAL metamod_startup(void) {
 	// Prepare for registered user messages from gamedll.
 	RegMsgs = new MRegMsgList();
 	
-	// Prepare for recording client cvar queries.
-	QueryClientCvars = new MQueryClientCvarList();
-
 	// Copy, and store pointer in Engine struct.  Yes, we could just store
 	// the actual engine_t struct in Engine, but then it wouldn't be a
 	// pointer to match the other g_engfuncs.

@@ -60,6 +60,7 @@
 #define REG_SVR_COMMAND		(*g_engfuncs.pfnAddServerCommand)
 #define SERVER_PRINT		(*g_engfuncs.pfnServerPrint)
 #define SET_SERVER_KEYVALUE	(*g_engfuncs.pfnSetKeyValue)
+#define QUERY_CLIENT_CVAR       (*g_engfuncs.pfnQueryClientCvar)
 
 // Also, create some nice inlines for engine callback combos.
 

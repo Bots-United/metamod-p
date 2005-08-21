@@ -361,17 +361,15 @@ static int mutil_UnloadMetaPluginByHandle(plid_t plid, void *plugin_handle, PLUG
 
 // Check if player is being queried for cvar
 static const char * mutil_IsQueryingClientCvar(plid_t plid, const edict_t *player) {
-	MQueryClientCvar *qccvar;
+	int index = ENTINDEX(const_cast<edict_t *>(player));
 	
-	//try find
-	if(likely(!(qccvar=QueryClientCvars->find(player))))
+	if(unlikely(index < 1) || unlikely(index > gpGlobals->maxClients)) {
 		return(NULL);
+	}
 	
-	//check and return
-	if(likely(qccvar->name) && likely(qccvar->name[0]))
-		return(qccvar->name);
-	else
-		return(NULL);
+	index-=1; //1-based to 0-based
+	
+	return(g_Players[index].cvarName);
 }
 
 #ifdef UNFINISHED

@@ -145,12 +145,12 @@ static void mm_ResetGlobalState(void) {
 
 // From SDK dlls/client.cpp:
 static qboolean mm_ClientConnect(edict_t *pEntity, const char *pszName, const char *pszAddress, char szRejectReason[128]) {
-	QueryClientCvars->remove(pEntity);
+	SetPlayerQuerying(const_cast<edict_t *>(pEntity), mFALSE, NULL);
 	META_DLLAPI_HANDLE(qboolean, TRUE, FN_CLIENTCONNECT, pfnClientConnect, 4p, (pEntity, pszName, pszAddress, szRejectReason));
 	RETURN_API(qboolean);
 }
 static void mm_ClientDisconnect(edict_t *pEntity) {
-	QueryClientCvars->remove(pEntity);
+	SetPlayerQuerying(const_cast<edict_t *>(pEntity), mFALSE, NULL);
 	META_DLLAPI_HANDLE_void(FN_CLIENTDISCONNECT, pfnClientDisconnect, p, (pEntity));
 	RETURN_API_void();
 }
@@ -196,7 +196,7 @@ static void mm_ServerDeactivate(void) {
 	Plugins->unpause_all();
 	// Plugins->retry_all(PT_CHANGELEVEL);
 	RegMsgs->reset_counts();
-	QueryClientCvars->reset();
+	ClearAllPlayers();
 	RETURN_API_void();
 }
 static void mm_PlayerPreThink(edict_t *pEntity) {
@@ -332,7 +332,7 @@ static int mm_ShouldCollide(edict_t *pentTouched, edict_t *pentOther) {
 }
 // Added 2005/08/11 (no SDK update):
 static void mm_CvarValue(const edict_t *pEnt, const char *value) {
-	QueryClientCvars->remove(pEnt);
+	SetPlayerQuerying(const_cast<edict_t *>(pEnt), mFALSE, NULL);
 	META_NEWAPI_HANDLE_void(FN_CVARVALUE, pfnCvarValue, 2p, (pEnt, value));
 	RETURN_API_void();
 }

@@ -555,7 +555,7 @@ mBOOL DLLINTERNAL MPlugin::load(PLUG_LOADTIME now) {
 		RETURN_ERRNO(mFALSE, ME_BADREQ);
 	}
 
-	if(likely(status != PL_OPENED)) {
+	if(likely(status <= PL_OPENED)) {
 		// query plugin; open file and get info about it
 		if(unlikely(!query())) {
 			META_WARNING("dll: Skipping plugin '%s'; couldn't query", desc);

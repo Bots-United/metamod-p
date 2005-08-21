@@ -6,16 +6,23 @@
  - Added support for new HLSDK-API functions: 
       - enginefuncs_t::pfnQueryClientCvarValue()
       - NEW_DLL_FUNCTIONS::pfnCvarValue()
+ - Fixed reloading and unloading of plugins that haven't been loaded
+   correctly.
+ - Fixed loading of plugins that needed changelevel to activate.
  - Linux x86 and Windows binaries are now compiled for i586 since there is not
    performance difference compared to i686.
- - Fixes to improve stability.
+ - Fixes to improve stability on win32. (thanks to Blackhawk)
+      - Changed to use mingw-gcc 3.4.2rc
+      - Changed optimization flags, replaced '-O3 -ffast-math' with '-O2'.
  - Minor performance tweaks.
- - Fixes to reloading and unloading plugins that haven't been loaded 
-   correctly.
+      - Changed to use mingw-gcc 3.4.2rc, mingw-gcc 3.4.4rc emited extra code
+        to zero stack memory which lowered performance.
+      - Changed API hooks to give structure offset to main API hook function 
+        instead of pointer, which increases performance on linux-i586.
  - Raised META_INTERFACE_VERSION to "5:12".
  - Fixed metamod_version cvar to show "1.18p25" instead of "1.18.0p25".
  - [linux] Improved dynamic linkent code.
- - [linux] Static linked libgcc.
+ - [linux] Static linked with libgcc.
 
 2005/07/27      1.18p24
 [Patch: Metamod-P v24 by Jussi Kivilinna]

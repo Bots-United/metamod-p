@@ -269,7 +269,8 @@ int DLLHIDDEN meta_RegUserMsg(const char *pszName, int iSize) {
 
 // Intercept and record queries
 void DLLHIDDEN meta_QueryClientCvarValue(const edict_t *player, const char *cvarName) {
-	QueryClientCvars->add(player, cvarName);
+	// record queries
+	SetPlayerQuerying(const_cast<edict_t *>(player), mTRUE);
 	
 	(*g_engfuncs.pfnQueryClientCvarValue)(player, cvarName);
 }

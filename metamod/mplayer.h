@@ -1,11 +1,10 @@
 // vi: set ts=4 sw=4 :
 // vim: set tw=75 :
 
-// vers_meta.h - version info, intended to be common among DLLs distributed
-// with metamod.
+// vdate.h - compile-time version date
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2003 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -35,26 +34,16 @@
  *
  */
 
-#ifndef VERS_META_H
-#define VERS_META_H
+#ifndef _INCLUDE_METAMOD_PLAYER_H
+#define _INCLUDE_METAMOD_PLAYER_H
 
-#ifndef OPT_TYPE
-#  define OPT_TYPE		"default"
-#endif /* not OPT_TYPE */
+struct mplayer
+{
+	mBOOL isQueried;
+	const char *cvarName;
+};
 
+void DLLINTERNAL SetPlayerQuerying(edict_t *pEntity, mBOOL set, const char *cvar=NULL);
+void DLLINTERNAL ClearAllPlayers(void);
 
-#define VDATE 			"2005/08/27"
-#define VMETA_VERSION		"1.18"
-
-#define VPATCH_NAME		"Metamod-P (mm-p)"
-#define VPATCH_IVERSION		25
-#define VPATCH_VERSION		"25"
-#define VPATCH_AUTHOR		"Jussi Kivilinna"
-#define VPATCH_WEBSITE		"http://koti.mbnet.fi/axh/"
-
-#define VVERSION		VMETA_VERSION "p" VPATCH_VERSION
-#define RC_VERS_DWORD		1,18,0,VPATCH_IVERSION	// Version Windows DLL Resources in res_meta.rc
-
-
-
-#endif /* VERS_META_H */
+#endif //_INCLUDE_METAMOD_PLAYER_H
