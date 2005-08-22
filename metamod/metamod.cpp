@@ -84,7 +84,7 @@ MRegCmdList *RegCmds;
 MRegCvarList *RegCvars;
 MRegMsgList *RegMsgs;
 
-mplayer g_Players[MAX_PLAYERS];	 
+MPlayerList g_Players; 
 
 DLHANDLE metamod_handle;
 int metamod_not_loaded = 0;

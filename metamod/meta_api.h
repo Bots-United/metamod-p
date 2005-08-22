@@ -231,5 +231,6 @@ C_DLLEXPORT int GetEngineFunctions_Post(enginefuncs_t *pengfuncsFromEngine,
 #define MNEW_OnFreeEntPrivateData		MNEW_FUNC->pfnOnFreeEntPrivateData
 #define MNEW_GameShutdown				MNEW_FUNC->pfnGameShutdown
 #define MNEW_ShouldCollide				MNEW_FUNC->pfnShouldCollide
+#define MNEW_CvarValue                                  MNEW_FUNC->pfnCvarValue
 
 #endif /* META_API_H */

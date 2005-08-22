@@ -286,90 +286,75 @@ static const char *mutil_GetGameInfo(plid_t plid, ginfo_t type) {
 	return(buf);
 }
 
-// Load plugin by filename. Works like "meta load <plugin>" (multiple plugins with one call not supported).
-static int mutil_LoadMetaPluginByName(plid_t plid, const char *cmdline, PLUG_LOADTIME now, void **plugin_handle) {
-	MPlugin * pl_loaded;
+int mutil_LoadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME now, void **plugin_handle)
+{
+	MPlugin *pl_loaded;
 	
-	if(unlikely(!cmdline)) {
-		return((int)ME_ARGUMENT);
+	if(unlikely(NULL == fname)) {
+		return(ME_ARGUMENT);
 	}
-	
-	//try load plugin
+
 	meta_errno = ME_NOERROR;
-	if(unlikely(!(pl_loaded=Plugins->plugin_addload(plid, cmdline, now)))) {
+	if(unlikely(!(pl_loaded=Plugins->plugin_addload(plid, fname, now)))) {
 		if(likely(plugin_handle))
 			*plugin_handle = NULL;
-		
-		return((int)meta_errno);
+		return(meta_errno);
 	} else {
 		if(likely(plugin_handle))
 			*plugin_handle = (void*)pl_loaded->handle;
-		
 		return(0);
 	}
 }
 
-// Unload plugin by filename. Works like "meta unload <plugin>" (multiple plugins with one call not supported).
-// If loading fails, plugin is still loaded.
-static int mutil_UnloadMetaPluginByName(plid_t plid, const char *cmdline, PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
-	MPlugin *findp = 0;
+int mutil_UnloadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME now, PL_UNLOAD_REASON reason)
+{
+	MPlugin *findp = NULL;
 	int pindex;
-	char *endptr;
-	
-	if(unlikely(!cmdline)) {
-		return((int)ME_ARGUMENT);
+	char* endptr;
+
+	if(unlikely(NULL == fname)) {
+		return(ME_ARGUMENT);
 	}
-	
-	// try to match plugin id first
-	pindex = strtol(cmdline, &endptr, 10);
-	if(likely(*cmdline) && likely(!*endptr))
-		findp=Plugins->find(pindex);
-	// else try to match some string (prefix)
+
+	pindex = strtol(fname, &endptr, 10);
+	if(likely(*fname != '\0') && likely(*endptr == '\0'))
+		findp = Plugins->find(pindex);
 	else
-		findp=Plugins->find_match(cmdline);
-	
+		findp = Plugins->find_match(fname);
+
 	if(unlikely(!findp))
-		return((int)ME_NOTUNIQ);
-	
-	//try unload plugin
+		return(meta_errno);
+
 	meta_errno = ME_NOERROR;
+
 	if(likely(findp->plugin_unload(plid, now, reason)))
 		return(0);
-	else
-		return((int)meta_errno);
+	
+	return(meta_errno);
 }
 
-// Unload plugin by handle. If loading fails, plugin is still loaded.
-static int mutil_UnloadMetaPluginByHandle(plid_t plid, void *plugin_handle, PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
+int mutil_UnloadMetaPluginByHandle(plid_t plid, void *plugin_handle, PLUG_LOADTIME now, PL_UNLOAD_REASON reason)
+{
 	MPlugin *findp;
-	
-	if(unlikely(!plugin_handle)) {
-		return((int)ME_ARGUMENT);
+
+	if(unlikely(NULL == plugin_handle)) {
+		return(ME_ARGUMENT);
 	}
-	
-	// try to match plugin handle
+
 	if(unlikely(!(findp=Plugins->find((DLHANDLE)plugin_handle))))
-		return((int)ME_NOTUNIQ);
+		return(ME_NOTFOUND);
 	
-	//try unload plugin
 	meta_errno = ME_NOERROR;
+
 	if(likely(findp->plugin_unload(plid, now, reason)))
 		return(0);
-	else
-		return((int)meta_errno);
+
+	return(meta_errno);
 }
 
 // Check if player is being queried for cvar
-static const char * mutil_IsQueryingClientCvar(plid_t plid, const edict_t *player) {
-	int index = ENTINDEX(const_cast<edict_t *>(player));
-	
-	if(unlikely(index < 1) || unlikely(index > gpGlobals->maxClients)) {
-		return(NULL);
-	}
-	
-	index-=1; //1-based to 0-based
-	
-	return(g_Players[index].cvarName);
+static const char * mutil_IsQueryingClientCvar(plid_t /*plid*/, const edict_t *player) {
+	return(g_Players.is_querying_cvar(player));
 }
 
 #ifdef UNFINISHED
@@ -423,8 +408,8 @@ mutil_funcs_t MetaUtilFunctions = {
 	mutil_GetUserMsgName,	// pfnGetUserMsgName
 	mutil_GetPluginPath,	// pfnGetPluginPath
 	mutil_GetGameInfo,		// pfnGetGameInfo
-	mutil_LoadMetaPluginByName, // pfnLoadPlugin
-	mutil_UnloadMetaPluginByName, // pfnUnloadPlugin
+	mutil_LoadMetaPlugin, // pfnLoadPlugin
+	mutil_UnloadMetaPlugin, // pfnUnloadPlugin
 	mutil_UnloadMetaPluginByHandle, // pfnUnloadPluginByHandle
 	mutil_IsQueryingClientCvar, // pfnIsQueryingClientCvar
 #ifdef UNFINISHED

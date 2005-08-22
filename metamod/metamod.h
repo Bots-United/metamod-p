@@ -44,7 +44,7 @@
 #include "conf_meta.h"			// MConfig
 #include "osdep.h"				// NAME_MAX, etc
 #include "types_meta.h"			// mBOOL
-#include "mplayer.h"                    // mplayer
+#include "mplayer.h"                    // MPlayerList
 
 // file that lists plugins to load at startup
 #define PLUGINS_INI			"addons/metamod/plugins.ini"
@@ -59,8 +59,6 @@
 
 // generic config file
 #define CONFIG_INI			"addons/metamod/config.ini"
-
-#define MAX_PLAYERS                     32
 
 // metamod module handle
 extern DLHANDLE metamod_handle DLLHIDDEN;
@@ -126,7 +124,7 @@ extern int metamod_not_loaded DLLHIDDEN;
 
 // Holds cached player info, right now only things for querying cvars
 // Max players is always 32, small enough that we can use a static array
-extern mplayer g_Players[MAX_PLAYERS] DLLHIDDEN;
+extern MPlayerList g_Players;
 
 int DLLINTERNAL metamod_startup(void);
 

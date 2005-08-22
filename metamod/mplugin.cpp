@@ -1104,11 +1104,18 @@ mBOOL DLLINTERNAL MPlugin::unload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason, PL
 
 // Inform plugin we're going to unload it.
 // meta_errno values:
+//  - 
 //  - ME_DLMISSING	couldn't find meta_detach() in plugin
 //  - ME_DLERROR	plugin detach() returned error
 mBOOL DLLINTERNAL MPlugin::detach(PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
 	int ret;
 	META_DETACH_FN pfn_detach;
+
+	// If we have no handle, i.e. no dll loaded, we return true because the
+	// dll is obviously detached. We shouldn't call DLSYM() with a NULL
+	// handle since this will DLSYM() ourself.
+	if(!handle)
+		return(mTRUE);
 
 	if(unlikely(!(pfn_detach = (META_DETACH_FN) DLSYM(handle, "Meta_Detach")))) {
 		META_WARNING("dll: Error detach plugin '%s': Couldn't find Meta_detach(): %s", desc, DLERROR());
@@ -1528,7 +1535,7 @@ const char * DLLINTERNAL MPlugin::str_reason(PL_UNLOAD_REASON preason, PL_UNLOAD
 			STRNCPY(buf, str_reason(PNL_NULL, preason), sizeof(buf));
 			return(META_UTIL_VarArgs("%s (forced request from plugin[%d])", buf, unloader_index));
 		case PNL_RELOAD:
-			return("server command, reload");
+			return("reloading");
 		default:
 			return(META_UTIL_VarArgs("unknown (%d)", preal_reason));
 	}

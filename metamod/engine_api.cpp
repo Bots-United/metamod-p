@@ -867,7 +867,7 @@ static void mm_QueryClientCvarValue(const edict_t *player, const char *cvarName)
 		g_engfuncs.pfnQueryClientCvarValue = 0;
 	
 	// record queries
-	SetPlayerQuerying(const_cast<edict_t *>(player), mTRUE);
+	g_Players.set_player_cvar_query(player, cvarName);
 	
 	META_ENGINE_HANDLE_void(FN_QUERYCLIENTCVARVALUE, pfnQueryClientCvarValue, 2p, (player, cvarName));
 	RETURN_API_void()
