@@ -43,7 +43,7 @@
 #endif /* not OPT_TYPE */
 
 
-#define VDATE 			"2005/08/27"
+#define VDATE 			"2005/08/24"
 #define VMETA_VERSION		"1.18"
 
 #define VPATCH_NAME		"Metamod-P (mm-p)"

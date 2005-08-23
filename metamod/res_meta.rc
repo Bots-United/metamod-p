@@ -61,7 +61,7 @@ BEGIN
 			VALUE "FileVersion", VVERSION "\0"
 			VALUE "InternalName", RC_INTERNAL "\0"
 			VALUE "LegalCopyright", RC_COPYRIGHT "\0"
-			VALUE "LegalTrademarks", "\0"
+			VALUE "License", RC_LICENSE "\0"
 			VALUE "OriginalFilename", RC_FILENAME "\0"
 			VALUE "PrivateBuild", "\0"
 			VALUE "ProductName", VNAME "\0"
