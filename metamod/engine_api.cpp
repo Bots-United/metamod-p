@@ -65,29 +65,40 @@
 	API_END_TSC_TRACKING()
 
 // For varargs functions
-#define MAKE_FORMATED_STRING(szFmt) \
-	char strbuf[MAX_STRBUF_LEN]; \
-	char * buf=strbuf; \
-	{ \
-		int len; \
-		va_list vargs; \
-		va_start(vargs, szFmt); \
-		len = safe_vsnprintf(strbuf, sizeof(strbuf), szFmt, vargs); \
-		va_end(vargs); \
-		if(unlikely((unsigned)len >= sizeof(strbuf))) { \
-			buf = (char *)malloc(len + 1); \
-			if(likely(buf)) { \
-				va_start(vargs, szFmt); \
-				safe_vsnprintf(buf, len + 1, szFmt, vargs); \
-				va_end(vargs); \
-			} else { \
-				buf=strbuf; \
+#ifdef FIX_VARARG_ENGINE_API_WARPERS
+	#define MAKE_FORMATED_STRING(szFmt) \
+		char strbuf[MAX_STRBUF_LEN]; \
+		char * buf=strbuf; \
+		{ \
+			int len; \
+			va_list vargs; \
+			va_start(vargs, szFmt); \
+			len = safe_vsnprintf(strbuf, sizeof(strbuf), szFmt, vargs); \
+			va_end(vargs); \
+			if(unlikely((unsigned)len >= sizeof(strbuf))) { \
+				buf = (char *)malloc(len + 1); \
+				if(likely(buf)) { \
+					va_start(vargs, szFmt); \
+					safe_vsnprintf(buf, len + 1, szFmt, vargs); \
+					va_end(vargs); \
+				} else { \
+					buf=strbuf; \
+				} \
 			} \
-		} \
-	}
-#define CLEAN_FORMATED_STRING() \
-	if(unlikely(buf != strbuf)) \
-		free(buf);
+		}
+	#define CLEAN_FORMATED_STRING() \
+		if(unlikely(buf != strbuf)) \
+			free(buf);
+#else
+	#define MAKE_FORMATED_STRING(szFmt) \
+		char buf[MAX_STRBUF_LEN]; \
+		va_list ap; \
+		va_start(ap, szFmt); \
+		safevoid_vsnprintf(buf, sizeof(buf), szFmt, ap); \
+		va_end(ap);
+	
+	#define CLEAN_FORMATED_STRING()
+#endif
 
 // Engine routines, printf-style functions returning "void".
 #define META_ENGINE_HANDLE_void_varargs(FN_TYPE, pfnName, pack_args_type, pfn_arg, fmt_arg) \

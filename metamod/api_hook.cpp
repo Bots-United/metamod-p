@@ -153,13 +153,18 @@ void DLLINTERNAL main_hook_function_void(unsigned long api_info_offset, enum_api
 				META_DEBUG(loglevel, ("Calling %s:%s()", (api==e_api_engine)?"engine":GameDLL.file, api_info->name));
 				api_info->api_caller(pfn_routine, packed_args);
 				API_UNPAUSE_TSC_TRACKING();
-			// don't complain for NULL routines in NEW_DLL_FUNCTIONS
-			} else if(likely(api != e_api_newapi)) {
-				META_WARNING("Couldn't find api call: %s:%s", (api==e_api_engine)?"engine":GameDLL.file, api_info->name);
+			} else {
+				// don't complain for NULL routines in NEW_DLL_FUNCTIONS
+				if(unlikely(api != e_api_newapi))
+					META_WARNING("Couldn't find api call: %s:%s", (api==e_api_engine)?"engine":GameDLL.file, api_info->name);
 				status=MRES_UNSET;
 			}
-		} else
-			META_DEBUG(loglevel, ("No api table defined for api call: %s:%s", (api==e_api_engine)?"engine":GameDLL.file, api_info->name));
+		} else {
+			// don't complain for NULL NEW_DLL_FUNCTIONS-table
+			if(unlikely(api != e_api_newapi))
+				META_DEBUG(loglevel, ("No api table defined for api call: %s:%s", (api==e_api_engine)?"engine":GameDLL.file, api_info->name));
+			status=MRES_UNSET;
+		}
 	} else
 		META_DEBUG(loglevel, ("Skipped (supercede) %s:%s()", (api==e_api_engine)?"engine":GameDLL.file, api_info->name));
 	
@@ -316,13 +321,18 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned long 
 				dllret = class_ret_t(api_info->api_caller(pfn_routine, packed_args));
 				API_UNPAUSE_TSC_TRACKING();
 				orig_ret = dllret;
-			// don't complain for NULL routines in NEW_DLL_FUNCTIONS
-			} else if(likely(api != e_api_newapi)) {
-				META_WARNING("Couldn't find api call: %s:%s", (api==e_api_engine)?"engine":GameDLL.file, api_info->name);
+			} else {
+				// don't complain for NULL routines in NEW_DLL_FUNCTIONS
+				if(unlikely(api != e_api_newapi))
+					META_WARNING("Couldn't find api call: %s:%s", (api==e_api_engine)?"engine":GameDLL.file, api_info->name);
 				status=MRES_UNSET;
 			}
-		} else
-			META_DEBUG(loglevel, ("No api table defined for api call: %s:%s", (api==e_api_engine)?"engine":GameDLL.file, api_info->name));
+		} else {
+			// don't complain for NULL NEW_DLL_FUNCTIONS-table
+			if(unlikely(api != e_api_newapi))
+				META_DEBUG(loglevel, ("No api table defined for api call: %s:%s", (api==e_api_engine)?"engine":GameDLL.file, api_info->name));
+			status=MRES_UNSET;
+		}
 	} else {
 		META_DEBUG(loglevel, ("Skipped (supercede) %s:%s()", (api==e_api_engine)?"engine":GameDLL.file, api_info->name));
 		orig_ret = override_ret;

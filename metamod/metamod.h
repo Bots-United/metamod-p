@@ -109,11 +109,6 @@ extern MRegCvarList *RegCvars DLLHIDDEN;
 // List of user messages registered by gamedll.
 extern MRegMsgList *RegMsgs DLLHIDDEN;
 
-#ifdef UNFINISHED
-// List of event/logline hooks requested by plugins.
-extern MHookList *Hooks DLLHIDDEN;
-#endif /* UNFINISHED */
-
 // Data provided to plugins.
 // Separate copies to prevent plugins from modifying "readable" parts.
 // See meta_api.h for meta_globals_t structure.

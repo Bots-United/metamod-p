@@ -195,7 +195,6 @@ static void mm_ServerDeactivate(void) {
 	Plugins->refresh(PT_CHANGELEVEL);
 	Plugins->unpause_all();
 	// Plugins->retry_all(PT_CHANGELEVEL);
-	RegMsgs->reset_counts();
 	g_Players.clear_all_cvar_queries();
 	RETURN_API_void();
 }
@@ -476,12 +475,7 @@ static NEW_DLL_FUNCTIONS gNewFunctionTable =
 C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *interfaceVersion) 
 {
 	META_DEBUG(6, ("called: GetNewDLLFunctions; version=%d", *interfaceVersion));
-	// Don't provide these functions to engine if gamedll doesn't provide
-	// them.  Otherwise, we're in the position of having to provide answers
-	// we can't necessarily provide (for instance, ShouldCollide())...
-	if(unlikely(!GameDLL.funcs.newapi_table))
-		return(FALSE);
-
+	
 	if(unlikely(!pNewFunctionTable) || unlikely(metamod_not_loaded)) {
 		META_WARNING("GetNewDLLFunctions called with null pNewFunctionTable");
 		return(FALSE);

@@ -64,11 +64,6 @@
 // Version 5:12 added IS_QUERYING_CLIENT_CVAR to mutils [v1.18]
 #define META_INTERFACE_VERSION "5:12"
 
-#ifdef UNFINISHED
-// Version 5:99	added event hook utility functions [v.???]
-#define META_INTERFACE_VERSION "5:99"
-#endif /* UNFINISHED */
-
 // Flags returned by a plugin's api function.
 // NOTE: order is crucial, as greater/less comparisons are made.
 typedef enum {

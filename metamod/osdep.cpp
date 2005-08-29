@@ -40,8 +40,6 @@
 #    define _GNU_SOURCE
 #  endif
 #include <dlfcn.h>			// dlopen, dladdr, etc
-#include <signal.h>			// sigaction, etc
-#include <setjmp.h>			// sigsetjmp, longjmp, etc
 #endif /* linux */
 
 #include <string.h>			// strpbrk, etc
@@ -97,6 +95,7 @@ char * DLLINTERNAL my_strlwr(char *s) {
 #endif
 
 
+#ifdef FIX_VARARG_ENGINE_API_WARPERS
 // Microsoft's msvcrt.dll:vsnprintf is buggy and so is vsnprintf on some glibc versions.
 // We use wrapper function to fix bugs.
 //  from: http://sourceforge.net/tracker/index.php?func=detail&aid=1083721&group_id=2435&atid=102435
@@ -106,8 +105,11 @@ int DLLINTERNAL safe_vsnprintf(char* s, size_t n, const char *format, va_list sr
 	char *tmpbuf;
 	size_t bufsize = n;
 	
+	if(likely(s) && likely(n>0))
+		s[0]=0;
+	
 	// If the format string is empty, nothing to do.
-	if(unlikely(!format) || unlikely(strlen(format) == 0))
+	if(unlikely(!format) || unlikely(!*format))
 		return(0);
 	
 	// The supplied count may be big enough. Try to use the library
@@ -191,6 +193,33 @@ int DLLINTERNAL safe_snprintf(char* s, size_t n, const char* format, ...) {
 	va_end(ap);
 	
 	return(res);
+}
+#endif
+
+void DLLINTERNAL safevoid_vsnprintf(char* s, size_t n, const char *format, va_list ap) { 
+	int res;
+	
+	if(unlikely(!s) || unlikely(n <= 0))
+		return;
+	
+	// If the format string is empty, nothing to do.
+	if(unlikely(!format) || unlikely(!*format)) {
+		s[0]=0;
+		return;
+	}
+	
+	res = vsnprintf(s, n, format, ap);
+	
+	if(likely(res > 0) && unlikely((unsigned)res == n))
+		s[res - 1] = 0;
+}
+
+void DLLINTERNAL safevoid_snprintf(char* s, size_t n, const char* format, ...) {
+	va_list ap;
+	
+	va_start(ap, format);
+	safevoid_vsnprintf(s, n, format, ap);
+	va_end(ap);
 }
 
 

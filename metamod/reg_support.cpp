@@ -216,54 +216,7 @@ void DLLHIDDEN meta_CVarRegister(cvar_t *pCvar) {
 
 // Replacement for engine routine RegUserMsg; called by plugins. 
 int DLLHIDDEN meta_RegUserMsg(const char *pszName, int iSize) {
-	const char *cp;
-	MRegMsg *imsg;
-	MPlugin *iplug;
-	int msgid;
-	
-	META_DEBUG(4, ("called: meta_RegUserMsg; name=%s", pszName));
-	
-	// Find out if message has already been registered.
-	imsg=RegMsgs->find(pszName);
-	if(unlikely(imsg)) {
-		// This name was already registered.
-		META_DEBUG(3, ("user message registered again: name=%s", pszName));
-		cp=imsg->name;
-	}
-	else {
-		cp=strdup(pszName);
-		if(unlikely(!cp)) {
-			META_WARNING("Couldn't strdup for usermsg name '%s': %s", pszName, strerror(errno));
-			return(-1);
-		}
-	}
-	
-	msgid=REG_USER_MSG(cp, iSize);
-	
-	//Register new user message
-	if(likely(!imsg)) {
-		imsg=RegMsgs->add(cp, msgid, iSize);
-		if(unlikely(!imsg)) {
-			// error details logged in add()
-			return(msgid);
-		}
-		
-		// try to find which plugin is registering this string
-		if(unlikely(!(iplug=Plugins->find_memloc((void*)pszName)))) {
-			// if this isn't supported on this OS, don't log an error
-			if(unlikely(meta_errno != ME_OSNOTSUP))
-				META_DEBUG(1, ("Failed to find memloc for usermsg '%s'", pszName));
-		}
-		
-		// Store which plugin this is for, if we know.  Use '-1' for unknown
-		// plugin, as plugin index starts at 1. 0 is used for gamedll.
-		if(likely(iplug))
-			imsg->plugid = iplug->index;
-		else
-			imsg->plugid = -1;
-	}
-	
-	return(msgid);
+	return(REG_USER_MSG(strdup(pszName), iSize));
 }
 
 

@@ -16,10 +16,10 @@ INFOFILES = info_name.h vers_meta.h
 RESFILE = res_meta.rc
 
 ifeq "$(OS)" "linux"
-	SRCFILES+=osdep_linkent_linux.cpp
+	SRCFILES+=osdep_linkent_linux.cpp osdep_detect_gamedll_linux.cpp
 	EXTRA_LINK=
 else
-	SRCFILES+=osdep_linkent_win32.cpp
+	SRCFILES+=osdep_linkent_win32.cpp osdep_detect_gamedll_win32.cpp
 	EXTRA_LINK=-Xlinker --script -Xlinker i386pe.merge
 endif
 

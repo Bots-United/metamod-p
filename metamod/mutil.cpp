@@ -65,7 +65,7 @@ static void mutil_LogConsole(plid_t /* plid */, const char *fmt, ...) {
 	unsigned int len;
 
 	va_start(ap, fmt);
-	safe_vsnprintf(buf, sizeof(buf), fmt, ap);
+	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	// end msg with newline
 	len=strlen(buf);
@@ -85,7 +85,7 @@ static void mutil_LogMessage(plid_t plid, const char *fmt, ...) {
 
 	plinfo=(plugin_info_t *)plid;
 	va_start(ap, fmt);
-	safe_vsnprintf(buf, sizeof(buf), fmt, ap);
+	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	ALERT(at_logged, "[%s] %s\n", plinfo->logtag, buf);
 }
@@ -98,7 +98,7 @@ static void mutil_LogError(plid_t plid, const char *fmt, ...) {
 
 	plinfo=(plugin_info_t *)plid;
 	va_start(ap, fmt);
-	safe_vsnprintf(buf, sizeof(buf), fmt, ap);
+	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	ALERT(at_logged, "[%s] ERROR: %s\n", plinfo->logtag, buf);
 }
@@ -114,7 +114,7 @@ static void mutil_LogDeveloper(plid_t plid, const char *fmt, ...) {
 
 	plinfo=(plugin_info_t *)plid;
 	va_start(ap, fmt);
-	safe_vsnprintf(buf, sizeof(buf), fmt, ap);
+	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	ALERT(at_logged, "[%s] dev: %s\n", plinfo->logtag, buf);
 }
@@ -128,7 +128,7 @@ static void mutil_CenterSayVarargs(plid_t plid, hudtextparms_t tparms,
 	int n;
 	edict_t *pEntity;
 
-	safe_vsnprintf(buf, sizeof(buf), fmt, ap);
+	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
 
 	mutil_LogMessage(plid, "(centersay) %s", buf);
 	for(n=1; likely(n <= gpGlobals->maxClients); n++) {
@@ -184,7 +184,7 @@ static int mutil_GetUserMsgID(plid_t plid, const char *msgname, int *size) {
 	plinfo=(plugin_info_t *)plid;
 	META_DEBUG(8, ("Looking up usermsg name '%s' for plugin '%s'", msgname,
 				plinfo->name));
-	umsg=RegMsgs->fast_find(msgname);
+	umsg=RegMsgs->find(msgname);
 	if(likely(umsg)) {
 		if(unlikely(size))
 			*size=umsg->size;
@@ -286,7 +286,7 @@ static const char *mutil_GetGameInfo(plid_t plid, ginfo_t type) {
 	return(buf);
 }
 
-int mutil_LoadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME now, void **plugin_handle)
+static int mutil_LoadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME now, void **plugin_handle)
 {
 	MPlugin *pl_loaded;
 	
@@ -306,7 +306,7 @@ int mutil_LoadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME now, void
 	}
 }
 
-int mutil_UnloadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME now, PL_UNLOAD_REASON reason)
+static int mutil_UnloadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME now, PL_UNLOAD_REASON reason)
 {
 	MPlugin *findp = NULL;
 	int pindex;
@@ -333,7 +333,7 @@ int mutil_UnloadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME now, PL
 	return(meta_errno);
 }
 
-int mutil_UnloadMetaPluginByHandle(plid_t plid, void *plugin_handle, PLUG_LOADTIME now, PL_UNLOAD_REASON reason)
+static int mutil_UnloadMetaPluginByHandle(plid_t plid, void *plugin_handle, PLUG_LOADTIME now, PL_UNLOAD_REASON reason)
 {
 	MPlugin *findp;
 
@@ -357,42 +357,21 @@ static const char * mutil_IsQueryingClientCvar(plid_t /*plid*/, const edict_t *p
 	return(g_Players.is_querying_cvar(player));
 }
 
-#ifdef UNFINISHED
-static int mutil_HookGameEvent(plid_t plid, game_event_t event, 
-		event_func_t pfnHandle) 
-{
-	return(Hooks->add(plid, event, pfnHandle));
+//
+/*
+static qboolean mutil_MetaQueryClientCvar(plid_t plid, edict_t * player, char * clcvar_name, query_callback_t pfnQueryResult) {
+	plugin_info_t *plinfo;
+	
+	plinfo=(plugin_info_t *)plid;
+	
+	if(!g_Players.queue_query(plinfo, player, clcvar_name, pfnQueryResult)) {
+		//queue_query has already whined.. quit quietly.
+		return(false);
+	}
+	
+	return(true);
 }
-
-static int mutil_HookLogTrigger(plid_t plid, const char *trigger, 
-		logmatch_func_t pfnHandle) 
-{
-	return(Hooks->add(plid, H_TRIGGER, trigger, pfnHandle));
-}
-
-static int mutil_HookLogString(plid_t plid, const char *string, 
-		logmatch_func_t pfnHandle) 
-{
-	return(Hooks->add(plid, H_STRING, string, pfnHandle));
-}
-
-static int mutil_HookLogRegex(plid_t plid, const char *pattern, 
-		logmatch_func_t pfnHandle) 
-{
-	return(Hooks->add(plid, H_STRING, pattern, pfnHandle));
-}
-
-static qboolean mutil_RemoveHookID(plid_t plid, int hookid) {
-	mBOOL ret;
-	ret=Hooks->remove(plid, hookid);
-	if(likely(ret==mTRUE)) return(true);
-	else return(false);
-}
-
-static int mutil_RemoveHookAll(plid_t plid) {
-	return(Hooks->remove_all(plid));
-}
-#endif /* UNFINISHED */
+*/
 
 // Meta Utility Function table.
 mutil_funcs_t MetaUtilFunctions = {
@@ -412,12 +391,5 @@ mutil_funcs_t MetaUtilFunctions = {
 	mutil_UnloadMetaPlugin, // pfnUnloadPlugin
 	mutil_UnloadMetaPluginByHandle, // pfnUnloadPluginByHandle
 	mutil_IsQueryingClientCvar, // pfnIsQueryingClientCvar
-#ifdef UNFINISHED
-	mutil_HookGameEvent,	// pfnGameEvent
-	mutil_HookLogTrigger,	// pfnLogTrigger
-	mutil_HookLogString,	// pfnLogString
-	mutil_HookLogRegex,		// pfnLogRegex
-	mutil_RemoveHookID,		// pfnRemoveHookID
-	mutil_RemoveHookAll,	// pfnRemoveHookAll
-#endif /* UNFINISHED */
+//	mutil_MetaQueryClientCvar, // pfnMetaQueryClientCvar
 };

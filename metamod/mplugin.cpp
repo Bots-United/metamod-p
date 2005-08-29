@@ -132,7 +132,7 @@ mBOOL DLLINTERNAL MPlugin::ini_parseline(const char *line) {
 	else {
 		// If no description is specified, temporarily use plugin file,
 		// until plugin can be queried, and desc replaced with info->name.
-		safe_snprintf(desc, sizeof(desc), "<%s>", file);
+		safevoid_snprintf(desc, sizeof(desc), "<%s>", file);
 	}
 
 	// Make full pathname (from gamedir if relative, remove "..",
@@ -185,7 +185,7 @@ mBOOL DLLINTERNAL MPlugin::cmd_parseline(const char *line) {
 	else {
 		// if no description is specified, temporarily use plugin file,
 		// until plugin can be queried, and desc replaced with info->name.
-		safe_snprintf(desc, sizeof(desc), "<%s>", file);
+		safevoid_snprintf(desc, sizeof(desc), "<%s>", file);
 	}
 
 	// Make full pathname (from gamedir if relative, remove "..",
@@ -216,7 +216,7 @@ mBOOL DLLINTERNAL MPlugin::plugin_parseline(const char *fname, int loader_index)
 
 	// Grab description.
 	// Temporarily use plugin file, until plugin can be queried, and desc replaced with info->name.
-	safe_snprintf(desc, sizeof(desc), "<%s>", file);
+	safevoid_snprintf(desc, sizeof(desc), "<%s>", file);
 	
 	// Make full pathname (from gamedir if relative, remove "..",
 	// backslashes, etc).
@@ -254,7 +254,7 @@ mBOOL DLLINTERNAL MPlugin::check_input(void) {
 	if(unlikely(!desc[0])) {
 		// if no description is specified, temporarily use plugin file,
 		// until plugin can be queried, and desc replaced with info->name.
-		safe_snprintf(desc, sizeof(desc), "<%s>", file);
+		safevoid_snprintf(desc, sizeof(desc), "<%s>", file);
 	}
 	return(mTRUE);
 }
@@ -320,7 +320,7 @@ char * DLLINTERNAL MPlugin::resolve_dirs(const char *path) {
 	static char buf[PATH_MAX];
 	char *found;
 
-	safe_snprintf(buf, sizeof(buf), "%s/%s", GameDLL.gamedir, path);
+	safevoid_snprintf(buf, sizeof(buf), "%s/%s", GameDLL.gamedir, path);
 	// try this path
 	if(unlikely(stat(buf, &st) == 0) && unlikely(S_ISREG(st.st_mode)))
 		return(buf);
@@ -328,7 +328,7 @@ char * DLLINTERNAL MPlugin::resolve_dirs(const char *path) {
 	if(unlikely((found=resolve_prefix(buf))))
 		return(found);
 
-	safe_snprintf(buf, sizeof(buf), "%s/dlls/%s", GameDLL.gamedir, path);
+	safevoid_snprintf(buf, sizeof(buf), "%s/dlls/%s", GameDLL.gamedir, path);
 	// try this path
 	if(unlikely(stat(buf, &st)) == 0 && unlikely(S_ISREG(st.st_mode)))
 		return(buf);
@@ -359,11 +359,11 @@ char * DLLINTERNAL MPlugin::resolve_prefix(const char *path) {
 	if(likely(cp)) {
 		*cp='\0';
 		fname=cp+1;
-		safe_snprintf(buf, sizeof(buf), "%s/mm_%s", dname, fname);
+		safevoid_snprintf(buf, sizeof(buf), "%s/mm_%s", dname, fname);
 	}
 	else {
 		// no directory in given path
-		safe_snprintf(buf, sizeof(buf), "mm_%s", path);
+		safevoid_snprintf(buf, sizeof(buf), "mm_%s", path);
 	}
 	// try this path
 	if(unlikely(stat(buf, &st) == 0) && unlikely(S_ISREG(st.st_mode)))
@@ -396,7 +396,7 @@ char * DLLINTERNAL MPlugin::resolve_suffix(const char *path) {
 
 	// Hmm, recursion.
 	if(unlikely(!strstr(path, "_mm"))) {
-		safe_snprintf(buf, sizeof(buf), "%s_mm", path);
+		safevoid_snprintf(buf, sizeof(buf), "%s_mm", path);
 		memcpy(tmpbuf,buf,sizeof(tmpbuf));
 		found=resolve_suffix(tmpbuf);
 		if(unlikely(found)) 
@@ -404,7 +404,7 @@ char * DLLINTERNAL MPlugin::resolve_suffix(const char *path) {
 	}
 	
 	if(unlikely(!strstr(path, "_MM"))) {
-		safe_snprintf(buf, sizeof(buf), "%s_MM", path);
+		safevoid_snprintf(buf, sizeof(buf), "%s_MM", path);
 		memcpy(tmpbuf,buf,sizeof(tmpbuf));
 		found=resolve_suffix(tmpbuf);
 		if(unlikely(found)) 
@@ -412,9 +412,9 @@ char * DLLINTERNAL MPlugin::resolve_suffix(const char *path) {
 	}
 
 #ifdef _WIN32
-	safe_snprintf(buf, sizeof(buf), "%s.dll", path);
+	safevoid_snprintf(buf, sizeof(buf), "%s.dll", path);
 #elif defined(linux)
-	safe_snprintf(buf, sizeof(buf), "%s.so", path);
+	safevoid_snprintf(buf, sizeof(buf), "%s.so", path);
 #else
 #error "OS unrecognized"
 #endif /* _WIN32 */
@@ -423,26 +423,26 @@ char * DLLINTERNAL MPlugin::resolve_suffix(const char *path) {
 
 #ifdef linux
 #ifdef __x86_64__
-	safe_snprintf(buf, sizeof(buf), "%s_amd64.so", path);
+	safevoid_snprintf(buf, sizeof(buf), "%s_amd64.so", path);
 	if(unlikely(stat(buf, &st) == 0) && unlikely(S_ISREG(st.st_mode)))
 		return(buf);
-	safe_snprintf(buf, sizeof(buf), "%s_x86_64.so", path);
+	safevoid_snprintf(buf, sizeof(buf), "%s_x86_64.so", path);
 	if(unlikely(stat(buf, &st) == 0) && unlikely(S_ISREG(st.st_mode)))
 		return(buf);
-	safe_snprintf(buf, sizeof(buf), "%s_x86-64.so", path);
+	safevoid_snprintf(buf, sizeof(buf), "%s_x86-64.so", path);
 	if(unlikely(stat(buf, &st) == 0) && unlikely(S_ISREG(st.st_mode)))
 		return(buf);
 #else
-	safe_snprintf(buf, sizeof(buf), "%s_i386.so", path);
+	safevoid_snprintf(buf, sizeof(buf), "%s_i386.so", path);
 	if(unlikely(stat(buf, &st) == 0) && unlikely(S_ISREG(st.st_mode)))
 		return(buf);
-	safe_snprintf(buf, sizeof(buf), "%s_i486.so", path);
+	safevoid_snprintf(buf, sizeof(buf), "%s_i486.so", path);
 	if(unlikely(stat(buf, &st) == 0) && unlikely(S_ISREG(st.st_mode)))
 		return(buf);
-	safe_snprintf(buf, sizeof(buf), "%s_i586.so", path);
+	safevoid_snprintf(buf, sizeof(buf), "%s_i586.so", path);
 	if(unlikely(stat(buf, &st) == 0) && unlikely(S_ISREG(st.st_mode)))
 		return(buf);
-	safe_snprintf(buf, sizeof(buf), "%s_i686.so", path);
+	safevoid_snprintf(buf, sizeof(buf), "%s_i686.so", path);
 	if(unlikely(stat(buf, &st) == 0) && unlikely(S_ISREG(st.st_mode)))
 		return(buf);
 #endif /* !__x86_64__ */
@@ -823,23 +823,27 @@ mBOOL DLLINTERNAL MPlugin::attach(PLUG_LOADTIME now) {
 
 	// Make copy of gameDLL's function tables for each plugin, so we don't
 	// risk the plugins screwing with the tables everyone uses.
-	if(likely(GameDLL.funcs.dllapi_table) && likely(!gamedll_funcs.dllapi_table)) {
+	if(likely(!gamedll_funcs.dllapi_table)) {
 		gamedll_funcs.dllapi_table = (DLL_FUNCTIONS *) calloc(1, sizeof(DLL_FUNCTIONS));
 		if(unlikely(!gamedll_funcs.dllapi_table)) {
 			META_WARNING("dll: Failed attach plugin '%s': Failed malloc() for dllapi_table");
 			RETURN_ERRNO(mFALSE, ME_NOMEM);
 		}
-		memcpy(gamedll_funcs.dllapi_table, GameDLL.funcs.dllapi_table, 
-				sizeof(DLL_FUNCTIONS));
+		if(likely(GameDLL.funcs.dllapi_table))
+			memcpy(gamedll_funcs.dllapi_table, GameDLL.funcs.dllapi_table, sizeof(DLL_FUNCTIONS));
+		else
+			memset(gamedll_funcs.dllapi_table, 0, sizeof(DLL_FUNCTIONS));
 	}
-	if(likely(GameDLL.funcs.newapi_table) && likely(!gamedll_funcs.newapi_table)) {
+	if(likely(!gamedll_funcs.newapi_table)) {
 		gamedll_funcs.newapi_table = (NEW_DLL_FUNCTIONS *) calloc(1, sizeof(NEW_DLL_FUNCTIONS));
 		if(unlikely(!gamedll_funcs.newapi_table)) {
 			META_WARNING("dll: Failed attach plugin '%s': Failed malloc() for newapi_table");
 			RETURN_ERRNO(mFALSE, ME_NOMEM);
 		}
-		memcpy(gamedll_funcs.newapi_table, GameDLL.funcs.newapi_table, 
-				sizeof(NEW_DLL_FUNCTIONS));
+		if(likely(GameDLL.funcs.newapi_table))
+			memcpy(gamedll_funcs.newapi_table, GameDLL.funcs.newapi_table, sizeof(NEW_DLL_FUNCTIONS));
+		else
+			memset(gamedll_funcs.newapi_table, 0, sizeof(NEW_DLL_FUNCTIONS));
 	}
 	if(unlikely(!(pfn_attach = (META_ATTACH_FN) DLSYM(handle, "Meta_Attach")))) {
 		META_WARNING("dll: Failed attach plugin '%s': Couldn't find Meta_Attach(): %s", desc, DLERROR());
@@ -885,22 +889,16 @@ mBOOL DLLINTERNAL MPlugin::attach(PLUG_LOADTIME now) {
 
 	// Look for API-NEW interface in plugin.  We do this before API2/API, because
 	// that's what the engine appears to do..
-	// But we only do this if the gamedll provides these, so that we don't
-	// give a plugin the idea that we'll call them, when in fact we won't
-	// (since we don't export them to the engine when the gamedll doesn't
-	// provide them).
-	if(likely(GameDLL.funcs.newapi_table)) {
-		iface_vers=NEW_DLL_FUNCTIONS_VERSION;
-		GET_FUNC_TABLE_FROM_PLUGIN(pfnGetNewDLLFunctions, 
-				"GetNewDLLFunctions", tables.newapi, 
-				NEW_DLL_FUNCTIONS_FN, NEW_DLL_FUNCTIONS,
-				&iface_vers, iface_vers, NEW_DLL_FUNCTIONS_VERSION);
-		iface_vers=NEW_DLL_FUNCTIONS_VERSION;
-		GET_FUNC_TABLE_FROM_PLUGIN(pfnGetNewDLLFunctions_Post, 
-				"GetNewDLLFunctions_Post", post_tables.newapi, 
-				NEW_DLL_FUNCTIONS_FN, NEW_DLL_FUNCTIONS,
-				&iface_vers, iface_vers, NEW_DLL_FUNCTIONS_VERSION);
-	}
+	iface_vers=NEW_DLL_FUNCTIONS_VERSION;
+	GET_FUNC_TABLE_FROM_PLUGIN(pfnGetNewDLLFunctions, 
+			"GetNewDLLFunctions", tables.newapi, 
+			NEW_DLL_FUNCTIONS_FN, NEW_DLL_FUNCTIONS,
+			&iface_vers, iface_vers, NEW_DLL_FUNCTIONS_VERSION);
+	iface_vers=NEW_DLL_FUNCTIONS_VERSION;
+	GET_FUNC_TABLE_FROM_PLUGIN(pfnGetNewDLLFunctions_Post, 
+			"GetNewDLLFunctions_Post", post_tables.newapi, 
+			NEW_DLL_FUNCTIONS_FN, NEW_DLL_FUNCTIONS,
+			&iface_vers, iface_vers, NEW_DLL_FUNCTIONS_VERSION);
 
 	// Look for API2 interface in plugin; preferred over API-1.
 	iface_vers=INTERFACE_VERSION;
@@ -1074,11 +1072,6 @@ mBOOL DLLINTERNAL MPlugin::unload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason, PL
 	RegCmds->disable(index);
 	// Unmark registered cvars for this plugin (by index number).
 	RegCvars->disable(index);
-
-#ifdef UNFINISHED
-	// Remove all requested hooks from this plugin (by index number).
-	Hooks->remove_all(info);
-#endif /* UNFINISHED */
 
 	// Close the file.  Note: after this, attempts to reference any memory
 	// locations in the file will produce a segfault.

@@ -58,7 +58,7 @@ void DLLINTERNAL META_CONS(const char *fmt, ...) {
 	unsigned int len;
 
 	va_start(ap, fmt);
-	safe_vsnprintf(buf, sizeof(buf), fmt, ap);
+	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	len=strlen(buf);
 	if(likely(len < sizeof(buf)-2)) {	// -1 null, -1 for newline
@@ -81,7 +81,7 @@ void DLLINTERNAL META_DEV(const char *fmt, ...) {
 	if(likely(dev==0)) return;
 
 	va_start(ap, fmt);
-	safe_vsnprintf(buf, sizeof(buf), fmt, ap);
+	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	ALERT(at_logged, "[META] dev: %s\n", buf);
 }
@@ -92,7 +92,7 @@ void DLLINTERNAL META_INFO(const char *fmt, ...) {
 	char buf[MAX_LOGMSG_LEN];
 
 	va_start(ap, fmt);
-	safe_vsnprintf(buf, sizeof(buf), fmt, ap);
+	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	ALERT(at_logged, "[META] INFO: %s\n", buf);
 }
@@ -103,7 +103,7 @@ void DLLINTERNAL META_WARNING(const char *fmt, ...) {
 	char buf[MAX_LOGMSG_LEN];
 
 	va_start(ap, fmt);
-	safe_vsnprintf(buf, sizeof(buf), fmt, ap);
+	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	ALERT(at_logged, "[META] WARNING: %s\n", buf);
 }
@@ -114,7 +114,7 @@ void DLLINTERNAL META_ERROR(const char *fmt, ...) {
 	char buf[MAX_LOGMSG_LEN];
 
 	va_start(ap, fmt);
-	safe_vsnprintf(buf, sizeof(buf), fmt, ap);
+	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	ALERT(at_logged, "[META] ERROR: %s\n", buf);
 }
@@ -125,7 +125,7 @@ void DLLINTERNAL META_LOG(const char *fmt, ...) {
 	char buf[MAX_LOGMSG_LEN];
 
 	va_start(ap, fmt);
-	safe_vsnprintf(buf, sizeof(buf), fmt, ap);
+	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	ALERT(at_logged, "[META] %s\n", buf);
 }
@@ -137,7 +137,7 @@ void DLLINTERNAL META_CLIENT(edict_t *pEntity, const char *fmt, ...) {
 	unsigned int len;
 
 	va_start(ap, fmt);
-	safe_vsnprintf(buf, sizeof(buf), fmt, ap);
+	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	len=strlen(buf);
 	if(likely(len < sizeof(buf)-2))	{	// -1 null, -1 for newline
@@ -157,7 +157,7 @@ void DLLINTERNAL META_DO_DEBUG(int level, const char *fmt, ...) {
 	va_list ap;
 	
 	va_start(ap, fmt);
-	safe_vsnprintf(meta_debug_str, sizeof(meta_debug_str), fmt, ap);
+	safevoid_vsnprintf(meta_debug_str, sizeof(meta_debug_str), fmt, ap);
 	va_end(ap);
 	
 	ALERT(at_logged, "[META] (debug:%d) %s\n", level, meta_debug_str);

@@ -1,8 +1,6 @@
 // vi: set ts=4 sw=4 :
 // vim: set tw=75 :
 
-#ifdef UNFINISHED
-
 // tqueue.h - template classes for Queue and QItem
 
 /*
@@ -39,17 +37,13 @@
 #ifndef TQUEUE_H
 #define TQUEUE_H
 
-#define MAX_QUEUE_SIZE	50
-
-#include "osdep.h"			// MUTEX_T, etc
 #include "new_baseclass.h"
 
 // Forward declarations.
 template<class qdata_t> class Queue;
 
 // Template for Queue.
-template<class qdata_t>
-class Queue : public class_metamod_new {
+template<class qdata_t> class Queue : public class_metamod_new {
 	private:
 	// private copy/assign constructors:
 		Queue(const Queue &src);
@@ -69,77 +63,52 @@ class Queue : public class_metamod_new {
 		};
 	// data:
 		int size;
-		int max_size;
 		QItem *front;
 		QItem *end;
-		MUTEX_T mx_queue;
-		COND_T cv_push;
-		COND_T cv_pop;
-	//functions
-		int DLLINTERNAL MXlock(void) { return(MUTEX_LOCK(&mx_queue)); };
-		int DLLINTERNAL MXunlock(void) { return(MUTEX_UNLOCK(&mx_queue)); };
 	public:
 	// constructor:
-		Queue(void) DLLINTERNAL;
-		Queue(int qmaxsize) DLLINTERNAL;
+		Queue(void) :size(0), front(NULL), end(NULL) {};
 	// functions:
-		void DLLINTERNAL push(qdata_t *qadd);
-		qdata_t * DLLINTERNAL pop(void);
+		void push(qdata_t *qadd);
+		qdata_t * pop(void);
 };
 
 
 ///// Template Queue:
 
-// Queue constructor (default).
-template<class qdata_t> Queue<qdata_t>::Queue(void)
-	: size(0), max_size(MAX_QUEUE_SIZE), front(NULL), end(NULL), mx_queue(), 
-	  cv_push(), cv_pop()
-{
-	MUTEX_INIT(&mx_queue);
-	COND_INIT(&cv_push);
-	COND_INIT(&cv_pop);
-}
-
-// Queue constructor.
-template<class qdata_t> Queue<qdata_t>::Queue(int qmaxsize)
-	: size(0), max_size(qmaxsize), front(NULL), end(NULL), mx_queue(), 
-	  cv_push(), cv_pop()
-{
-	MUTEX_INIT(&mx_queue);
-	COND_INIT(&cv_push);
-	COND_INIT(&cv_pop);
-}
-
 // Push onto the queue (at end).
-template<class qdata_t> void Queue<qdata_t>::push(qdata_t *qadd) {
-	QItem *qnew;
-	MXlock();
-	while(likely(size >= max_size))
-		COND_WAIT(&cv_push, &mx_queue);
-	qnew = new QItem(qadd);
-	end->next = qnew;
+template<class qdata_t> inline void Queue<qdata_t>::push(qdata_t *qadd) {
+	QItem *qnew = new QItem(qadd);
+	
+	if(unlikely(size==0))
+		front=qnew;
+	else
+		end->next=qnew;
+	
 	end=qnew;
+	
 	size++;
-	MXunlock();
 }
 
 // Pop from queue (from front).  Wait for an item to actually be available
 // on the queue (block until there's something there).
-template<class qdata_t> qdata_t* Queue<qdata_t>::pop(void) {
+template<class qdata_t> inline qdata_t* Queue<qdata_t>::pop(void) {
 	QItem *qtmp;
 	qdata_t *ret;
-	MXlock();
-	while(likely(!size))
-		COND_WAIT(&cv_pop, &mx_queue);
+	
+	if(unlikely(size==0))
+		return(NULL);
+	
 	qtmp=front;
-	front=qtmp->next;
-	size--;
-	ret=qtmp->data;
+	
+	ret=front->data;
+	front=front->next;
+	
 	delete qtmp;
-	MXunlock();
+	
+	size--;
+	
 	return(ret);
 }
 
 #endif /* TQUEUE_H */
-
-#endif /* UNFINISHED */

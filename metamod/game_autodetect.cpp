@@ -52,7 +52,7 @@ const char * DLLINTERNAL autodetect_gamedll(const gamedll_t *gamedll, const char
 	unsigned int fn_len;
 		
 	// Generate dllpath
-	safe_snprintf(buf, sizeof(buf), "%s/dlls", gamedll->gamedir);
+	safevoid_snprintf(buf, sizeof(buf), "%s/dlls", gamedll->gamedir);
 	if(unlikely(!full_gamedir_path(buf, dllpath))) {
 		//whine & return
 		META_WARNING("GameDLL-Autodetection: Directory '%s' doesn't exist.", buf);
@@ -60,7 +60,7 @@ const char * DLLINTERNAL autodetect_gamedll(const gamedll_t *gamedll, const char
 	}
 	
 	// Generate knownfn path
-	safe_snprintf(fnpath, sizeof(fnpath), "%s/%s", dllpath, knownfn);
+	safevoid_snprintf(fnpath, sizeof(fnpath), "%s/%s", dllpath, knownfn);
 	
 	// Check if knownfn exists and is valid gamedll
 	if(likely(is_gamedll(fnpath))) {
@@ -108,18 +108,17 @@ const char * DLLINTERNAL autodetect_gamedll(const gamedll_t *gamedll, const char
 #endif
 		
 		// Generate full path
-		safe_snprintf(fnpath, sizeof(fnpath), "%s/%s", dllpath, ent->d_name);
+		safevoid_snprintf(fnpath, sizeof(fnpath), "%s/%s", dllpath, ent->d_name);
 		
-		META_DEBUG(8, ("is_gamedll(%s)", fnpath));
 		// Check if dll is gamedll
 		if(likely(is_gamedll(fnpath))) {
-			META_DEBUG(8, ("..ok"));
+			META_DEBUG(8, ("is_gamedll(%s): ok.", fnpath));
 			//gamedll detected
 			STRNCPY(buf, ent->d_name, sizeof(buf));
 			closedir(dir);
 			return(buf);
 		}
-		META_DEBUG(8, ("..failed"));
+		META_DEBUG(8, ("is_gamedll(%s): failed.", fnpath));
 	}
 	
 	//not found

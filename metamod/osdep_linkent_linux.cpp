@@ -144,7 +144,7 @@ static struct link_map * DLLINTERNAL_NOVIS get_link_map(void) {
 }
 
 //
-static int DLLINTERNAL_NOVIS get_tables(struct link_map * l_map, void *& symtab, void *& strtab, int & nchains) {
+static int DLLINTERNAL_NOVIS get_tables(struct link_map * l_map, ElfW(Sym) *& symtab, char *& strtab, int & nchains) {
 	ElfW(Dyn) * dyn;
 	
 	dyn = l_map->l_ld;
@@ -155,13 +155,24 @@ static int DLLINTERNAL_NOVIS get_tables(struct link_map * l_map, void *& symtab,
 	
 	for(int i = 0; likely(dyn[i].d_tag != DT_NULL); i++) {
 		if(unlikely(dyn[i].d_tag == DT_HASH)) {
-			nchains = *(int*)(dyn[i].d_un.d_ptr+4);
+			Elf32_Word * hash_table;
+			
+			// some linux versions seem to have this already relocated while other don't(?)
+			if(dyn[i].d_un.d_ptr < l_map->l_addr)
+				hash_table = (Elf32_Word*)(l_map->l_addr + dyn[i].d_un.d_ptr);
+			else
+				hash_table = (Elf32_Word*)(dyn[i].d_un.d_ptr);
+			
+			//nbuckets = hash_table[0];
+			nchains = hash_table[1];
+			//buckets = &hash_table[2];
+			//chains = &buckets[nbuckets];
 		} 
 		else if(unlikely(dyn[i].d_tag == DT_STRTAB)) {
-			strtab = (void*)dyn[i].d_un.d_ptr;
+			strtab = (char*)dyn[i].d_un.d_ptr;
 		}
 		else if(unlikely(dyn[i].d_tag == DT_SYMTAB)) {
-			symtab = (void*)dyn[i].d_un.d_ptr;
+			symtab = (ElfW(Sym)*)dyn[i].d_un.d_ptr;
 		}
 		
 		if(unlikely(nchains) && unlikely(strtab) && unlikely(symtab))
@@ -172,27 +183,25 @@ static int DLLINTERNAL_NOVIS get_tables(struct link_map * l_map, void *& symtab,
 }
 
 //
-static void * DLLINTERNAL_NOVIS find_symbol(struct link_map * l_map, const char * name, int stt_type, int stb_type, void * symtab, void * strtab, int nchains) {
-	ElfW(Sym) * sym;
+static void * DLLINTERNAL_NOVIS find_symbol(struct link_map * l_map, const char * name, int stt_type, int stb_type, ElfW(Sym) * symtab, char * strtab, int nchains) {
 	char * str;
 	size_t name_len;
 	
-	sym = (ElfW(Sym)*)symtab;
 	name_len = strlen(name);
 	
 	for(int i = 0; likely(i < nchains); i++) {
 #ifdef __x86_64__
-		if(likely(ELF64_ST_TYPE(sym[i].st_info) != stt_type) || likely(ELF64_ST_BIND(sym[i].st_info) != stb_type))
+		if(likely(ELF64_ST_TYPE(symtab[i].st_info) != stt_type) || likely(ELF64_ST_BIND(symtab[i].st_info) != stb_type))
 			continue;
 #else
-		if(likely(ELF32_ST_TYPE(sym[i].st_info) != stt_type) || likely(ELF32_ST_BIND(sym[i].st_info) != stb_type))
+		if(likely(ELF32_ST_TYPE(symtab[i].st_info) != stt_type) || likely(ELF32_ST_BIND(symtab[i].st_info) != stb_type))
 			continue;
 #endif		
-		str = (char*)((unsigned long)strtab + sym[i].st_name);
+		str = strtab + symtab[i].st_name;
 		
 		if(unlikely(mm_strncmp(str, name, name_len) == 0)) {
 			if(likely(str[name_len]==0)) {
-				return((void*)(l_map->l_addr + sym[i].st_value));
+				return((void*)(l_map->l_addr + symtab[i].st_value));
 			}
 		}
 	}
@@ -203,8 +212,8 @@ static void * DLLINTERNAL_NOVIS find_symbol(struct link_map * l_map, const char 
 // 
 static void * DLLINTERNAL_NOVIS get_real_func_ptr(const char * lib, const char * name, int * errorcode) {
 	struct link_map * l_map;
-	void * symtab;
-	void * strtab;
+	ElfW(Sym) * symtab;
+	char * strtab;
 	int nchains;
 	void * sym_ptr;
 	

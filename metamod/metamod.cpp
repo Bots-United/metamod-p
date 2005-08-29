@@ -89,10 +89,6 @@ MPlayerList g_Players;
 DLHANDLE metamod_handle;
 int metamod_not_loaded = 0;
 
-#ifdef UNFINISHED
-MHookList *Hooks;
-#endif /* UNFINISHED */
-
 // Very first metamod function that's run.
 // Do startup operations...
 int DLLINTERNAL metamod_startup(void) {	
@@ -136,9 +132,9 @@ int DLLINTERNAL metamod_startup(void) {
 		char mvers[32];
 		
 		if(vers[2]==0)
-			safe_snprintf(mvers, sizeof(mvers), "%d.%dp%d", vers[0], vers[1], vers[3]);	
+			safevoid_snprintf(mvers, sizeof(mvers), "%d.%dp%d", vers[0], vers[1], vers[3]);	
 		else
-			safe_snprintf(mvers, sizeof(mvers), "%d.%d.%dp%d", vers[0], vers[1], vers[2], vers[3]);	
+			safevoid_snprintf(mvers, sizeof(mvers), "%d.%d.%dp%d", vers[0], vers[1], vers[2], vers[3]);	
 		
 		CVAR_SET_STRING(meta_version.name, mvers);
 	}
@@ -225,11 +221,6 @@ int DLLINTERNAL metamod_startup(void) {
 	Engine.pl_funcs->pfnRegUserMsg = meta_RegUserMsg;
 	Engine.pl_funcs->pfnQueryClientCvarValue = meta_QueryClientCvarValue;
 
-#ifdef UNFINISHED
-	// Init the list of event/logline hooks.
-	Hooks = new MHookList();
-#endif /* UNFINISHED */
-
 	// Before, we loaded plugins before loading the game DLL, so that if no
 	// plugins caught engine functions, we could pass engine funcs straight
 	// to game dll, rather than acting as intermediary.  (Should perform
@@ -273,11 +264,6 @@ int DLLINTERNAL metamod_startup(void) {
 		// Exit on failure here?  Dunno...
 	}
 
-#ifdef UNFINISHED
-	// Start up the log parsing thread.
-	startup_logparse_thread();
-#endif /* UNFINISHED */
-
 	// Allow for commands to metamod plugins at startup.  Autoexec.cfg is
 	// read too early, and server.cfg is read too late.
 	//
@@ -297,7 +283,7 @@ int DLLINTERNAL metamod_startup(void) {
 		else {
 			char cmd[NAME_MAX];
 			META_LOG("Exec'ing metamod exec.cfg: %s...", mmfile);
-			safe_snprintf(cmd, sizeof(cmd), "exec %s\n", mmfile);
+			safevoid_snprintf(cmd, sizeof(cmd), "exec %s\n", mmfile);
 			SERVER_COMMAND(cmd);
 		}
 	}
@@ -343,7 +329,7 @@ mBOOL DLLINTERNAL meta_init_gamedll(void) {
 			META_WARNING("dll: Couldn't get cwd; %s", strerror(errno));
 			RETURN_ERRNO(mFALSE, ME_NULLRESULT);
 		}
-		safe_snprintf(GameDLL.gamedir, sizeof(GameDLL.gamedir), 
+		safevoid_snprintf(GameDLL.gamedir, sizeof(GameDLL.gamedir), 
 				"%s/%s", buf, gamedir);
 		STRNCPY(GameDLL.name, gamedir, sizeof(GameDLL.name));
 	}

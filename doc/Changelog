@@ -1,5 +1,16 @@
 # vim: set tw=75 ft=none :
 
+2005/08/24      1.18p26
+[Patch: Metamod-P v26 by Jussi Kivilinna]
+ - Fixed newapi functions not active on mods that don't use newapi.
+ - [win32] New is_gamedll() code.
+ - [linux] Fix for buggy DT_HASH in library walker function.
+ - Following features were removed to improve stability. These changes were 
+   not present in metamod.org version:
+      - Removed fix for engine_api varargs log calls with very long log 
+        string. 
+      - Removed optimized version of GET_USER_MSG_ID() for metamod-bots.
+
 2005/08/24      1.18p25
 [Patch: Metamod-P v25 by Jussi Kivilinna]
  - Added mutil::IsQueryingClientCvar().

@@ -55,6 +55,9 @@ typedef enum {
 	GINFO_REALDLL_FULLPATH,
 } ginfo_t;
 
+//
+typedef void (*query_callback_t)(edict_t * player, char * clcvar_name, char * clcvar_value);
+
 // Meta Utility Function table type.
 typedef struct meta_util_funcs_s {
 	void		(*pfnLogConsole)		(plid_t plid, const char *fmt, ...);
@@ -78,18 +81,8 @@ typedef struct meta_util_funcs_s {
 	int (*pfnUnloadPluginByHandle)(plid_t plid, void *plugin_handle, PLUG_LOADTIME now, PL_UNLOAD_REASON reason);
 	
 	const char *(*pfnIsQueryingClientCvar)	(plid_t plid, const edict_t *player);
-#ifdef UNFINISHED
-	int			(*pfnHookGameEvent)		(plid_t plid, game_event_t event, 
-											event_func_t pfnHandle);
-	int			(*pfnHookLogTrigger)	(plid_t plid, const char *trigger, 
-											logmatch_func_t pfnHandle);
-	int			(*pfnHookLogString)		(plid_t plid, const char *string, 
-											logmatch_func_t pfnHandle);
-	int			(*pfnHookLogRegex)		(plid_t plid, const char *pattern, 
-											logmatch_func_t pfnHandle);
-	qboolean	(*pfnRemoveHookID)		(plid_t plid, int hookid);
-	int			(*pfnRemoveHookAll)		(plid_t plid);
-#endif /* UNFINISHED */
+	
+//	qboolean (*pfnMetaQueryClientCvar)	(plid_t plid, edict_t * player, char * clcvar_name, query_callback_t pfnQueryResult);
 } mutil_funcs_t;
 extern mutil_funcs_t MetaUtilFunctions DLLHIDDEN;
 
@@ -110,14 +103,6 @@ extern mutil_funcs_t MetaUtilFunctions DLLHIDDEN;
 #define UNLOAD_PLUGIN		(*gpMetaUtilFuncs->pfnUnloadPlugin)
 #define UNLOAD_PLUGIN_BY_HANDLE	(*gpMetaUtilFuncs->pfnUnloadPluginByHandle)
 #define IS_QUERYING_CLIENT_CVAR (*gpMetaUtilFuncs->pfnIsQueryingClientCvar)
-
-#ifdef UNFINISHED
-#define HOOK_GAME_EVENT		(*gpMetaUtilFuncs->pfnHookGameEvent)
-#define HOOK_LOG_TRIGGER	(*gpMetaUtilFuncs->pfnHookLogTrigger)
-#define HOOK_LOG_STRING		(*gpMetaUtilFuncs->pfnHookLogString)
-#define HOOK_LOG_REGEX		(*gpMetaUtilFuncs->pfnHookLogRegex)
-#define REMOVE_HOOK_ID		(*gpMetaUtilFuncs->pfnRemoveHookID)
-#define REMOVE_HOOK_ALL		(*gpMetaUtilFuncs->pfnRemoveHookAll)
-#endif /* UNFINISHED */
+//#define META_QUERY_CLIENT_CVAR  (*gpMetaUtilFuncs->pfnMetaQueryClientCvar)
 
 #endif /* MUTIL_H */

@@ -198,8 +198,8 @@ static int DLLINTERNAL_NOVIS combine_module_export_tables(HMODULE moduleMM, HMOD
 	qsort(newSort, newNumberOfNames, sizeof(*newSort), (int(*)(const void*, const void*))&sort_names_list);
 	
 	//make newNames and newNameOrdinals lists (VirtualAlloc so we dont waste heap memory to stuff that isn't freed)
-	*(void**)&newNames        = VirtualAlloc(0, newNumberOfNames * sizeof(*newNames), MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE);
-	*(void**)&newNameOrdinals = VirtualAlloc(0, newNumberOfNames * sizeof(*newNameOrdinals), MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE);
+	*(void**)&newNames        = VirtualAlloc(0, newNumberOfNames * sizeof(*newNames), MEM_COMMIT, PAGE_READWRITE);
+	*(void**)&newNameOrdinals = VirtualAlloc(0, newNumberOfNames * sizeof(*newNameOrdinals), MEM_COMMIT, PAGE_READWRITE);
 	
 	for(i = 0; likely(i < newNumberOfNames); i++)
 	{

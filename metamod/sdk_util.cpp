@@ -39,12 +39,12 @@
 
 const char * DLLINTERNAL META_UTIL_VarArgs(const char *format, ...)
 {
-	va_list			argptr;
-	static char		string[4096];
+	va_list argptr;
+	static char string[4096];
 	
-	va_start (argptr, format);
-	safe_vsnprintf (string, sizeof(string), format, argptr);
-	va_end (argptr);
+	va_start(argptr, format);
+	safevoid_vsnprintf(string, sizeof(string), format, argptr);
+	va_end(argptr);
 
 	return(string);
 }

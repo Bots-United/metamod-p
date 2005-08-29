@@ -35,7 +35,8 @@
 #include "types_meta.h"		// mBOOL
 #include "osdep.h"		// PATH_MAX
 
-// Checks if file is hlsdk api game dll
+// Checks if file is hlsdk api game dll 
+//   (osdep_detect_gamedll_linux.cpp and osdep_detect_gamedll_win32.cpp)
 //  --Jussi Kivilinna
 mBOOL DLLINTERNAL is_gamedll(const char *filename);
 

@@ -163,11 +163,9 @@ class MRegMsg : public class_metamod_new {
 	// data:
 		int index;				// 1-based
 	public:
-		const char *name;			// name
+		const char *name;		// name, assumed constant string in gamedll
 		int msgid;				// msgid, assigned by engine
 		int size;				// size, if given by gamedll
-		int plugid;				// usermsg from plugin?
-		int search_count;			// how many times this regmsg has been searched by name?
 };
 
 
@@ -176,9 +174,8 @@ class MRegMsgList : public class_metamod_new {
 	private:
 	// data:
 		MRegMsg mlist[MAX_REG_MSGS];	// array of registered msgs
-		MRegMsg *flist[MAX_REG_MSGS];	// fast access list
-		enum {size = MAX_REG_MSGS };	// size of list, ie MAX_REG_MSGS
-		int endlist;			// index of last used entry
+		int size;						// size of list, ie MAX_REG_MSGS
+		int endlist;					// index of last used entry
 
 	public:
 	// constructor:
@@ -188,10 +185,7 @@ class MRegMsgList : public class_metamod_new {
 		MRegMsg * DLLINTERNAL add(const char *addname, int addmsgid, int addsize);
 		MRegMsg * DLLINTERNAL find(const char *findname);
 		MRegMsg * DLLINTERNAL find(int findmsgid);
-		MRegMsg * DLLINTERNAL fast_find(const char *findname);
-		void DLLINTERNAL show(void);	// list all msgs to console
-		void DLLINTERNAL reset_counts(void);
-		void DLLINTERNAL sort_flist(void);
+		void DLLINTERNAL show(void);						// list all msgs to console
 };
 
 #endif /* MREG_H */

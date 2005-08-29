@@ -97,8 +97,13 @@
 // DLLEXPORT is defined, for convenience.
 #define C_DLLEXPORT		extern "C" DLLEXPORT
 
-//int64bit
-typedef long long int int64bit;
+// Special version that fixes vsnprintf bugs.
+#ifdef FIX_VARARG_ENGINE_API_WARPERS
+int DLLINTERNAL safe_vsnprintf(char* s,  size_t n,  const char *format, va_list ap);
+int DLLINTERNAL safe_snprintf(char* s, size_t n, const char* format, ...);
+#endif
+void DLLINTERNAL safevoid_vsnprintf(char* s, size_t n, const char *format, va_list ap);
+void DLLINTERNAL safevoid_snprintf(char* s, size_t n, const char* format, ...);
 
 // Functions & types for DLL open/close/etc operations.
 extern mBOOL dlclose_handle_invalid DLLHIDDEN;
@@ -172,11 +177,6 @@ mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn);
 #endif /* _WIN32 */
 
 
-// Special version that fixes vsnprintf bugs.
-int DLLINTERNAL safe_vsnprintf(char* s,  size_t n,  const char *format, va_list ap);
-int DLLINTERNAL safe_snprintf(char* s, size_t n, const char* format, ...);
-
-
 // Linux doesn't have an strlwr() routine, so we write our own.
 #ifdef linux
 	#define strlwr(s) my_strlwr(s)
@@ -243,170 +243,6 @@ int DLLINTERNAL safe_snprintf(char* s, size_t n, const char* format, ...);
         #define S_IWGRP S_IWUSR
     #endif
 #endif /* _WIN32 */
-
-
-#ifdef UNFINISHED
-
-// Thread handling...
-#ifdef linux
-	#include <pthread.h>
-	typedef	pthread_t 	THREAD_T;
-	// returns 0==success, non-zero==failure
-	inline int DLLINTERNAL THREAD_CREATE(THREAD_T *tid, void (*func)(void)) {
-		int ret;
-		ret=pthread_create(tid, NULL, (void *(*)(void*)) func, NULL);
-		if(ret != 0) {
-			META_WARNING("Failure starting thread: %s", strerror(ret));
-			return(ret);
-		}
-		ret=pthread_detach(*tid);
-		if(ret != 0)
-			META_WARNING("Failure detaching thread: %s", strerror(ret));
-		return(ret);
-	}
-#elif defined(_WIN32)
-	// See:
-	//    http://msdn.microsoft.com/library/en-us/dllproc/prothred_4084.asp
-	typedef	DWORD 		THREAD_T;
-	// returns 0==success, non-zero==failure
-	inline int DLLINTERNAL THREAD_CREATE(THREAD_T *tid, void (*func)(void)) {
-		HANDLE ret;
-		// win32 returns NULL==failure, non-NULL==success
-		ret=CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) func, NULL, 0, tid);
-		if(ret==NULL)
-			META_WARNING("Failure starting thread: %s", str_GetLastError());
-		return(ret==NULL);
-	}
-#endif /* _WIN32 */
-#define THREAD_OK	0
-
-
-// Mutex handling...
-#ifdef linux
-	typedef pthread_mutex_t		MUTEX_T;
-	inline int DLLINTERNAL MUTEX_INIT(MUTEX_T *mutex) {
-		int ret;
-		ret=pthread_mutex_init(mutex, NULL);
-		if(ret!=THREAD_OK)
-			META_WARNING("mutex_init failed: %s", strerror(ret));
-		return(ret);
-	}
-	inline int DLLINTERNAL MUTEX_LOCK(MUTEX_T *mutex) {
-		int ret;
-		ret=pthread_mutex_lock(mutex);
-		if(ret!=THREAD_OK)
-			META_WARNING("mutex_lock failed: %s", strerror(ret));
-		return(ret);
-	}
-	inline int DLLINTERNAL MUTEX_UNLOCK(MUTEX_T *mutex) {
-		int ret;
-		ret=pthread_mutex_unlock(mutex);
-		if(ret!=THREAD_OK)
-			META_WARNING("mutex_unlock failed: %s", strerror(ret));
-		return(ret);
-	}
-#elif defined(_WIN32)
-	// Win32 has "mutexes" as well, but CS's are simpler.
-	// See:
-	//    http://msdn.microsoft.com/library/en-us/dllproc/synchro_2a2b.asp
-	typedef CRITICAL_SECTION	MUTEX_T;
-	// Note win32 routines don't return any error (return void).
-	inline int DLLINTERNAL MUTEX_INIT(MUTEX_T *mutex) {
-		InitializeCriticalSection(mutex);
-		return(THREAD_OK);
-	}
-	inline int DLLINTERNAL MUTEX_LOCK(MUTEX_T *mutex) {
-		EnterCriticalSection(mutex);
-		return(THREAD_OK);
-	}
-	inline int DLLINTERNAL MUTEX_UNLOCK(MUTEX_T *mutex) {
-		LeaveCriticalSection(mutex);
-		return(THREAD_OK);
-	}
-#endif /* _WIN32 (mutex) */
-
-
-// Condition variables...
-#ifdef linux
-	typedef pthread_cond_t	COND_T;
-	inline int DLLINTERNAL COND_INIT(COND_T *cond) {
-		int ret;
-		ret=pthread_cond_init(cond, NULL);
-		if(ret!=THREAD_OK)
-			META_WARNING("cond_init failed: %s", strerror(ret));
-		return(ret);
-	}
-	inline int DLLINTERNAL COND_WAIT(COND_T *cond, MUTEX_T *mutex) {
-		int ret;
-		ret=pthread_cond_wait(cond, mutex);
-		if(ret!=THREAD_OK)
-			META_WARNING("cond_wait failed: %s", strerror(ret));
-		return(ret);
-	}
-	inline int DLLINTERNAL COND_SIGNAL(COND_T *cond) {
-		int ret;
-		ret=pthread_cond_signal(cond);
-		if(ret!=THREAD_OK)
-			META_WARNING("cond_signal failed: %s", strerror(ret));
-		return(ret);
-	}
-#elif defined(_WIN32)
-	// Since win32 doesn't provide condition-variables, we have to model
-	// them with mutex/critical-sections and win32 events.  This uses the
-	// second (SetEvent) solution from:
-	//
-	//    http://www.cs.wustl.edu/~schmidt/win32-cv-1.html
-	//
-	// but without the waiters_count overhead, since we don't need
-	// broadcast functionality anyway.  Or actually, I guess it's more like
-	// the first (PulseEvent) solution, but with SetEven rather than
-	// PulseEvent. :)
-	//
-	// See also:
-	//    http://msdn.microsoft.com/library/en-us/dllproc/synchro_8ann.asp
-	typedef HANDLE COND_T; 
-	inline int DLLINTERNAL COND_INIT(COND_T *cond) {
-		*cond = CreateEvent(NULL,	// security attributes (none)
-							FALSE,	// manual-reset type (false==auto-reset)
-							FALSE,	// initial state (unsignaled)
-							NULL);	// object name (unnamed)
-		// returns NULL on error
-		if(unlikely(*cond==NULL)) {
-			META_WARNING("cond_init failed: %s", str_GetLastError());
-			return(-1);
-		}
-		else
-			return(0);
-	}
-	inline int DLLINTERNAL COND_WAIT(COND_T *cond, MUTEX_T *mutex) {
-		DWORD ret;
-		LeaveCriticalSection(mutex);
-		ret=WaitForSingleObject(*cond, INFINITE);
-		EnterCriticalSection(mutex);
-		// returns WAIT_OBJECT_0 if object was signaled; other return
-		// values indicate errors.
-		if(ret == WAIT_OBJECT_0)
-			return(0);
-		else {
-			META_WARNING("cond_wait failed: %s", str_GetLastError());
-			return(-1);
-		}
-	}
-	inline int DLLINTERNAL COND_SIGNAL(COND_T *cond) {
-		BOOL ret;
-		ret=SetEvent(*cond);
-		// returns zero on failure
-		if(ret==0) {
-			META_WARNING("cond_signal failed: %s", str_GetLastError());
-			return(-1);
-		}
-		else
-			return(0);
-	}
-#endif /* _WIN32 (condition variable) */
-
-#endif /*NFINISHED*/
-
 
 // Normalize/standardize a pathname.
 //  - For win32, this involves:

@@ -68,7 +68,7 @@ int DLLINTERNAL valid_gamedir_file(const char *path) {
 	if(likely(is_absolute_path(path)))
 		STRNCPY(buf, path, sizeof(buf));
 	else
-		safe_snprintf(buf, sizeof(buf), "%s/%s", GameDLL.gamedir, path);
+		safevoid_snprintf(buf, sizeof(buf), "%s/%s", GameDLL.gamedir, path);
 
 	ret=stat(buf, &st);
 	if(unlikely(ret != 0)) {
@@ -108,7 +108,7 @@ char * DLLINTERNAL full_gamedir_path(const char *path, char *fullpath) {
 	if(likely(is_absolute_path(path)))
 		STRNCPY(buf, path, sizeof(buf));
 	else
-		safe_snprintf(buf, sizeof(buf), "%s/%s", GameDLL.gamedir, path);
+		safevoid_snprintf(buf, sizeof(buf), "%s/%s", GameDLL.gamedir, path);
 	// Remove relative path components, if possible.
 	if(unlikely(!realpath(buf, fullpath))) {
 		META_DEBUG(4, ("Unable to get realpath for '%s': %s", buf,

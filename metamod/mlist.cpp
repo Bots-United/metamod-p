@@ -250,7 +250,7 @@ MPlugin * DLLINTERNAL MPluginList::find_match(const char *prefix) {
 		RETURN_ERRNO(NULL, ME_ARGUMENT);
 	pfound=NULL;
 	len=strlen(prefix);
-	safe_snprintf(buf, sizeof(buf), "mm_%s", prefix);
+	safevoid_snprintf(buf, sizeof(buf), "mm_%s", prefix);
 	for(i=0; likely(i < endlist); i++) {
 		iplug=&plist[i];
 		if(unlikely(iplug->status < PL_VALID))
