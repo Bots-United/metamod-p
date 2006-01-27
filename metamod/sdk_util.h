@@ -60,8 +60,8 @@
 #define REG_SVR_COMMAND		(*g_engfuncs.pfnAddServerCommand)
 #define SERVER_PRINT		(*g_engfuncs.pfnServerPrint)
 #define SET_SERVER_KEYVALUE	(*g_engfuncs.pfnSetKeyValue)
-#define QUERY_CLIENT_CVAR       (*g_engfuncs.pfnQueryClientCvarValue)
-
+#define QUERY_CLIENT_CVAR_VALUE	(*g_engfuncs.pfnQueryClientCvarValue)
+#define QUERY_CLIENT_CVAR_VALUE2 (*g_engfuncs.pfnQueryClientCvarValue2)
 
 // Add overloaded ENTINDEX() version for const edict_t pointer.
 // The pfnIndexOfEdict() function takes a const edict_t pointer

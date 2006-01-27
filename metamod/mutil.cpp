@@ -358,20 +358,9 @@ static const char * mutil_IsQueryingClientCvar(plid_t /*plid*/, const edict_t *p
 }
 
 //
-/*
-static qboolean mutil_MetaQueryClientCvar(plid_t plid, edict_t * player, char * clcvar_name, query_callback_t pfnQueryResult) {
-	plugin_info_t *plinfo;
-	
-	plinfo=(plugin_info_t *)plid;
-	
-	if(!g_Players.queue_query(plinfo, player, clcvar_name, pfnQueryResult)) {
-		//queue_query has already whined.. quit quietly.
-		return(false);
-	}
-	
-	return(true);
+static int mutil_MakeRequestID(plid_t /*plid*/) {
+	return(abs(0xbeef<<16) + (++requestid_counter));
 }
-*/
 
 // Meta Utility Function table.
 mutil_funcs_t MetaUtilFunctions = {
@@ -391,5 +380,5 @@ mutil_funcs_t MetaUtilFunctions = {
 	mutil_UnloadMetaPlugin, // pfnUnloadPlugin
 	mutil_UnloadMetaPluginByHandle, // pfnUnloadPluginByHandle
 	mutil_IsQueryingClientCvar, // pfnIsQueryingClientCvar
-//	mutil_MetaQueryClientCvar, // pfnMetaQueryClientCvar
+	mutil_MakeRequestID, 	// pfnMakeRequestID
 };

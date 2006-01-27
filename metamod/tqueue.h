@@ -33,7 +33,7 @@
  *    version.
  *
  */
-
+/*
 #ifndef TQUEUE_H
 #define TQUEUE_H
 
@@ -111,4 +111,4 @@ template<class qdata_t> inline qdata_t* Queue<qdata_t>::pop(void) {
 	return(ret);
 }
 
-#endif /* TQUEUE_H */
+#endif*/ /* TQUEUE_H */

@@ -225,5 +225,7 @@ typedef void (*FN_CONSTRUCTTUTORMESSAGEDECAYBUFFER) (int *buffer, int bufferLeng
 typedef void (*FN_RESETTUTORMESSAGEDECAYDATA) (void);
 // Added 2005/08/11 (no SDK update):
 typedef void (*FN_QUERYCLIENTCVARVALUE) ( const edict_t *player, const char *cvarName );  
+// Added 2005/11/21 (no SDK update):
+typedef void (*FN_QUERYCLIENTCVARVALUE2) ( const edict_t *player, const char *cvarName, int requestID );
 
 #endif /* ENGINE_API_H */

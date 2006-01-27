@@ -871,16 +871,42 @@ static void mm_ResetTutorMessageDecayData(void) {
 }
 
 // Added 2005/08/11 (no SDK update):
-
 static void mm_QueryClientCvarValue(const edict_t *player, const char *cvarName) {
-	// Engine version didn't change when this API was added. We need to check if pointer is valid.
-	if(likely(g_engfuncs.pfnQueryClientCvarValue) && unlikely(!IS_VALID_PTR((void*)g_engfuncs.pfnQueryClientCvarValue)))
-		g_engfuncs.pfnQueryClientCvarValue = 0;
+	static mBOOL checked_valid = mFALSE;
+	static mBOOL is_valid = mFALSE;
 	
-	// record queries
-	g_Players.set_player_cvar_query(player, cvarName);
+	// Engine version didn't change when this API was added. We need to check if pointer is valid.
+	if(likely(g_engfuncs.pfnQueryClientCvarValue)) {
+		if(unlikely(!checked_valid)) {
+			is_valid = IS_VALID_PTR((void*)g_engfuncs.pfnQueryClientCvarValue);
+			checked_valid = mTRUE;
+		}
+		
+		if(unlikely(!is_valid))
+			g_engfuncs.pfnQueryClientCvarValue = 0;
+	}
 	
 	META_ENGINE_HANDLE_void(FN_QUERYCLIENTCVARVALUE, pfnQueryClientCvarValue, 2p, (player, cvarName));
+	RETURN_API_void()
+}
+
+// Added 2005/11/21 (no SDK update):
+static void mm_QueryClientCvarValue2(const edict_t *player, const char *cvarName, int requestID) {
+	static mBOOL checked_valid = mFALSE;
+	static mBOOL is_valid = mFALSE;
+	
+	// Engine version didn't change when this API was added. We need to check if pointer is valid.
+	if(likely(g_engfuncs.pfnQueryClientCvarValue2)) {
+		if(unlikely(!checked_valid)) {
+			is_valid = IS_VALID_PTR((void*)g_engfuncs.pfnQueryClientCvarValue2);
+			checked_valid = mTRUE;
+		}
+		
+		if(unlikely(!is_valid))
+			g_engfuncs.pfnQueryClientCvarValue2 = 0;
+	}
+	
+	META_ENGINE_HANDLE_void(FN_QUERYCLIENTCVARVALUE2, pfnQueryClientCvarValue2, 2pi, (player, cvarName, requestID));
 	RETURN_API_void()
 }
 
@@ -1090,6 +1116,9 @@ enginefuncs_t meta_engfuncs = {
 	
 	// Added 2005/08/11 (no SDK update):
 	mm_QueryClientCvarValue,		// pfnQueryClientCvarValue()
+	
+	// Added 2005/11/21 (no SDK update):
+	mm_QueryClientCvarValue2,		// pfnQueryClientCvarValue2()
 	
 	{0,}
 };

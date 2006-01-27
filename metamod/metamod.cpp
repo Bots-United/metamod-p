@@ -85,9 +85,11 @@ MRegCvarList *RegCvars;
 MRegMsgList *RegMsgs;
 
 MPlayerList g_Players; 
+int requestid_counter = 0;
 
 DLHANDLE metamod_handle;
 int metamod_not_loaded = 0;
+
 
 // Very first metamod function that's run.
 // Do startup operations...

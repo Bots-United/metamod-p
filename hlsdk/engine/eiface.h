@@ -306,7 +306,10 @@ typedef struct enginefuncs_s
 	void		(*pfnResetTutorMessageDecayData)		( void );
 	
 	// Added 2005/08/11 (no SDK update):
-	void		(*pfnQueryClientCvarValue)		( const edict_t *player, const char *cvarName );  
+	void		(*pfnQueryClientCvarValue)		(const edict_t *player, const char *cvarName);  
+
+	// Added 2005/11/21 (no SDK update):
+	void		(*pfnQueryClientCvarValue2)		(const edict_t *player, const char *cvarName, int requestID);
 
 #ifdef __METAMOD_BUILD__
 	//extra (future updates)
@@ -543,6 +546,11 @@ typedef struct
 	
 	// Added 2005/08/11 (no SDK update):
 	void			(*pfnCvarValue)( const edict_t *pEnt, const char *value ); 
+	
+	// Added 2005/11/21 (no SDK update):
+	//    value is "Bad CVAR request" on failure (i.e that user is not connected or the cvar does not exist).
+	//    value is "Bad Player" if invalid player edict.
+	void                    (*pfnCvarValue2)( const edict_t *pEnt, int requestID, const char *cvarName, const char *value );
 } NEW_DLL_FUNCTIONS;
 typedef int	(*NEW_DLL_FUNCTIONS_FN)( NEW_DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion );
 

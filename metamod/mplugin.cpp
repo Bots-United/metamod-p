@@ -1111,7 +1111,7 @@ mBOOL DLLINTERNAL MPlugin::detach(PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
 		return(mTRUE);
 
 	if(unlikely(!(pfn_detach = (META_DETACH_FN) DLSYM(handle, "Meta_Detach")))) {
-		META_WARNING("dll: Error detach plugin '%s': Couldn't find Meta_detach(): %s", desc, DLERROR());
+		META_WARNING("dll: Error detach plugin '%s': Couldn't find Meta_Detach(): %s", desc, DLERROR());
 		// caller will dlclose()
 		RETURN_ERRNO(mFALSE, ME_DLMISSING);
 	}

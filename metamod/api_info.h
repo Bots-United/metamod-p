@@ -128,6 +128,8 @@ typedef struct newapi_info_s {
 	api_info_t pfnShouldCollide;
 	// Added 2005/08/11 (no SDK update):
 	api_info_t pfnCvarValue;
+	// Added 2005/11/21 (no SDK update):
+	api_info_t pfnCvarValue2;
 	api_info_t END;
 } newapi_info_t;
 
@@ -294,6 +296,8 @@ typedef struct engine_info_s {
 	api_info_t pfnResetTutorMessageDecayData;
 	// Added 2005/08/11 (no SDK update):
 	api_info_t pfnQueryClientCvarValue;
+	// Added 2005/11/21 (no SDK update):
+	api_info_t pfnQueryClientCvarValue2;
 	// end
 	api_info_t END;
 } engine_info_t;

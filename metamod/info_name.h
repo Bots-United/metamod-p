@@ -43,7 +43,7 @@
 #define VAUTHOR		"Will Day"
 #define VURL		"http://www.metamod.org/"
 
-#define COPYRIGHT_YEAR "2005"
+#define COPYRIGHT_YEAR "2006"
 
 // Various strings for the Windows DLL Resources in res_meta.rc
 #define RC_COMMENTS		"Metamod allows running multiple mod-like plugin DLLs, to add functionality or change the behavior of the running HLDS game mod.  See " VURL

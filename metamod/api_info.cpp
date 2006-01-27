@@ -100,6 +100,8 @@ const newapi_info_t newapi_info = {
 	{ mFALSE,  14,	api_caller_int_args_2p,		"ShouldCollide" },			// pfnShouldCollide
 	// Added 2005/08/11 (no SDK update):
 	{ mFALSE,  3,	api_caller_void_args_2p,	"CvarValue" },			// pfnCvarValue
+	// Added 2005/11/21 (no SDK update):
+	{ mFALSE,  3,	api_caller_void_args_pi2p,	"CvarValue2" },			// pfnCvarValue2
 	{ mFALSE,  0,	NULL, 	NULL },
 };
 
@@ -264,6 +266,8 @@ const engine_info_t engine_info = {
 	{ mFALSE,  9,	api_caller_void_args_void,	"ResetTutorMessageDecayData" },	// pfnResetTutorMessageDecayData
 	// Added 2005/08/11 (no SDK update):
 	{ mFALSE,  3,	api_caller_void_args_2p,	"QueryClientCvarValue" },	// pfnQueryClientCvarValue
+	// Added 2005/11/21 (no SDK update):
+	{ mFALSE,  3,	api_caller_void_args_2pi,	"QueryClientCvarValue2" },	// pfnQueryClientCvarValue2
 	// end
 	{ mFALSE,  0,   NULL,	NULL },
 };

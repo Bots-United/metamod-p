@@ -50,8 +50,8 @@ void DLLINTERNAL do_exit(int exitval);
 inline int DLLINTERNAL mm_strcmp(const char *s1, const char *s2) {
 	//use pointer to avoid inlining of strcmp
 	int (*__strcmp)(const char*, const char*) = &strcmp;
-	int diff;
-	return(likely((diff = *s1 - *s2) != 0) ? (diff) : (*__strcmp)(s1+1, s2+1));
+	int diff = *s1 - *s2;
+	return( likely(diff) ? diff : ( likely(*s1) ? (*__strcmp)(s1+1, s2+1) : 0 ) ); //if *s1 is zero then *s2 is too (because diff is zero)
 }
 
 // faster than c-lib strncmp() on short strings
@@ -60,8 +60,8 @@ inline int DLLINTERNAL mm_strncmp(const char *s1, const char *s2, size_t n) {
 		return(0);
 	//use pointer to avoid inlining of strncmp
 	int (*__strncmp)(const char*, const char*, size_t) = &strncmp;
-	int diff;
-	return(likely((diff = *s1 - *s2) != 0) ? (diff) : (*__strncmp)(s1+1, s2+1, n-1));
+	int diff = *s1 - *s2;
+	return( likely(diff) ? diff : ( likely(*s1) ? (*__strncmp)(s1+1, s2+1, n-1) : 0 ) ); //if *s1 is zero then *s2 is too (because diff is zero)
 }
 
 // Unlike snprintf(), strncpy() doesn't necessarily null-terminate the

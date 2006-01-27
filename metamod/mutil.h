@@ -55,9 +55,6 @@ typedef enum {
 	GINFO_REALDLL_FULLPATH,
 } ginfo_t;
 
-//
-typedef void (*query_callback_t)(edict_t * player, char * clcvar_name, char * clcvar_value);
-
 // Meta Utility Function table type.
 typedef struct meta_util_funcs_s {
 	void		(*pfnLogConsole)		(plid_t plid, const char *fmt, ...);
@@ -82,7 +79,7 @@ typedef struct meta_util_funcs_s {
 	
 	const char *(*pfnIsQueryingClientCvar)	(plid_t plid, const edict_t *player);
 	
-//	qboolean (*pfnMetaQueryClientCvar)	(plid_t plid, edict_t * player, char * clcvar_name, query_callback_t pfnQueryResult);
+	int (*pfnMakeRequestID)	(plid_t plid);
 } mutil_funcs_t;
 extern mutil_funcs_t MetaUtilFunctions DLLHIDDEN;
 
@@ -103,6 +100,6 @@ extern mutil_funcs_t MetaUtilFunctions DLLHIDDEN;
 #define UNLOAD_PLUGIN		(*gpMetaUtilFuncs->pfnUnloadPlugin)
 #define UNLOAD_PLUGIN_BY_HANDLE	(*gpMetaUtilFuncs->pfnUnloadPluginByHandle)
 #define IS_QUERYING_CLIENT_CVAR (*gpMetaUtilFuncs->pfnIsQueryingClientCvar)
-//#define META_QUERY_CLIENT_CVAR  (*gpMetaUtilFuncs->pfnMetaQueryClientCvar)
+#define MAKE_REQUESTID		(*gpMetaUtilFuncs->pfnMakeRequestID)
 
 #endif /* MUTIL_H */

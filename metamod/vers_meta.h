@@ -43,17 +43,17 @@
 #endif /* not OPT_TYPE */
 
 
-#define VDATE 			"2005/08/29"
-#define VMETA_VERSION		"1.18"
+#define VDATE 			"2006/01/27"
+#define VMETA_VERSION		"1.19"
 
 #define VPATCH_NAME		"Metamod-P (mm-p)"
-#define VPATCH_IVERSION		26
-#define VPATCH_VERSION		"26"
+#define VPATCH_IVERSION		27
+#define VPATCH_VERSION		"27"
 #define VPATCH_AUTHOR		"Jussi Kivilinna"
-#define VPATCH_WEBSITE		"http://koti.mbnet.fi/axh/"
+#define VPATCH_WEBSITE		"http://metamod-p.sourceforge.net/"
 
 #define VVERSION		VMETA_VERSION "p" VPATCH_VERSION
-#define RC_VERS_DWORD		1,18,0,VPATCH_IVERSION	// Version Windows DLL Resources in res_meta.rc
+#define RC_VERS_DWORD		1,19,0,VPATCH_IVERSION	// Version Windows DLL Resources in res_meta.rc
 
 
 

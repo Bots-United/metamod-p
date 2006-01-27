@@ -234,7 +234,7 @@ char * DLLINTERNAL str_GetLastError(void) {
 	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 
 			NULL, GetLastError(), 
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), //! Default language 
-			(LPTSTR) &buf, 0, NULL);
+			(LPTSTR) &buf, MAX_STRBUF_LEN-1, NULL);
 	return(buf);
 }
 #endif /* _WIN32 */

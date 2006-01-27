@@ -119,7 +119,9 @@ extern int metamod_not_loaded DLLHIDDEN;
 
 // Holds cached player info, right now only things for querying cvars
 // Max players is always 32, small enough that we can use a static array
-extern MPlayerList g_Players;
+extern MPlayerList g_Players DLLHIDDEN;
+
+extern int requestid_counter DLLHIDDEN;
 
 int DLLINTERNAL metamod_startup(void);
 

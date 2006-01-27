@@ -1,5 +1,13 @@
 # vim: set tw=75 ft=none :
 
+2006/01/27      1.18p27
+[Patch: Metamod-P v27 by Jussi Kivilinna]
+ - Fixed problem with hlds engine random-number generator going out of sync
+   between client.dll and gamedll when plugin used RANDOM_LONG or 
+   RANDOM_FLOAT.
+ - Re-enabled fix for engine_api varargs log calls with very long log string.
+ - Plus MM.org 1.19 changes :P
+
 2005/08/24      1.18p26
 [Patch: Metamod-P v26 by Jussi Kivilinna]
  - Fixed newapi functions not active on mods that don't use newapi.

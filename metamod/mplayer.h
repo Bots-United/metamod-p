@@ -42,19 +42,10 @@
 #include "mutil.h"         // query_callback_t
 #include "types_meta.h"    // mBOOL
 #include "new_baseclass.h" // class_metamod_new
-#include "tqueue.h"        // Queue
 
 
 // Numbers of players limit set by the engine
 #define MAX_PLAYERS 32
-
-
-//
-typedef struct {
-	plugin_info_t * plinfo;		// plugin that is querying
-	char * clcvar_name;		// cvar that is being queried
-	query_callback_t callback;	// plugin callback function
-} client_cvar_query_t;
 
 
 // Info on an individual player
@@ -63,8 +54,6 @@ class MPlayer : public class_metamod_new
 private:
 	mBOOL isQueried;                         // is this player currently queried for a cvar value
 	char *cvarName;                          // name of the cvar if getting queried
-	
-	Queue<client_cvar_query_t> queryQueue;
 	
 	MPlayer (const MPlayer&) DLLINTERNAL;
 	MPlayer& operator=(const MPlayer&) DLLINTERNAL; 
@@ -96,7 +85,6 @@ public:
 	void        DLLINTERNAL clear_player_cvar_query(const edict_t *pEntity, const char *cvar=NULL);
 	void        DLLINTERNAL clear_all_cvar_queries(void);
 	const char *DLLINTERNAL is_querying_cvar(const edict_t *pEntity);
-	mBOOL       DLLINTERNAL queue_query(plugin_info_t * plinfo, edict_t * player, char * clcvar_name, query_callback_t pfnQueryResult);
 };
 
 

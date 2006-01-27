@@ -1,7 +1,7 @@
 MODNAME = metamod
 
 #__METAMOD_BUILD__ for our special eiface.h
-EXTRA_CFLAGS = -D__METAMOD_BUILD__ -D__META_DEBUG_VALUE__CACHE_AS_INT__
+EXTRA_CFLAGS = -D__METAMOD_BUILD__ -D__META_DEBUG_VALUE__CACHE_AS_INT__ -DFIX_VARARG_ENGINE_API_WARPERS
 #-DMETA_PERFMON
 
 SRCFILES = api_hook.cpp api_info.cpp commands_meta.cpp conf_meta.cpp \

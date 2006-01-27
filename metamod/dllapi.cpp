@@ -196,6 +196,7 @@ static void mm_ServerDeactivate(void) {
 	Plugins->unpause_all();
 	// Plugins->retry_all(PT_CHANGELEVEL);
 	g_Players.clear_all_cvar_queries();
+	requestid_counter = 0;
 	RETURN_API_void();
 }
 static void mm_PlayerPreThink(edict_t *pEntity) {
@@ -333,6 +334,13 @@ static int mm_ShouldCollide(edict_t *pentTouched, edict_t *pentOther) {
 static void mm_CvarValue(const edict_t *pEnt, const char *value) {
 	g_Players.clear_player_cvar_query(pEnt);
 	META_NEWAPI_HANDLE_void(FN_CVARVALUE, pfnCvarValue, 2p, (pEnt, value));
+	
+	RETURN_API_void();
+}
+// Added 2005/11/21 (no SDK update):
+static void mm_CvarValue2(const edict_t *pEnt, int requestID, const char *cvarName, const char *value) {
+	META_NEWAPI_HANDLE_void(FN_CVARVALUE2, pfnCvarValue2, pi2p, (pEnt, requestID, cvarName, value));
+	
 	RETURN_API_void();
 }
 
@@ -470,6 +478,8 @@ static NEW_DLL_FUNCTIONS gNewFunctionTable =
 	mm_ShouldCollide,				//! pfnShouldCollide()
 	// Added 2005/08/11 (no SDK update):
 	mm_CvarValue,				//! pfnCvarValue()
+	// Added 2005/11/21 (no SDK update):
+	mm_CvarValue2,				//! pfnCvarValue2()
 };
 
 C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *interfaceVersion) 
@@ -488,10 +498,16 @@ C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *in
 	}
 	
 	// Detect old engine
-	if(unlikely(!IS_VALID_PTR((void*)g_engfuncs.pfnQueryClientCvarValue)))
-		memcpy(pNewFunctionTable, &gNewFunctionTable, sizeof(NEW_DLL_FUNCTIONS) - sizeof(FN_CVARVALUE)); // old engine without query client cvar API
-	else
-		memcpy(pNewFunctionTable, &gNewFunctionTable, sizeof(NEW_DLL_FUNCTIONS));
+	mBOOL valid_query1 = IS_VALID_PTR((void*)g_engfuncs.pfnQueryClientCvarValue);
+	mBOOL valid_query2 = IS_VALID_PTR((void*)g_engfuncs.pfnQueryClientCvarValue2);
+	size_t copysize = sizeof(NEW_DLL_FUNCTIONS);
+	
+	if(!valid_query1 && !valid_query2)
+		copysize -= sizeof(FN_CVARVALUE) + sizeof(FN_CVARVALUE2); // old engine without query client cvar APIs
+	else if(!valid_query2)
+		copysize -= sizeof(FN_CVARVALUE2); // old engine without query client cvar2 API
+	
+	memcpy(pNewFunctionTable, &gNewFunctionTable, copysize);
 	
 	return(TRUE);
 }

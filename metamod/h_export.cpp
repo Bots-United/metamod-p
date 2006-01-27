@@ -29,6 +29,7 @@
 
 
 #include <extdll.h>			// always
+#include <time.h>
 
 #include "h_export.h"		// me
 #include "metamod.h"		// engine_t, etc

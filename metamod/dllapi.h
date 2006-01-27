@@ -115,5 +115,7 @@ typedef void (*FN_GAMESHUTDOWN) (void);
 typedef int (*FN_SHOULDCOLLIDE) (edict_t *pentTouched, edict_t *pentOther);
 // Added 2005/08/11 (no SDK update):
 typedef void (*FN_CVARVALUE)(const edict_t *pEnt, const char *value);
+// Added 2005/11/21 (no SDK update):
+typedef void (*FN_CVARVALUE2)(const edict_t *pEnt, int requestID, const char *cvarName, const char *value);
 
 #endif /* DLLAPI_H */
