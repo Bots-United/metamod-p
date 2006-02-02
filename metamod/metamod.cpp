@@ -221,8 +221,13 @@ int DLLINTERNAL metamod_startup(void) {
 	Engine.pl_funcs->pfnCVarRegister = meta_CVarRegister;
 	Engine.pl_funcs->pfnCvar_RegisterVariable = meta_CVarRegister;
 	Engine.pl_funcs->pfnRegUserMsg = meta_RegUserMsg;
-	Engine.pl_funcs->pfnQueryClientCvarValue = meta_QueryClientCvarValue;
-
+	if(likely(IS_VALID_PTR((void*)Engine.pl_funcs->pfnQueryClientCvarValue)))
+		Engine.pl_funcs->pfnQueryClientCvarValue = meta_QueryClientCvarValue;
+	else
+		Engine.pl_funcs->pfnQueryClientCvarValue = NULL;
+	if(unlikely(!IS_VALID_PTR((void*)Engine.pl_funcs->pfnQueryClientCvarValue2)))
+		Engine.pl_funcs->pfnQueryClientCvarValue2 = NULL;
+	
 	// Before, we loaded plugins before loading the game DLL, so that if no
 	// plugins caught engine functions, we could pass engine funcs straight
 	// to game dll, rather than acting as intermediary.  (Should perform
