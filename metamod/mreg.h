@@ -71,9 +71,6 @@ typedef enum {
 typedef void (*REG_CMD_FN) (void);
 
 
-typedef int (*pfncompare)(const void*, const void*);
-
-
 // An individual registered function/command.
 class MRegCmd : public class_metamod_new {
 	friend class MRegCmdList;
@@ -179,9 +176,6 @@ class MRegMsgList : public class_metamod_new {
 		MRegMsg mlist[MAX_REG_MSGS];	// array of registered msgs
 		int size;						// size of list, ie MAX_REG_MSGS
 		int endlist;					// index of last used entry
-		int regcount;
-		
-		static int compare_names(const MRegMsg *a, const MRegMsg *b);
 
 	public:
 	// constructor:

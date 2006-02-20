@@ -43,12 +43,12 @@
 #endif /* not OPT_TYPE */
 
 
-#define VDATE 			"2006/01/27"
+#define VDATE 			"2006/02/26"
 #define VMETA_VERSION		"1.19"
 
 #define VPATCH_NAME		"Metamod-P (mm-p)"
-#define VPATCH_IVERSION		27
-#define VPATCH_VERSION		"27"
+#define VPATCH_IVERSION		28
+#define VPATCH_VERSION		"28"
 #define VPATCH_AUTHOR		"Jussi Kivilinna"
 #define VPATCH_WEBSITE		"http://metamod-p.sourceforge.net/"
 

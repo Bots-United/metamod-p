@@ -568,6 +568,7 @@ mBOOL DLLINTERNAL MPlugin::load(PLUG_LOADTIME now) {
 					handle=NULL;
 			}
 			status=PL_BADFILE;
+			info=NULL; // prevent crash
 			// meta_errno should be already set in query()
 			return(mFALSE);
 		}

@@ -80,6 +80,8 @@ typedef struct meta_util_funcs_s {
 	const char *(*pfnIsQueryingClientCvar)	(plid_t plid, const edict_t *player);
 	
 	int (*pfnMakeRequestID)	(plid_t plid);
+	
+	void            (*pfnGetHookTables)             (plid_t plid, enginefuncs_t **peng, DLL_FUNCTIONS **pdll, NEW_DLL_FUNCTIONS **pnewdll);
 } mutil_funcs_t;
 extern mutil_funcs_t MetaUtilFunctions DLLHIDDEN;
 
@@ -101,5 +103,6 @@ extern mutil_funcs_t MetaUtilFunctions DLLHIDDEN;
 #define UNLOAD_PLUGIN_BY_HANDLE	(*gpMetaUtilFuncs->pfnUnloadPluginByHandle)
 #define IS_QUERYING_CLIENT_CVAR (*gpMetaUtilFuncs->pfnIsQueryingClientCvar)
 #define MAKE_REQUESTID		(*gpMetaUtilFuncs->pfnMakeRequestID)
+#define GET_HOOK_TABLES         (*gpMetaUtilFuncs->pfnGetHookTables)
 
 #endif /* MUTIL_H */

@@ -115,6 +115,10 @@ extern MRegMsgList *RegMsgs DLLHIDDEN;
 extern meta_globals_t PublicMetaGlobals DLLHIDDEN;
 extern meta_globals_t PrivateMetaGlobals DLLHIDDEN;
 
+// hook function tables
+extern DLL_FUNCTIONS *g_pHookedDllFunctions DLLHIDDEN;
+extern NEW_DLL_FUNCTIONS *g_pHookedNewDllFunctions DLLHIDDEN;
+
 extern int metamod_not_loaded DLLHIDDEN;
 
 // Holds cached player info, right now only things for querying cvars

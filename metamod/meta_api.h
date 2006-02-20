@@ -62,7 +62,7 @@
 // Version 5:10 added GINFO_REALDLL_FULLPATH for GetGameInfo [v1.17]
 // Version 5:11 added plugin loading and unloading API [v1.18]
 // Version 5:12 added IS_QUERYING_CLIENT_CVAR to mutils [v1.18]
-// Version 5:13 added MAKE_REQUESTID to mutils [v1.19]
+// Version 5:13 added MAKE_REQUESTID and GET_HOOK_TABLES to mutils [v1.19]
 #define META_INTERFACE_VERSION "5:13"
 
 // Flags returned by a plugin's api function.

@@ -362,6 +362,16 @@ static int mutil_MakeRequestID(plid_t /*plid*/) {
 	return(abs(0xbeef<<16) + (++requestid_counter));
 }
 
+//
+static void mutil_GetHookTables(plid_t plid, enginefuncs_t **peng, DLL_FUNCTIONS **pdll, NEW_DLL_FUNCTIONS **pnewdll) {
+	if (peng)
+		*peng = &meta_engfuncs;
+	if (pdll)
+		*pdll = g_pHookedDllFunctions;
+	if (pnewdll)
+		*pnewdll = g_pHookedNewDllFunctions;
+}
+
 // Meta Utility Function table.
 mutil_funcs_t MetaUtilFunctions = {
 	mutil_LogConsole,		// pfnLogConsole
@@ -381,4 +391,5 @@ mutil_funcs_t MetaUtilFunctions = {
 	mutil_UnloadMetaPluginByHandle, // pfnUnloadPluginByHandle
 	mutil_IsQueryingClientCvar, // pfnIsQueryingClientCvar
 	mutil_MakeRequestID, 	// pfnMakeRequestID
+	mutil_GetHookTables,   // pfnGetHookTables
 };

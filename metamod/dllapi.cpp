@@ -411,6 +411,8 @@ static DLL_FUNCTIONS gFunctionTable =
 	mm_AllowLagCompensation,		//! pfnAllowLagCompensation()	(wd) SDK2
 };
 
+DLL_FUNCTIONS *g_pHookedDllFunctions = &gFunctionTable;
+
 // It's not clear what the difference is between GetAPI and GetAPI2; they
 // both appear to return the exact same function table.  
 //
@@ -481,6 +483,8 @@ static NEW_DLL_FUNCTIONS gNewFunctionTable =
 	// Added 2005/11/21 (no SDK update):
 	mm_CvarValue2,				//! pfnCvarValue2()
 };
+
+NEW_DLL_FUNCTIONS *g_pHookedNewDllFunctions = &gNewFunctionTable;
 
 C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *interfaceVersion) 
 {

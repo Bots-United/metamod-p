@@ -450,15 +450,13 @@ void DLLINTERNAL MRegCvarList::show(int plugin_id) {
 
 // Constructor
 MRegMsgList::MRegMsgList(void)
-	: size(MAX_REG_MSGS), endlist(0), regcount(0)
+	: size(MAX_REG_MSGS), endlist(0)
 {
 	int i;
 	// initialize array
+	memset(mlist, 0, sizeof(mlist));
 	for(i=0; likely(i < size); i++) {
 		mlist[i].index=i+1;		// 1-based
-		mlist[i].name=0;
-		mlist[i].msgid=-1;
-		mlist[i].size=0;
 	}
 	endlist=0;
 }
@@ -467,7 +465,7 @@ MRegMsgList::MRegMsgList(void)
 // meta_errno values:
 //  - ME_MAXREACHED		reached max number of msgs allowed
 MRegMsg * DLLINTERNAL MRegMsgList::add(const char *addname, int addmsgid, int addsize) {
-	MRegMsg *imsg = 0;
+	MRegMsg *imsg;
 
 	if(unlikely(endlist==size)) {
 		// all slots used
@@ -475,20 +473,9 @@ MRegMsg * DLLINTERNAL MRegMsgList::add(const char *addname, int addmsgid, int ad
 				addname, size);
 		RETURN_ERRNO(NULL, ME_MAXREACHED);
 	}
-	
-	for(int i = 0; likely(i < size); i++) {
-		if(unlikely(mlist[i].index - 1 == endlist)) {
-			imsg = &mlist[endlist++];
-			break;
-		}
-	}
-	
-	if(!imsg) {
-		// all slots used?
-		META_ERROR("Couldn't add registered msg '%s' to list; cannot find free msg slot",
-				addname);
-		RETURN_ERRNO(NULL, ME_MAXREACHED);
-	}
+
+	imsg = &mlist[endlist];
+	endlist++;
 
 	// Copy msg data into empty slot.
 	// Note: 'addname' assumed to be a constant string allocated in the
@@ -496,31 +483,19 @@ MRegMsg * DLLINTERNAL MRegMsgList::add(const char *addname, int addmsgid, int ad
 	imsg->name=addname;
 	imsg->msgid=addmsgid;
 	imsg->size=addsize;
-	
-	qsort(&mlist, size, sizeof(MRegMsg), (pfncompare)&MRegMsgList::compare_names);
-	imsg = find(addname);
-	
-	return(imsg);
-}
 
-//
-int MRegMsgList::compare_names(const MRegMsg * a, const MRegMsg * b) {
-	return(mm_strcmp(a->name, b->name));
+	return(imsg);
 }
 
 // Try to find a registered msg with the given name.
 // meta_errno values:
 //  - ME_NOTFOUND	couldn't find a matching cvar
 MRegMsg * DLLINTERNAL MRegMsgList::find(const char *findname) {
-	MRegMsg key, *msg;
-	
-	key.name = findname;
-	
-	msg = (MRegMsg*)bsearch(&key, &mlist, size, sizeof(MRegMsg), (pfncompare)&MRegMsgList::compare_names);
-	
-	if(msg)
-		return(msg);
-	
+	int i;
+	for(i=0; likely(i < endlist); i++) {
+		if(unlikely(!mm_strcmp(mlist[i].name, findname)))
+			return(&mlist[i]);
+	}
 	RETURN_ERRNO(NULL, ME_NOTFOUND);
 }
 
@@ -529,7 +504,7 @@ MRegMsg * DLLINTERNAL MRegMsgList::find(const char *findname) {
 //  - ME_NOTFOUND	couldn't find a matching cvar
 MRegMsg * DLLINTERNAL MRegMsgList::find(int findmsgid) {
 	int i;
-	for(i=0; likely(i < size); i++) {
+	for(i=0; likely(i < endlist); i++) {
 		if(unlikely(mlist[i].msgid == findmsgid))
 			return(&mlist[i]);
 	}
@@ -538,28 +513,20 @@ MRegMsg * DLLINTERNAL MRegMsgList::find(int findmsgid) {
 
 // List the registered usermsgs for the gamedll.
 void DLLINTERNAL MRegMsgList::show(void) {
-	int j, i, n=0;
+	int i, n=0;
 	MRegMsg *imsg;
 	char bname[25+1];	// +1 for term null
 
 	META_CONS("%-*s    %5s  %5s", 
 			sizeof(bname)-1, "Game registered user msgs:", "msgid", "size");
-	
 	for(i=0; likely(i < endlist); i++) {
-		for(j=0; likely(j < MAX_REG_MSGS); j++) {
-			if(likely(mlist[j].index - 1 != i))
-				continue;
-			
-			imsg = &mlist[j];
-			STRNCPY(bname, imsg->name, sizeof(bname));
-			META_CONS("   %-*s   %3d    %3d", 
-					sizeof(bname)-1, bname,
-					imsg->msgid,
-					imsg->size);
-			n++;
-			
-			break;
-		}
+		imsg = &mlist[i];
+		STRNCPY(bname, imsg->name, sizeof(bname));
+		META_CONS("   %-*s   %3d    %3d", 
+				sizeof(bname)-1, bname,
+				imsg->msgid,
+				imsg->size);
+		n++;
 	}
 	META_CONS("%d game user msgs", n); 
 }
