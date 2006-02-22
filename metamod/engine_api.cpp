@@ -79,7 +79,7 @@
 				buf = (char *)malloc(len + 1); \
 				if(likely(buf)) { \
 					va_start(vargs, szFmt); \
-					safe_vsnprintf(buf, len + 1, szFmt, vargs); \
+					safevoid_vsnprintf(buf, len + 1, szFmt, vargs); \
 					va_end(vargs); \
 				} else { \
 					buf=strbuf; \
