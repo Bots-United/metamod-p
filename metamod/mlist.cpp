@@ -4,7 +4,7 @@
 // mlist.cpp - functions for list of plugins (class MPluginList)
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -56,7 +56,7 @@ MPluginList::MPluginList(const char *ifile)
 	// store filename of ini file
 	STRNCPY(inifile, ifile, sizeof(inifile));
 	// initialize array
-	for(i=0; likely(i < size); i++) {
+	for(i=0; i < size; i++) {
 		//reset to empty
 		plist[i].index=i+1;
 		reset_plugin(&plist[i]);
@@ -86,10 +86,10 @@ void DLLINTERNAL MPluginList::reset_plugin(MPlugin *pl_find) {
 //  - ME_NOTFOUND	couldn't find a matching plugin
 MPlugin * DLLINTERNAL MPluginList::find(int pindex) {
 	MPlugin *pfound;
-	if(unlikely(pindex <= 0))
+	if(pindex <= 0)
 		RETURN_ERRNO(NULL, ME_ARGUMENT);
 	pfound=&plist[pindex-1];
-	if(unlikely(pfound->status < PL_VALID))
+	if(pfound->status < PL_VALID)
 		RETURN_ERRNO(NULL, ME_NOTFOUND);
 	else
 		return(pfound);
@@ -102,12 +102,12 @@ MPlugin * DLLINTERNAL MPluginList::find(int pindex) {
 MPlugin * DLLINTERNAL MPluginList::find(DLHANDLE handle) {
 	int i;
 
-	if(unlikely(!handle))
+	if(!handle)
 		RETURN_ERRNO(NULL, ME_ARGUMENT);
-	for(i=0; likely(i < endlist); i++) {
-		if(unlikely(plist[i].status < PL_VALID))
+	for(i=0; i < endlist; i++) {
+		if(plist[i].status < PL_VALID)
 			continue;
-		if(unlikely(plist[i].handle == handle))
+		if(plist[i].handle == handle)
 			return(&plist[i]);
 	}
 	RETURN_ERRNO(NULL, ME_NOTFOUND);
@@ -117,13 +117,13 @@ MPlugin * DLLINTERNAL MPluginList::find(DLHANDLE handle) {
 void DLLINTERNAL MPluginList::clear_source_plugin_index(int source_index) {
 	int i;
 	
-	if(unlikely(source_index <= 0))
+	if(source_index <= 0)
 		return;
 	
-	for(i=0; likely(i < endlist); i++) {
-		if(unlikely(plist[i].status < PL_VALID))
+	for(i=0; i < endlist; i++) {
+		if(plist[i].status < PL_VALID)
 			continue;
-		if(unlikely(plist[i].source_plugin_index == source_index))
+		if(plist[i].source_plugin_index == source_index)
 			plist[i].source_plugin_index = -1;
 	}
 }
@@ -132,13 +132,13 @@ void DLLINTERNAL MPluginList::clear_source_plugin_index(int source_index) {
 mBOOL DLLINTERNAL MPluginList::found_child_plugins(int source_index) {
 	int i;
 	
-	if(unlikely(source_index <= 0))
+	if(source_index <= 0)
 		return(mFALSE);
 	
-	for(i=0; likely(i < endlist); i++) {
-		if(unlikely(plist[i].status < PL_VALID))
+	for(i=0; i < endlist; i++) {
+		if(plist[i].status < PL_VALID)
 			continue;
-		if(unlikely(plist[i].source_plugin_index == source_index))
+		if(plist[i].source_plugin_index == source_index)
 			return(mTRUE);
 	}
 	
@@ -149,16 +149,16 @@ mBOOL DLLINTERNAL MPluginList::found_child_plugins(int source_index) {
 void DLLINTERNAL MPluginList::trim_list(void) {
 	int i,n;
 	
-	if(unlikely(endlist <= 0))
+	if(endlist <= 0)
 		return;
 	
-	for(i=0,n=0; likely(i < endlist); i++) {
-		if(unlikely(plist[i].status == PL_EMPTY))
+	for(i=0,n=0; i < endlist; i++) {
+		if(plist[i].status == PL_EMPTY)
 			continue;
 		n=i+1;
 	}
 	
-	if(unlikely(n < endlist))
+	if(n < endlist)
 		endlist=n;
 }
 
@@ -169,12 +169,12 @@ void DLLINTERNAL MPluginList::trim_list(void) {
 MPlugin * DLLINTERNAL MPluginList::find(plid_t id) {
 	int i;
 
-	if(unlikely(!id))
+	if(!id)
 		RETURN_ERRNO(NULL, ME_ARGUMENT);
-	for(i=0; likely(i < endlist); i++) {
-		if(unlikely(plist[i].status < PL_VALID))
+	for(i=0; i < endlist; i++) {
+		if(plist[i].status < PL_VALID)
 			continue;
-		if(unlikely(plist[i].info == id))
+		if(plist[i].info == id)
 			return(&plist[i]);
 	}
 	RETURN_ERRNO(NULL, ME_NOTFOUND);
@@ -187,14 +187,14 @@ MPlugin * DLLINTERNAL MPluginList::find(plid_t id) {
 MPlugin * DLLINTERNAL MPluginList::find(const char *findpath) {
 	int i;
 
-	if(unlikely(!findpath))
+	if(!findpath)
 		RETURN_ERRNO(NULL, ME_ARGUMENT);
 	META_DEBUG(8, ("Looking for loaded plugin with dlfnamepath: %s", findpath));
-	for(i=0; likely(i < endlist); i++) {
+	for(i=0; i < endlist; i++) {
 		META_DEBUG(9, ("Looking at: plugin %s loadedpath: %s", plist[i].file, plist[i].pathname));
-		if(unlikely(plist[i].status < PL_VALID))
+		if(plist[i].status < PL_VALID)
 			continue;
-		if(unlikely(strmatch(plist[i].pathname, findpath))) {
+		if(strmatch(plist[i].pathname, findpath)) {
 			META_DEBUG(8, ("Found loaded plugin %s", plist[i].file));
 			return(&plist[i]);
 		}
@@ -212,9 +212,9 @@ MPlugin * DLLINTERNAL MPluginList::find_memloc(void *memptr) {
 #ifdef linux
 	const char *dlfile;
 
-	if(unlikely(!memptr))
+	if(!memptr)
 		RETURN_ERRNO(NULL, ME_ARGUMENT);
-	if(unlikely(!(dlfile=DLFNAME(memptr)))) {
+	if(!(dlfile=DLFNAME(memptr))) {
 		META_DEBUG(8, ("DLFNAME failed to find memloc %d", memptr));
 		// meta_errno should be already set in DLFNAME
 		return(NULL);
@@ -224,9 +224,9 @@ MPlugin * DLLINTERNAL MPluginList::find_memloc(void *memptr) {
 #else
 	DLHANDLE dlhandle;
 	
-	if(unlikely(!memptr))
+	if(!memptr)
 		RETURN_ERRNO(NULL, ME_ARGUMENT);
-	if(unlikely(!(dlhandle=get_module_handle_of_memptr(memptr)))) {
+	if(!(dlhandle=get_module_handle_of_memptr(memptr))) {
 		META_DEBUG(8, ("DLFNAME failed to find memloc %d", memptr));
 		RETURN_ERRNO(NULL, ME_NOTFOUND);
 	}
@@ -246,52 +246,53 @@ MPlugin * DLLINTERNAL MPluginList::find_match(const char *prefix) {
 	MPlugin *iplug, *pfound;
 	char buf[NAME_MAX];
 
-	if(unlikely(!prefix))
+	if(!prefix)
 		RETURN_ERRNO(NULL, ME_ARGUMENT);
 	pfound=NULL;
 	len=strlen(prefix);
 	safevoid_snprintf(buf, sizeof(buf), "mm_%s", prefix);
-	for(i=0; likely(i < endlist); i++) {
+	for(i=0; i < endlist; i++) {
 		iplug=&plist[i];
-		if(unlikely(iplug->status < PL_VALID))
+		if(iplug->status < PL_VALID)
 			continue;
-		if(likely(iplug->info) && unlikely(strncasecmp(iplug->info->name, prefix, len) == 0)) {
-			if(unlikely(pfound))
+		if(iplug->info && strncasecmp(iplug->info->name, prefix, len) == 0) {
+			if(pfound)
 				RETURN_ERRNO(NULL, ME_NOTUNIQ);
 			pfound=iplug;
 			continue;
 		}
-		else if(unlikely(strncasecmp(iplug->desc, prefix, len) == 0)) {
-			if(unlikely(pfound))
+		else if(strncasecmp(iplug->desc, prefix, len) == 0) {
+			if(pfound)
 				RETURN_ERRNO(NULL, ME_NOTUNIQ);
 			pfound=iplug;
 			continue;
 		}
-		else if(unlikely(strncasecmp(iplug->file, prefix, len) == 0)) {
-			if(unlikely(pfound))
+		else if(strncasecmp(iplug->file, prefix, len) == 0) {
+			if(pfound)
 				RETURN_ERRNO(NULL, ME_NOTUNIQ);
 			pfound=iplug;
 			continue;
 		}
-		else if(unlikely(strncasecmp(iplug->file, buf, strlen(buf)) == 0)) {
-			if(unlikely(pfound))
+		else if(strncasecmp(iplug->file, buf, strlen(buf)) == 0) {
+			if(pfound)
 				RETURN_ERRNO(NULL, ME_NOTUNIQ);
 			pfound=iplug;
 			continue;
 		}
-		else if(likely(iplug->info)
-				&& unlikely(strncasecmp(iplug->info->logtag, prefix, len) == 0))
+		else if(iplug->info
+				&& strncasecmp(iplug->info->logtag, prefix, len) == 0)
 		{
-			if(unlikely(pfound))
+			if(pfound)
 				RETURN_ERRNO(NULL, ME_NOTUNIQ);
 			pfound=iplug;
 			continue;
 		}
 	}
-	if(unlikely(pfound))
+	
+	if(pfound)
 		return(pfound);
-	else
-		RETURN_ERRNO(NULL, ME_NOTFOUND);
+
+	RETURN_ERRNO(NULL, ME_NOTFOUND);
 }
 
 // Find a plugin with same file, logtag, desc or significant 
@@ -302,21 +303,21 @@ MPlugin * DLLINTERNAL MPluginList::find_match(const char *prefix) {
 MPlugin * DLLINTERNAL MPluginList::find_match(MPlugin *pmatch) {
 	int i;
 	MPlugin *iplug, *pfound;
-	if(unlikely(!pmatch))
+	if(!pmatch)
 		RETURN_ERRNO(NULL, ME_ARGUMENT);
 	pfound=NULL;
-	for(i=0; likely(i < endlist); i++) {
+	for(i=0; i < endlist; i++) {
 		iplug=&plist[i];
-		if(unlikely(pmatch->platform_match(iplug))) {
+		if(pmatch->platform_match(iplug)) {
 			pfound=iplug;
 			break;
 		}
 	}
 
-	if(unlikely(pfound))
+	if(pfound)
 		return(pfound);
-	else
-		RETURN_ERRNO(NULL, ME_NOTFOUND);
+	
+	RETURN_ERRNO(NULL, ME_NOTFOUND);
 }
 
 // Add a plugin to the list.
@@ -329,17 +330,17 @@ MPlugin * DLLINTERNAL MPluginList::add(MPlugin *padd) {
 	// Find either:
 	//  - a slot in the list that's not being used
 	//  - the end of the list
-	for(i=0; likely(i < endlist) && likely(plist[i].status != PL_EMPTY); i++);
+	for(i=0; i < endlist && plist[i].status != PL_EMPTY; i++);
 
 	// couldn't find a slot to use
-	if(unlikely(i==size)) {
+	if(i==size) {
 		META_WARNING("Couldn't add plugin '%s' to list; reached max plugins (%d)", 
 				padd->file, i);
 		RETURN_ERRNO(NULL, ME_MAXREACHED);
 	}
 
 	// if we found the end of the list, advance end marker
-	if(likely(i==endlist))
+	if(i==endlist)
 		endlist++;
 	iplug = &plist[i];
 
@@ -373,36 +374,36 @@ mBOOL DLLINTERNAL MPluginList::ini_startup() {
 	int n, ln;
 	MPlugin *pmatch;
 
-	if(unlikely(!valid_gamedir_file(inifile))) {
+	if(!valid_gamedir_file(inifile)) {
 		META_WARNING("ini: Metamod plugins file empty or missing: %s", inifile);
 		RETURN_ERRNO(mFALSE, ME_NOFILE);
 	}
 	full_gamedir_path(inifile, inifile);
 
 	fp=fopen(inifile, "r");
-	if(unlikely(!fp)) {
+	if(!fp) {
 		META_WARNING("ini: Unable to open plugins file '%s': %s", inifile, 
 				strerror(errno));
 		RETURN_ERRNO(mFALSE, ME_NOFILE);
 	}
 
 	META_LOG("ini: Begin reading plugins list: %s", inifile);
-	for(n=0, ln=1; likely(!feof(fp)) && likely(fgets(line, sizeof(line), fp)) && likely(n < size); ln++) {
+	for(n=0, ln=1; !feof(fp) && fgets(line, sizeof(line), fp) && n < size; ln++) {
 		// Remove line terminations.
 		char *cp;
-		if(likely((cp=strrchr(line, '\r'))))
+		if((cp=strrchr(line, '\r')))
 			*cp='\0';
-		if(likely((cp=strrchr(line, '\n'))))
+		if((cp=strrchr(line, '\n')))
 			*cp='\0';
 		// Parse directly into next entry in array
-		if(unlikely(!plist[n].ini_parseline(line))) {
+		if(!plist[n].ini_parseline(line)) {
 			if(meta_errno==ME_FORMAT)
 				META_WARNING("ini: Skipping malformed line %d of %s", ln, 
 						inifile);
 			continue;
 		}
 		// Check for a duplicate - an existing entry with this pathname.
-		if(unlikely(find(plist[n].pathname))) {
+		if(find(plist[n].pathname)) {
 			// Should we check platform specific level here?
 			META_INFO("ini: Skipping duplicate plugin, line %d of %s: %s", 
 					ln, inifile, plist[n].pathname);
@@ -410,8 +411,8 @@ mBOOL DLLINTERNAL MPluginList::ini_startup() {
 		}
 		// Check for a matching platform with different platform specifics
 		// level.
-		if(unlikely(NULL != (pmatch=find_match(&plist[n])))) {
-			if(likely(pmatch->pfspecific >= plist[n].pfspecific)) {
+		if(NULL != (pmatch=find_match(&plist[n]))) {
+			if(pmatch->pfspecific >= plist[n].pfspecific) {
 				META_DEBUG(1, ("ini: Skipping plugin, line %d of %s: plugin with higher platform specific level already exists. (%d >= %d)",
                          ln, inifile, pmatch->pfspecific, plist[n].pfspecific)); 
 				continue;
@@ -430,7 +431,7 @@ mBOOL DLLINTERNAL MPluginList::ini_startup() {
 			inifile, n);
 
 	fclose(fp);
-	if(unlikely(!n)) {
+	if(!n) {
 		META_WARNING("ini: Warning; no plugins found to load?");
 	}
 	return(mTRUE);
@@ -447,24 +448,24 @@ mBOOL DLLINTERNAL MPluginList::ini_refresh() {
 	MPlugin *pl_found, *pl_added;
 
 	fp=fopen(inifile, "r");
-	if(unlikely(!fp)) {
+	if(!fp) {
 		META_WARNING("ini: Unable to open plugins file '%s': %s", inifile, 
 				strerror(errno));
 		RETURN_ERRNO(mFALSE, ME_NOFILE);
 	}
 
 	META_LOG("ini: Begin re-reading plugins list: %s", inifile);
-	for(n=0, ln=1; likely(!feof(fp)) && likely(fgets(line, sizeof(line), fp)) && likely(n < size); ln++) 
+	for(n=0, ln=1; !feof(fp) && fgets(line, sizeof(line), fp) && n < size; ln++) 
 	{
 		// Remove line terminations.
 		char *cp;
-		if(likely((cp=strrchr(line, '\r'))))
+		if((cp=strrchr(line, '\r')))
 			*cp='\0';
-		if(likely((cp=strrchr(line, '\n'))))
+		if((cp=strrchr(line, '\n')))
 			*cp='\0';
 		// Parse into a temp plugin
 		memset(&pl_temp, 0, sizeof(pl_temp));
-		if(unlikely(!pl_temp.ini_parseline(line))) {
+		if(!pl_temp.ini_parseline(line)) {
 			if(meta_errno==ME_FORMAT)
 				META_WARNING("ini: Skipping malformed line %d of %s", 
 						ln, inifile);
@@ -472,16 +473,16 @@ mBOOL DLLINTERNAL MPluginList::ini_refresh() {
 		}
 		// Try to find plugin with this pathname in the current list of
 		// plugins.
-		if(unlikely(!(pl_found=find(pl_temp.pathname)))) {
+		if(!(pl_found=find(pl_temp.pathname))) {
 			// Check for a matching platform with higher platform specifics
 			// level.
-			if(unlikely(NULL != (pl_found=find_match(&pl_temp)))) {
-				if(likely(pl_found->pfspecific >= pl_temp.pfspecific)) {
+			if(NULL != (pl_found=find_match(&pl_temp))) {
+				if(pl_found->pfspecific >= pl_temp.pfspecific) {
 					META_DEBUG(1, ("ini: Skipping plugin, line %d of %s: plugin with higher platform specific level already exists. (%d >= %d)",
                        			 ln, inifile, pl_found->pfspecific, pl_temp.pfspecific)); 
 					continue;
 				}
-				if(likely(PA_LOAD == pl_found->action)) {
+				if(PA_LOAD == pl_found->action) {
 					META_DEBUG(1, ("ini: Plugin in line %d overrides loading of plugin with lower platform specific level %d, ours %d",
 								ln, pl_found->pfspecific, pl_temp.pfspecific));
 					//reset to empty
@@ -494,7 +495,7 @@ mBOOL DLLINTERNAL MPluginList::ini_refresh() {
 				}
 			}
 			// new plugin; add to list
-			if(likely((pl_added=add(&pl_temp)))) {
+			if((pl_added=add(&pl_temp))) {
 				// try to load this plugin at the next opportunity
 				pl_added->action=PA_LOAD;
 			}
@@ -506,13 +507,13 @@ mBOOL DLLINTERNAL MPluginList::ini_refresh() {
 			// This plugin is already in the current list of plugins.
 			// Pathname already matches.  Recopy desc, if specified in
 			// plugins.ini.
-			if(likely(pl_temp.desc[0] != '<'))
+			if(pl_temp.desc[0] != '<')
 				STRNCPY(pl_found->desc, pl_temp.desc, sizeof(pl_found->desc));
 
 			// Check the file to see if it looks like it's been modified
 			// since we last loaded it.
-			if(likely(!pl_found->newer_file())) {
-				if(unlikely(meta_errno==ME_NOFILE)) {
+			if(!pl_found->newer_file()) {
+				if(meta_errno==ME_NOFILE) {
 					META_WARNING("ini: Skipping plugin, couldn't stat file '%s': %s",
 							pl_found->pathname, strerror(errno));
 					continue;
@@ -524,7 +525,7 @@ mBOOL DLLINTERNAL MPluginList::ini_refresh() {
 				}
 			}
 			// Newer file on disk.
-			else if(unlikely(pl_found->status >= PL_OPENED)) {
+			else if(pl_found->status >= PL_OPENED) {
 				META_DEBUG(2, ("ini: Plugin '%s' has newer file on disk", pl_found->desc));
 				pl_found->action=PA_RELOAD;
 			}
@@ -532,7 +533,7 @@ mBOOL DLLINTERNAL MPluginList::ini_refresh() {
 				META_WARNING("ini: Plugin '%s' has newer file, but unexpected status (%s)",
 						pl_found->desc, pl_found->str_status());
 		}
-		if(likely(NULL != pl_found)) {
+		if(NULL != pl_found) {
 			META_LOG("ini: Read plugin config for: %s", pl_found->desc);
 		}
 		else {
@@ -543,7 +544,7 @@ mBOOL DLLINTERNAL MPluginList::ini_refresh() {
 	META_LOG("ini: Finished reading plugins list: %s; Found %d plugins", inifile, n);
 
 	fclose(fp);
-	if(unlikely(!n)) {
+	if(!n) {
 		META_WARNING("ini: Warning; no plugins found to load?");
 	}
 	return(mTRUE);
@@ -560,7 +561,7 @@ MPlugin * DLLINTERNAL MPluginList::plugin_addload(plid_t plid, const char *fname
 	MPlugin *pl_found, *pl_added, *pl_loader;
 	
 	// Find loader plugin
-	if(unlikely(!(pl_loader=find(plid)))) {
+	if(!(pl_loader=find(plid))) {
 		// Couldn't find a matching file on disk
 		META_DEBUG(1, ("Couldn't find plugin that gave this loading request!"));
 		// meta_errno should be already set in resolve()
@@ -570,14 +571,14 @@ MPlugin * DLLINTERNAL MPluginList::plugin_addload(plid_t plid, const char *fname
 	memset(&pl_temp, 0, sizeof(pl_temp));
 	
 	// copy filename
-	if(unlikely(!pl_temp.plugin_parseline(fname, pl_loader->index))) {
+	if(!pl_temp.plugin_parseline(fname, pl_loader->index)) {
 		// parse_plugin_load doesn't return mFALSE.
 		RETURN_ERRNO(NULL, ME_NOTFOUND);
 	}
 	
 	// resolve given path into a file; accepts various "shortcut"
 	// pathnames.
-	if(unlikely(pl_temp.resolve() != mTRUE)) {
+	if(pl_temp.resolve() != mTRUE) {
 		// Couldn't find a matching file on disk
 		META_DEBUG(1, ("Couldn't resolve given path into a file: %s", pl_temp.file));
 		// meta_errno should be already set in resolve()
@@ -586,14 +587,14 @@ MPlugin * DLLINTERNAL MPluginList::plugin_addload(plid_t plid, const char *fname
 
 	// Try to find plugin with this pathname in the current list of
 	// plugins.
-	if(unlikely((pl_found=find(pl_temp.pathname)))) {
+	if((pl_found=find(pl_temp.pathname))) {
 		// Already in list
 		META_DEBUG(1, ("Plugin '%s' already in current list; file=%s desc='%s'", 
 				pl_temp.file, pl_found->file, pl_found->desc));
 		RETURN_ERRNO(NULL, ME_ALREADY);
 	}
 	// new plugin; add to list
-	if(unlikely(!(pl_added=add(&pl_temp)))) {
+	if(!(pl_added=add(&pl_temp))) {
 		META_DEBUG(1, ("Couldn't add plugin '%s' to list; see log", pl_temp.desc));
 		// meta_errno should be already set in add()
 		return(NULL);
@@ -601,14 +602,14 @@ MPlugin * DLLINTERNAL MPluginList::plugin_addload(plid_t plid, const char *fname
 
 	// try to load new plugin (setting 'must load now')
 	pl_added->action=PA_LOAD;
-	if(unlikely(!pl_added->load(now))) {
+	if(!pl_added->load(now)) {
 		// load failed
-		if(unlikely(meta_errno==ME_NOTALLOWED) || unlikely(meta_errno==ME_DELAYED)) {
+		if(meta_errno==ME_NOTALLOWED || meta_errno==ME_DELAYED) {
 			META_DEBUG(1, ("Plugin '%s' couldn't attach; only allowed %s", 
 					pl_added->desc, pl_added->str_loadable(SL_ALLOWED)));
 			pl_added->clear();
 		}
-		else if(unlikely(pl_added->status == PL_OPENED))
+		else if(pl_added->status == PL_OPENED)
 			META_DEBUG(1, ("Opened plugin '%s', but failed to attach; see log", pl_added->desc));
 		else
 			META_DEBUG(1, ("Couldn't load plugin '%s'; see log", pl_added->desc));
@@ -636,7 +637,7 @@ mBOOL DLLINTERNAL MPluginList::cmd_addload(const char *args) {
 	// XXX move back to comands_meta ?
 
 	// parse into a temp plugin
-	if(unlikely(pl_temp.cmd_parseline(args) != mTRUE)) {
+	if(pl_temp.cmd_parseline(args) != mTRUE) {
 		META_CONS("Couldn't parse 'meta load' arguments: %s", args);
 		// meta_errno should be already set in cmd_parseline()
 		return(mFALSE);
@@ -644,7 +645,7 @@ mBOOL DLLINTERNAL MPluginList::cmd_addload(const char *args) {
 
 	// resolve given path into a file; accepts various "shortcut"
 	// pathnames.
-	if(unlikely(pl_temp.resolve() != mTRUE)) {
+	if(pl_temp.resolve() != mTRUE) {
 		// Couldn't find a matching file on disk
 		META_CONS("Couldn't resolve given path into a file: %s", 
 				pl_temp.file);
@@ -654,14 +655,14 @@ mBOOL DLLINTERNAL MPluginList::cmd_addload(const char *args) {
 
 	// Try to find plugin with this pathname in the current list of
 	// plugins.
-	if(unlikely((pl_found=find(pl_temp.pathname)))) {
+	if((pl_found=find(pl_temp.pathname))) {
 		// Already in list
 		META_CONS("Plugin '%s' already in current list; file=%s desc='%s'", 
 				pl_temp.file, pl_found->file, pl_found->desc);
 		RETURN_ERRNO(mFALSE, ME_ALREADY);
 	}
 	// new plugin; add to list
-	if(unlikely(!(pl_added=add(&pl_temp)))) {
+	if(!(pl_added=add(&pl_temp))) {
 		META_CONS("Couldn't add plugin '%s' to list; see log", pl_temp.desc);
 		// meta_errno should be already set in add()
 		return(mFALSE);
@@ -669,17 +670,17 @@ mBOOL DLLINTERNAL MPluginList::cmd_addload(const char *args) {
 
 	// try to load new plugin
 	pl_added->action=PA_LOAD;
-	if(unlikely(!pl_added->load(PT_ANYTIME))) {
+	if(!pl_added->load(PT_ANYTIME)) {
 		// load failed
-		if(unlikely(meta_errno==ME_DELAYED)) 
+		if(meta_errno==ME_DELAYED) 
 			META_CONS("Loaded plugin '%s', but will wait to become active, %s", 
 					pl_added->desc, pl_added->str_loadable(SL_ALLOWED));
-		else if(unlikely(meta_errno==ME_NOTALLOWED)) {
+		else if(meta_errno==ME_NOTALLOWED) {
 			META_CONS("Plugin '%s' couldn't attach; only allowed %s", 
 					pl_added->desc, pl_added->str_loadable(SL_ALLOWED));
 			pl_added->clear();
 		}
-		else if(unlikely(pl_added->status == PL_OPENED))
+		else if(pl_added->status == PL_OPENED)
 			META_CONS("Opened plugin '%s', but failed to attach; see log", pl_added->desc);
 		else
 			META_CONS("Couldn't load plugin '%s'; see log", pl_added->desc);
@@ -698,17 +699,17 @@ mBOOL DLLINTERNAL MPluginList::cmd_addload(const char *args) {
 mBOOL DLLINTERNAL MPluginList::load() {
 	int i, n;
 
-	if(unlikely(!ini_startup())) {
+	if(!ini_startup()) {
 		META_WARNING("Problem loading plugins.ini: %s", inifile);
 		// meta_errno should be already set in ini_startup()
 		return(mFALSE);
 	}
 
 	META_LOG("dll: Loading plugins...");
-	for(i=0, n=0; likely(i < endlist); i++) {
-		if(unlikely(plist[i].status < PL_VALID))
+	for(i=0, n=0; i < endlist; i++) {
+		if(plist[i].status < PL_VALID)
 			continue;
-		if(likely(plist[i].load(PT_STARTUP) == mTRUE))
+		if(plist[i].load(PT_STARTUP) == mTRUE)
 			n++;
 		else
 			// all plugins should be loadable at startup...
@@ -725,16 +726,16 @@ mBOOL DLLINTERNAL MPluginList::refresh(PLUG_LOADTIME now) {
 	int i, ndone=0, nkept=0, nloaded=0, nunloaded=0, nreloaded=0, ndelayed=0;
 	MPlugin *iplug;
 
-	if(unlikely(!ini_refresh())) {
+	if(!ini_refresh()) {
 		META_WARNING("dll: Problem reloading plugins.ini: %s", inifile);
 		// meta_errno should be already set in ini_refresh()
 		return(mFALSE);
 	}
 
 	META_LOG("dll: Updating plugins...");
-	for(i=0; likely(i < endlist); i++) {
+	for(i=0; i < endlist; i++) {
 		iplug=&plist[i];
-		if(unlikely(iplug->status < PL_VALID))
+		if(iplug->status < PL_VALID)
 			continue;
 		switch(iplug->action) {
 			case PA_KEEP:
@@ -744,43 +745,43 @@ mBOOL DLLINTERNAL MPluginList::refresh(PLUG_LOADTIME now) {
 				break;
 			case PA_LOAD:
 				META_DEBUG(1, ("Loading plugin '%s'", iplug->desc));
-				if(likely(iplug->load(now)))
+				if(iplug->load(now))
 					nloaded++;
-				else if(likely(meta_errno==ME_DELAYED))
+				else if(meta_errno==ME_DELAYED)
 					ndelayed++;
 				break;
 			case PA_RELOAD:
 				META_DEBUG(1, ("Reloading plugin '%s'", iplug->desc));
-				if(likely(iplug->reload(now, PNL_FILE_NEWER)))
+				if(iplug->reload(now, PNL_FILE_NEWER))
 					nreloaded++;
-				else if(likely(meta_errno==ME_DELAYED))
+				else if(meta_errno==ME_DELAYED)
 					ndelayed++;
 				break;
 			case PA_NONE:
 				// If previously loaded from ini, but apparently removed from new ini.
-				if(likely(iplug->source==PS_INI) && likely(iplug->status >= PL_RUNNING)) {
+				if(iplug->source==PS_INI && iplug->status >= PL_RUNNING) {
 					META_DEBUG(1, ("Unloading plugin '%s'", iplug->desc));
 					iplug->action=PA_UNLOAD;
-					if(likely(iplug->unload(now, PNL_INI_DELETED, PNL_INI_DELETED)))
+					if(iplug->unload(now, PNL_INI_DELETED, PNL_INI_DELETED))
 						nunloaded++;
-					else if(likely(meta_errno==ME_DELAYED))
+					else if(meta_errno==ME_DELAYED)
 						ndelayed++;
 				}
 				break;
 			case PA_ATTACH:
 				// Previously requested attach, but was delayed?
 				META_DEBUG(1, ("Retrying attach plugin '%s'", iplug->desc));
-				if(likely(iplug->retry(now, PNL_DELAYED)))
+				if(iplug->retry(now, PNL_DELAYED))
 					nloaded++;
-				else if(likely(meta_errno==ME_DELAYED))
+				else if(meta_errno==ME_DELAYED)
 					ndelayed++;
 				break;
 			case PA_UNLOAD:
 				// Previously requested unload, but was delayed?
 				META_DEBUG(1, ("Retrying unload plugin '%s'", iplug->desc));
-				if(likely(iplug->retry(now, PNL_DELAYED)))
+				if(iplug->retry(now, PNL_DELAYED))
 					nunloaded++;
-				else if(likely(meta_errno==ME_DELAYED))
+				else if(meta_errno==ME_DELAYED)
 					ndelayed++;
 				break;
 			case PA_NULL:
@@ -803,9 +804,9 @@ mBOOL DLLINTERNAL MPluginList::refresh(PLUG_LOADTIME now) {
 void DLLINTERNAL MPluginList::unpause_all(void) {
 	int i;
 	MPlugin *iplug;
-	for(i=0; likely(i < endlist); i++) {
+	for(i=0; i < endlist; i++) {
 		iplug=&plist[i];
-		if(unlikely(iplug->status==PL_PAUSED))
+		if(iplug->status==PL_PAUSED)
 			iplug->unpause();
 	}
 }
@@ -817,9 +818,9 @@ void DLLINTERNAL MPluginList::unpause_all(void) {
 void DLLINTERNAL MPluginList::retry_all(PLUG_LOADTIME now) {
 	int i;
 	MPlugin *iplug;
-	for(i=0; likely(i < endlist); i++) {
+	for(i=0; i < endlist; i++) {
 		iplug=&plist[i];
-		if(unlikely(iplug->action != PA_NONE))
+		if(iplug->action != PA_NONE)
 			iplug->retry(now, PNL_DELAYED);
 	}
 }
@@ -832,7 +833,7 @@ void DLLINTERNAL MPluginList::show(int source_index) {
 	MPlugin *pl;
 	char desc[15+1], file[16+1], vers[7+1];		// plus 1 for term null
 	
-	if(likely(source_index <= 0))
+	if(source_index <= 0)
 		META_CONS("Currently loaded plugins:");
 	else
 		META_CONS("Child plugins:");
@@ -845,15 +846,15 @@ void DLLINTERNAL MPluginList::show(int source_index) {
 			2+WIDTH_MAX_PLUGINS, "src", 
 			"load ", "unlod");
 	
-	for(i=0; likely(i < endlist); i++) {
+	for(i=0; i < endlist; i++) {
 		pl=&plist[i];
-		if(unlikely(pl->status < PL_VALID))
+		if(pl->status < PL_VALID)
 			continue;
-		if(unlikely(source_index > 0) && likely(pl->source_plugin_index != source_index))
+		if(source_index > 0 && pl->source_plugin_index != source_index)
 			continue;
 		STRNCPY(desc, pl->desc, sizeof(desc));
 		STRNCPY(file, pl->file, sizeof(file));
-		if(likely(pl->info) && likely(pl->info->version))
+		if(pl->info && pl->info->version)
 			STRNCPY(vers, pl->info->version, sizeof(vers));
 		else 
 			STRNCPY(vers, " -", sizeof(vers));
@@ -864,7 +865,7 @@ void DLLINTERNAL MPluginList::show(int source_index) {
 				sizeof(file)-1, file, sizeof(vers)-1, vers,
 				2+WIDTH_MAX_PLUGINS, pl->str_source(SO_SHOW),
 				pl->str_loadable(SL_SHOW), pl->str_unloadable(SL_SHOW));
-		if(likely(pl->status == PL_RUNNING))
+		if(pl->status == PL_RUNNING)
 			r++;
 		n++;
 	}
@@ -883,9 +884,9 @@ void DLLINTERNAL MPluginList::show_client(edict_t *pEntity) {
 	int i, n=0;
 	MPlugin *pl;
 	META_CLIENT(pEntity, "Currently running plugins:");
-	for(i=0; likely(i < endlist); i++) {
+	for(i=0; i < endlist; i++) {
 		pl=&plist[i];
-		if(unlikely(pl->status != PL_RUNNING))
+		if(pl->status != PL_RUNNING)
 			continue;
 		n++;
 		META_CLIENT(pEntity, " [%3d] %s, v%s, %s, by %s, see %s",

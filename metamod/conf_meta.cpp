@@ -4,7 +4,7 @@
 // conf_meta.cpp - configfile reading routines
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -55,15 +55,15 @@ MConfig::MConfig(void)
 void DLLINTERNAL MConfig::init(option_t *global_options) {
 	option_t *optp;
 	list=global_options;
-	for(optp=list; likely(optp->name); optp++)
+	for(optp=list; optp->name; optp++)
 		set(optp, optp->init);
 }
 
 option_t * DLLINTERNAL MConfig::find(const char *lookup) {
 	option_t *optp;
 
-	for(optp=list; likely(optp->name) && likely(!strmatch(optp->name, lookup)); optp++);
-	if(likely(optp->name))
+	for(optp=list; optp->name && !strmatch(optp->name, lookup); optp++);
+	if(optp->name)
 		return(optp);
 	else
 		RETURN_ERRNO(NULL, ME_NOTFOUND);
@@ -72,7 +72,7 @@ option_t * DLLINTERNAL MConfig::find(const char *lookup) {
 mBOOL DLLINTERNAL MConfig::set(const char *key, const char *value) {
 	option_t *optp;
 	optp=find(key);
-	if(likely(optp))
+	if(optp)
 		return(set(optp, value));
 	else
 		RETURN_ERRNO(mFALSE, ME_NOTFOUND);
@@ -85,12 +85,12 @@ mBOOL DLLINTERNAL MConfig::set(option_t *setp, const char *setstr) {
 	// cvar_t *optcvar = (cvar_t *) setp->dest;
 	// SETOPT_FN optcmd = (SETOPT_FN) setp->dest;
 
-	if(unlikely(!setstr))
+	if(!setstr)
 		return(mTRUE);
 
 	switch(setp->type) {
 		case CF_INT:
-			if(unlikely(!isdigit(setstr[0]))) {
+			if(!isdigit(setstr[0])) {
 				META_WARNING("option '%s' invalid format '%s'", setp->name, setstr);
 				RETURN_ERRNO(mFALSE, ME_FORMAT);
 			}
@@ -98,15 +98,15 @@ mBOOL DLLINTERNAL MConfig::set(option_t *setp, const char *setstr) {
 			META_DEBUG(3, ("set config int: %s = %d", setp->name, *optval));
 			break;
 		case CF_BOOL:
-			if(likely(strcasematch(setstr, "true"))
-					|| unlikely(strcasematch(setstr, "yes"))
-					|| unlikely(strmatch(setstr, "1")))
+			if(strcasematch(setstr, "true")
+					|| strcasematch(setstr, "yes")
+					|| strmatch(setstr, "1"))
 			{
 				*optval=1;
 			}
-			else if(unlikely(strcasematch(setstr, "false"))
-					|| unlikely(strcasematch(setstr, "no"))
-					|| unlikely(strmatch(setstr, "0")))
+			else if(strcasematch(setstr, "false")
+					|| strcasematch(setstr, "no")
+					|| strmatch(setstr, "0"))
 			{
 				*optval=0;
 			}
@@ -117,13 +117,13 @@ mBOOL DLLINTERNAL MConfig::set(option_t *setp, const char *setstr) {
 			META_DEBUG(3, ("set config bool: %s = %s", setp->name, *optval ? "true" : "false"));
 			break;
 		case CF_STR:
-			if(likely(*optstr))
+			if(*optstr)
 				free(*optstr);
 			*optstr=strdup(setstr);
 			META_DEBUG(3, ("set config string: %s = %s", setp->name, *optstr));
 			break;
 		case CF_PATH:
-			if(likely(*optstr))
+			if(*optstr)
 				free(*optstr);
 			full_gamedir_path(setstr, pathbuf);
 			*optstr=strdup(pathbuf);
@@ -159,38 +159,38 @@ mBOOL DLLINTERNAL MConfig::load(const char *fn) {
 	full_gamedir_path(fn, loadfile);
 
 	fp=fopen(loadfile, "r");
-	if(unlikely(!fp)) {
+	if(!fp) {
 		META_WARNING("unable to open config file '%s': %s", loadfile, 
 				strerror(errno));
 		RETURN_ERRNO(mFALSE, ME_NOFILE);
 	}
 
 	META_DEBUG(2, ("Loading from config file: %s", loadfile));
-	for(ln=1; likely(!feof(fp)) && likely(fgets(line, sizeof(line), fp)); ln++) {
-		if(unlikely(line[0]=='#'))
+	for(ln=1; !feof(fp) && fgets(line, sizeof(line), fp); ln++) {
+		if(line[0]=='#')
 			continue;
-		if(unlikely(line[0]==';'))
+		if(line[0]==';')
 			continue;
-		if(unlikely(strnmatch(line, "//", 2)))
+		if(strnmatch(line, "//", 2))
 			continue;
-		if(unlikely(!(optname=strtok(line, " \t\r\n")))) {
+		if(!(optname=strtok(line, " \t\r\n"))) {
 			META_WARNING("'%s' line %d: bad config format: missing option", 
 					loadfile, ln);
 			continue;
 		}
-		if(unlikely(!(optval=strtok(NULL, "\r\n")))) {
+		if(!(optval=strtok(NULL, "\r\n"))) {
 			META_WARNING("'%s' line %d: bad config format: missing value", 
 					loadfile, ln);
 			continue;
 		}
 
-		if(unlikely(!(optp=find(optname)))) {
+		if(!(optp=find(optname))) {
 			META_WARNING("'%s' line %d: unknown option name '%s'", 
 					loadfile, ln, optname);
 			continue;
 		}
 
-		if(unlikely(!set(optp, optval))) {
+		if(!set(optp, optval)) {
 			META_WARNING("'%s' line %d: unable to set option '%s' value '%s'", 
 					loadfile, ln, optname, optval);
 			continue;
@@ -203,11 +203,11 @@ mBOOL DLLINTERNAL MConfig::load(const char *fn) {
 
 void DLLINTERNAL MConfig::show(void) {
 	option_t *optp;
-	if(unlikely(filename))
+	if(filename)
 		META_CONS("%s and %s:", "Config options from localinfo", filename);
 	else
 		META_CONS("%s:", "Config options from localinfo");
-	for(optp=list; likely(optp->name); optp++) {
+	for(optp=list; optp->name; optp++) {
 		int *optval = (int *) optp->dest;
 		char **optstr = (char **) optp->dest;
 		// cvar_t *optcvar = (cvar_t *) optp->dest;

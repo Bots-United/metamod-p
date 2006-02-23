@@ -4,7 +4,7 @@
 // tqueue.h - template classes for Queue and QItem
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -80,7 +80,7 @@ template<class qdata_t> class Queue : public class_metamod_new {
 template<class qdata_t> inline void Queue<qdata_t>::push(qdata_t *qadd) {
 	QItem *qnew = new QItem(qadd);
 	
-	if(unlikely(size==0))
+	if(size==0)
 		front=qnew;
 	else
 		end->next=qnew;
@@ -96,7 +96,7 @@ template<class qdata_t> inline qdata_t* Queue<qdata_t>::pop(void) {
 	QItem *qtmp;
 	qdata_t *ret;
 	
-	if(unlikely(size==0))
+	if(size==0)
 		return(NULL);
 	
 	qtmp=front;

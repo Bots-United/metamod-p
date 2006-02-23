@@ -55,7 +55,7 @@ MPlayer::MPlayer()
 // Destructor
 MPlayer::~MPlayer()
 {
-	if(unlikely(cvarName)) {
+	if(cvarName) {
 		free(cvarName);
 	}
 }
@@ -66,7 +66,7 @@ MPlayer::MPlayer(const MPlayer& rhs)
 	: isQueried(rhs.isQueried),
 	  cvarName(NULL)
 {
-	if(unlikely(rhs.cvarName)) {
+	if(rhs.cvarName) {
 		cvarName = strdup(rhs.cvarName);
 	}
 }
@@ -77,13 +77,13 @@ MPlayer& DLLINTERNAL MPlayer::operator=(const MPlayer& rhs)
 {
 	isQueried = rhs.isQueried;
 
-	if(unlikely(cvarName)) {
+	if(cvarName) {
 		free(cvarName);
 	}
 
 	cvarName = NULL;
 
-	if(unlikely(rhs.cvarName)) {
+	if(rhs.cvarName) {
 		cvarName = strdup(rhs.cvarName);
 	}
 
@@ -99,13 +99,13 @@ void DLLINTERNAL MPlayer::set_cvar_query(const char *cvar)
 	// Do not allow NULL as queried cvar since we use this as
 	// return value in is_querying_cvar as indication if a
 	// client cvar is queried.
-	if(unlikely(!cvar)) {
+	if(!cvar) {
 		meta_errno = ME_ARGUMENT;
 		return;
 	}
 
 	isQueried = mTRUE;
-	if(unlikely(cvarName)) {
+	if(cvarName) {
 		free(cvarName);
 	}
 
@@ -117,7 +117,7 @@ void DLLINTERNAL MPlayer::set_cvar_query(const char *cvar)
 void DLLINTERNAL MPlayer::clear_cvar_query(const char* /*cvar*/)
 {
 	isQueried = mFALSE;
-	if(unlikely(cvarName)) {
+	if(cvarName) {
 		free(cvarName);
 		cvarName = NULL;
 	}
@@ -129,7 +129,7 @@ void DLLINTERNAL MPlayer::clear_cvar_query(const char* /*cvar*/)
 // or the name of the cvar.
 const char * DLLINTERNAL MPlayer::is_querying_cvar(void)
 {
-	if(unlikely(isQueried)) {
+	if(isQueried) {
 		return(cvarName);
 	}
 
@@ -145,7 +145,7 @@ void DLLINTERNAL MPlayerList::set_player_cvar_query(const edict_t *pEntity, cons
 {
 	int indx = ENTINDEX(const_cast<edict_t*>(pEntity));
 
-	if(unlikely(indx < 1) || unlikely(indx >= MPlayerList::NUM_SLOTS))
+	if(indx < 1 || indx >= MPlayerList::NUM_SLOTS)
 		return;	//maybe output a message?
 
 	players[indx].set_cvar_query(cvar);
@@ -157,7 +157,7 @@ void DLLINTERNAL MPlayerList::clear_player_cvar_query(const edict_t *pEntity, co
 {
 	int indx = ENTINDEX(const_cast<edict_t*>(pEntity));
 
-	if(unlikely(indx < 1) || unlikely(indx >= MPlayerList::NUM_SLOTS))
+	if(indx < 1 || indx >= MPlayerList::NUM_SLOTS)
 		return;	//maybe output a message?
 
 	players[indx].clear_cvar_query(cvar);
@@ -166,7 +166,7 @@ void DLLINTERNAL MPlayerList::clear_player_cvar_query(const edict_t *pEntity, co
 
 void DLLINTERNAL MPlayerList::clear_all_cvar_queries(void)
 {
-	for(int indx=1; likely(indx < MPlayerList::NUM_SLOTS); ++indx) {
+	for(int indx=1; indx < MPlayerList::NUM_SLOTS; ++indx) {
 		players[indx].clear_cvar_query();
 	}
 }
@@ -182,7 +182,7 @@ const char* DLLINTERNAL MPlayerList::is_querying_cvar(const edict_t *pEntity)
 {
 	int indx = ENTINDEX(const_cast<edict_t*>(pEntity));
 
-	if(unlikely(indx < 1) || unlikely(indx > gpGlobals->maxClients)) {
+	if(indx < 1 || indx > gpGlobals->maxClients) {
 		RETURN_ERRNO(NULL, ME_NOTFOUND);
 	}
  

@@ -46,10 +46,10 @@
 // Note! 'extern "C"' needed for mingw compile.
 extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-	if (unlikely(fdwReason == DLL_PROCESS_ATTACH)) {
+	if (fdwReason == DLL_PROCESS_ATTACH) {
 		metamod_handle = hinstDLL;
 	}
-	else if (unlikely(fdwReason == DLL_PROCESS_DETACH)) {
+	else if (fdwReason == DLL_PROCESS_DETACH) {
 		/* nothing */
 	}
 	return(TRUE);
@@ -92,7 +92,7 @@ C_DLLEXPORT void WINAPI GiveFnptrsToDll(enginefuncs_t *pengfuncsFromEngine,
 	META_DEV("called: GiveFnptrsToDll");
 	
 	// Load plugins, load game dll.
-	if(unlikely(!metamod_startup())) {
+	if(!metamod_startup()) {
 		metamod_not_loaded = 1;
 	}
 	

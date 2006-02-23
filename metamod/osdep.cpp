@@ -4,7 +4,7 @@
 // osdep.cpp - routines for operating system differences
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -64,14 +64,14 @@ char * DLLINTERNAL my_strtok_r(char *s, const char *delim, char **ptrptr) {
 	char *begin=NULL;
 	char *end=NULL;
 	char *rest=NULL;
-	if(likely(s))
+	if(s)
 		begin=s;
 	else
 		begin=*ptrptr;
-	if(unlikely(!begin))
+	if(!begin)
 		return(NULL);
 	end=strpbrk(begin, delim);
-	if(unlikely(end)) {
+	if(end) {
 		*end='\0';
 		rest=end+1;
 		*ptrptr=rest+strspn(rest, delim);
@@ -86,9 +86,9 @@ char * DLLINTERNAL my_strtok_r(char *s, const char *delim, char **ptrptr) {
 #ifdef linux
 char * DLLINTERNAL my_strlwr(char *s) {
 	char *c;
-	if(unlikely(!s))
+	if(!s)
 		return(0);
-	for(c=s;likely(*c);c++)
+	for(c=s;*c;c++)
 		*c = tolower(*c);
 	return(s);
 }
@@ -105,29 +105,29 @@ int DLLINTERNAL safe_vsnprintf(char* s, size_t n, const char *format, va_list sr
 	char *tmpbuf;
 	size_t bufsize = n;
 	
-	if(likely(s) && likely(n>0))
+	if(s && n>0)
 		s[0]=0;
 	
 	// If the format string is empty, nothing to do.
-	if(unlikely(!format) || unlikely(!*format))
+	if(!format || !*format)
 		return(0);
 	
 	// The supplied count may be big enough. Try to use the library
      	// vsnprintf, fixing up the case where the library function
 	// neglects to terminate with '/0'.
-	if(likely(n > 0))
+	if(n > 0)
 	{
 		// A NULL destination will cause a segfault with vsnprintf.
 		// if n > 0.  Nor do we want to copy our tmpbuf to NULL later.
-		if(unlikely(!s))
+		if(!s)
 			return(-1);
 		
 		va_copy(ap, src_ap);
 		res = vsnprintf(s, n, format, ap);
 		va_end(ap);
 		
-		if(likely(res > 0)) {
-			if(unlikely((unsigned)res == n))
+		if(res > 0) {
+			if((unsigned)res == n)
 				s[res - 1] = 0;
 	  		return(res);
 		}
@@ -141,11 +141,11 @@ int DLLINTERNAL safe_vsnprintf(char* s, size_t n, const char *format, va_list sr
 		bufsize *= 2;
 	}
 	
-	if(unlikely(bufsize < 1024))
+	if(bufsize < 1024)
 		bufsize = 1024;
 	
 	tmpbuf = (char *)malloc(bufsize * sizeof(char));
-	if(unlikely(!tmpbuf))
+	if(!tmpbuf)
 		return(-1);
 	
 	va_copy(ap, src_ap);
@@ -155,13 +155,13 @@ int DLLINTERNAL safe_vsnprintf(char* s, size_t n, const char *format, va_list sr
 	// The test for bufsize limit is probably not necesary
 	// with 2GB address space limit, since, in practice, malloc will
 	// fail well before INT_MAX.
-	while(unlikely(res < 0) && likely(bufsize <= INT_MAX)) {
+	while(res < 0 && bufsize <= INT_MAX) {
 		char * newbuf;
 		
 		bufsize *= 2;
 		newbuf = (char*)realloc(tmpbuf, bufsize * sizeof(char));
 		
-		if(unlikely(!newbuf))
+		if(!newbuf)
 			break;
 		
 		tmpbuf = newbuf;
@@ -171,8 +171,8 @@ int DLLINTERNAL safe_vsnprintf(char* s, size_t n, const char *format, va_list sr
 		va_end(ap);
 	}
 	
-	if(likely(res > 0) && likely(n > 0)) {
-		if(likely(n > (unsigned)res))
+	if(res > 0 && n > 0) {
+		if(n > (unsigned)res)
 			memcpy(s, tmpbuf, (res + 1) * sizeof (char));
 		else {
 			memcpy(s, tmpbuf, (n - 1) * sizeof (char));
@@ -199,18 +199,18 @@ int DLLINTERNAL safe_snprintf(char* s, size_t n, const char* format, ...) {
 void DLLINTERNAL safevoid_vsnprintf(char* s, size_t n, const char *format, va_list ap) { 
 	int res;
 	
-	if(unlikely(!s) || unlikely(n <= 0))
+	if(!s || n <= 0)
 		return;
 	
 	// If the format string is empty, nothing to do.
-	if(unlikely(!format) || unlikely(!*format)) {
+	if(!format || !*format) {
 		s[0]=0;
 		return;
 	}
 	
 	res = vsnprintf(s, n, format, ap);
 	
-	if(likely(res > 0) && unlikely((unsigned)res == n))
+	if(res > 0 && (unsigned)res == n)
 		s[res - 1] = 0;
 }
 
@@ -248,7 +248,7 @@ char * DLLINTERNAL str_GetLastError(void) {
 const char * DLLINTERNAL DLFNAME(void *memptr) {
 	Dl_info dli;
 	memset(&dli, 0, sizeof(dli));
-	if(likely(dladdr(memptr, &dli)))
+	if(dladdr(memptr, &dli))
 		return(dli.dli_fname);
 	else
 		RETURN_ERRNO(NULL, ME_NOTFOUND);
@@ -281,18 +281,18 @@ const char * DLLINTERNAL DLFNAME(void *memptr) {
 
 	memset(fname, 0, sizeof(fname));
 
-	if(unlikely(!VirtualQuery(memptr, &MBI, sizeof(MBI))))
+	if(!VirtualQuery(memptr, &MBI, sizeof(MBI)))
 		RETURN_ERRNO(NULL, ME_NOTFOUND);
-	if(unlikely(MBI.State != MEM_COMMIT))
+	if(MBI.State != MEM_COMMIT)
 		RETURN_ERRNO(NULL, ME_NOTFOUND);
-	if(unlikely(!MBI.AllocationBase))
+	if(!MBI.AllocationBase)
 		RETURN_ERRNO(NULL, ME_NOTFOUND);
 	
 	// MSDN indicates that GetModuleFileName will leave string
 	// null-terminated, even if it's truncated because buffer is too small.
-	if(unlikely(!GetModuleFileName((HMODULE)MBI.AllocationBase, fname, sizeof(fname)-1)))
+	if(!GetModuleFileName((HMODULE)MBI.AllocationBase, fname, sizeof(fname)-1))
 		RETURN_ERRNO(NULL, ME_NOTFOUND);
-	if(unlikely(!fname[0]))
+	if(!fname[0])
 		RETURN_ERRNO(NULL, ME_NOTFOUND);
 	
 	normalize_pathname(fname);
@@ -314,11 +314,11 @@ void DLLINTERNAL normalize_pathname(char *path) {
 	char *cp;
 
 	META_DEBUG(8, ("normalize: %s", path));
-	for(cp=path; likely(*cp); cp++) {
-		/*if(unlikely(isupper(*cp)))*/
+	for(cp=path; *cp; cp++) {
+		/*if(isupper(*cp))*/
 			*cp=tolower(*cp);
 		
-		if(unlikely(*cp=='\\'))
+		if(*cp=='\\')
 			*cp='/';
 	}
 	META_DEBUG(8, ("normalized: %s", path));
@@ -329,15 +329,15 @@ void DLLINTERNAL normalize_pathname(char *path) {
 char * DLLINTERNAL realpath(const char *file_name, char *resolved_name) {
 	int ret;
 	ret=GetFullPathName(file_name, PATH_MAX, resolved_name, NULL);
-	if(unlikely(ret > PATH_MAX)) {
+	if(ret > PATH_MAX) {
 		errno=ENAMETOOLONG;
 		return(NULL);
 	}
-	else if(likely(ret > 0)) {
+	else if(ret > 0) {
 		HANDLE handle;
 		WIN32_FIND_DATA find_data;
 		handle=FindFirstFile(resolved_name, &find_data);
-		if(unlikely(INVALID_HANDLE_VALUE == handle)) {
+		if(INVALID_HANDLE_VALUE == handle) {
 			errno=ENOENT;
 			return(NULL);
 		}
@@ -363,7 +363,7 @@ char * DLLINTERNAL realpath(const char *file_name, char *resolved_name) {
 mBOOL DLLINTERNAL IS_VALID_PTR(void *memptr) {
 	Dl_info dli;
 	memset(&dli, 0, sizeof(dli));
-	if(likely(dladdr(memptr, &dli)))
+	if(dladdr(memptr, &dli))
 		return(mTRUE);
 	else
 		RETURN_ERRNO(mFALSE, ME_NOTFOUND);
@@ -373,7 +373,7 @@ mBOOL DLLINTERNAL IS_VALID_PTR(void *memptr) {
 // meta_errno values:
 //  - ME_BADMEMPTR	not a valid memory pointer
 mBOOL DLLINTERNAL IS_VALID_PTR(void *memptr) {
-	if(unlikely(IsBadCodePtr((FARPROC) memptr)))
+	if(IsBadCodePtr((FARPROC) memptr))
 		RETURN_ERRNO(mFALSE, ME_BADMEMPTR);
 	else
 		return(mTRUE);
@@ -387,7 +387,7 @@ mBOOL DLLINTERNAL IS_VALID_PTR(void *memptr) {
 // IS_VALID_PTR() should cover the situation.
 mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn) {
 	// try and see if this is a valid memory location
-	if(unlikely(!IS_VALID_PTR((void *) pfn)))
+	if(!IS_VALID_PTR((void *) pfn))
 		// meta_errno should be already set in is_valid_ptr()
 		return(mFALSE);
 

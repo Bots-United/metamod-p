@@ -4,7 +4,7 @@
 // support_meta.h - generic support macros
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -46,22 +46,16 @@
 
 void DLLINTERNAL do_exit(int exitval);
 
-// faster than c-lib strcmp() on short strings
+//use pointer to avoid inlining of strcmp
 inline int DLLINTERNAL mm_strcmp(const char *s1, const char *s2) {
-	//use pointer to avoid inlining of strcmp
 	int (*__strcmp)(const char*, const char*) = &strcmp;
-	int diff = *s1 - *s2;
-	return( likely(diff) ? diff : ( likely(*s1) ? (*__strcmp)(s1+1, s2+1) : 0 ) ); //if *s1 is zero then *s2 is too (because diff is zero)
+	return((*__strcmp)(s1, s2));
 }
 
-// faster than c-lib strncmp() on short strings
+//use pointer to avoid inlining of strncmp
 inline int DLLINTERNAL mm_strncmp(const char *s1, const char *s2, size_t n) {
-	if(unlikely(n <= 0))
-		return(0);
-	//use pointer to avoid inlining of strncmp
 	int (*__strncmp)(const char*, const char*, size_t) = &strncmp;
-	int diff = *s1 - *s2;
-	return( likely(diff) ? diff : ( likely(*s1) ? (*__strncmp)(s1+1, s2+1, n-1) : 0 ) ); //if *s1 is zero then *s2 is too (because diff is zero)
+	return((*__strncmp)(s1, s2, n));
 }
 
 // Unlike snprintf(), strncpy() doesn't necessarily null-terminate the
@@ -139,7 +133,7 @@ inline int DLLINTERNAL old_valid_file(char *path) {
 	char *cp;
 	int len, ret;
 	cp = (char *)LOAD_FILE_FOR_ME(path, &len);
-	if(likely(cp) && likely(len))
+	if(cp && len)
 		ret=1;
 	else
 		ret=0;

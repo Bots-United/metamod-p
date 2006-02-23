@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 Jussi Kivilinna
+ * Copyright (c) 2004-2006 Jussi Kivilinna
  *
  *    This file is part of "Metamod All-Mod-Support"-patch for Metamod.
  *
@@ -136,7 +136,7 @@ static struct link_map * DLLINTERNAL_NOVIS get_link_map(void) {
 	struct link_map * l_map;
 	
 	l_map = _r_debug.r_map;
-	while(likely(l_map) && unlikely(l_map->l_prev)) {
+	while(l_map && l_map->l_prev) {
 		l_map = l_map->l_prev;
 	}
 	
@@ -153,8 +153,8 @@ static int DLLINTERNAL_NOVIS get_tables(struct link_map * l_map, ElfW(Sym) *& sy
 	symtab = 0;
 	nchains = 0;
 	
-	for(int i = 0; likely(dyn[i].d_tag != DT_NULL); i++) {
-		if(unlikely(dyn[i].d_tag == DT_HASH)) {
+	for(int i = 0; dyn[i].d_tag != DT_NULL; i++) {
+		if(dyn[i].d_tag == DT_HASH) {
 			Elf32_Word * hash_table;
 			
 			// some linux versions seem to have this already relocated while other don't(?)
@@ -168,18 +168,18 @@ static int DLLINTERNAL_NOVIS get_tables(struct link_map * l_map, ElfW(Sym) *& sy
 			//buckets = &hash_table[2];
 			//chains = &buckets[nbuckets];
 		} 
-		else if(unlikely(dyn[i].d_tag == DT_STRTAB)) {
+		else if(dyn[i].d_tag == DT_STRTAB) {
 			strtab = (char*)dyn[i].d_un.d_ptr;
 		}
-		else if(unlikely(dyn[i].d_tag == DT_SYMTAB)) {
+		else if(dyn[i].d_tag == DT_SYMTAB) {
 			symtab = (ElfW(Sym)*)dyn[i].d_un.d_ptr;
 		}
 		
-		if(unlikely(nchains) && unlikely(strtab) && unlikely(symtab))
+		if(nchains && strtab && symtab)
 			break;
 	}
 	
-	return(likely(nchains) && likely(strtab) && likely(symtab));
+	return(nchains && strtab && symtab);
 }
 
 //
@@ -189,18 +189,18 @@ static void * DLLINTERNAL_NOVIS find_symbol(struct link_map * l_map, const char 
 	
 	name_len = strlen(name);
 	
-	for(int i = 0; likely(i < nchains); i++) {
+	for(int i = 0; i < nchains; i++) {
 #ifdef __x86_64__
-		if(likely(ELF64_ST_TYPE(symtab[i].st_info) != stt_type) || likely(ELF64_ST_BIND(symtab[i].st_info) != stb_type))
+		if(ELF64_ST_TYPE(symtab[i].st_info) != stt_type || ELF64_ST_BIND(symtab[i].st_info) != stb_type)
 			continue;
 #else
-		if(likely(ELF32_ST_TYPE(symtab[i].st_info) != stt_type) || likely(ELF32_ST_BIND(symtab[i].st_info) != stb_type))
+		if(ELF32_ST_TYPE(symtab[i].st_info) != stt_type || ELF32_ST_BIND(symtab[i].st_info) != stb_type)
 			continue;
 #endif		
 		str = strtab + symtab[i].st_name;
 		
-		if(unlikely(mm_strncmp(str, name, name_len) == 0)) {
-			if(likely(str[name_len]==0)) {
+		if(mm_strncmp(str, name, name_len) == 0) {
+			if(str[name_len]==0) {
 				return((void*)(l_map->l_addr + symtab[i].st_value));
 			}
 		}
@@ -221,7 +221,7 @@ static void * DLLINTERNAL_NOVIS get_real_func_ptr(const char * lib, const char *
 		*errorcode = 0;
 	
 	l_map = get_link_map();
-	if(unlikely(!l_map)) {
+	if(!l_map) {
 		if(errorcode)
 			*errorcode = 1;
 		return(0);
@@ -229,18 +229,18 @@ static void * DLLINTERNAL_NOVIS get_real_func_ptr(const char * lib, const char *
 	
 	do {
 		// skip all except 'lib'
-		if(likely(!strstr(l_map->l_name, lib)))
+		if(!strstr(l_map->l_name, lib))
 			continue;
 		
-		if(unlikely(!get_tables(l_map, symtab, strtab, nchains))) {
+		if(!get_tables(l_map, symtab, strtab, nchains)) {
 			continue;
 		}
 		
 		sym_ptr = find_symbol(l_map, name, STT_FUNC, STB_GLOBAL, symtab, strtab, nchains);
-		if(likely(sym_ptr) && likely(*(unsigned short*)sym_ptr != 0x25ff)) {
+		if(sym_ptr && *(unsigned short*)sym_ptr != 0x25ff) {
 			return(sym_ptr);
 		}
-	} while(likely(l_map = l_map->l_next));
+	} while((l_map = l_map->l_next));
 	
 	if(errorcode)
 		*errorcode = 2;
@@ -281,7 +281,7 @@ static void * __replacement_dlsym(void * module, const char * funcname)
 	pthread_mutex_lock(&mutex_replacement_dlsym);
 	
 	//restore old dlsym
-	if(likely(!is_original_restored))
+	if(!is_original_restored)
 	{
 		restore_original_dlsym();
 		
@@ -289,14 +289,14 @@ static void * __replacement_dlsym(void * module, const char * funcname)
 	}
 		
 	//check if we should hook this call
-	if(unlikely(module != metamod_module_handle) || unlikely(!metamod_module_handle) || unlikely(!gamedll_module_handle))
+	if(module != metamod_module_handle || !metamod_module_handle || !gamedll_module_handle)
 	{
 		//no metamod/gamedll module? should we remove hook now?
 		void * retval = dlsym_original(module, funcname);
 		
-		if(likely(metamod_module_handle) && likely(gamedll_module_handle))
+		if(metamod_module_handle && gamedll_module_handle)
 		{
-			if(likely(!was_original_restored))
+			if(!was_original_restored)
 			{
 				//reset dlsym hook
 				reset_dlsym_hook();
@@ -318,13 +318,13 @@ static void * __replacement_dlsym(void * module, const char * funcname)
 	//dlsym on metamod module
 	void * func = dlsym_original(module, funcname);
 	
-	if(likely(!func))
+	if(!func)
 	{
 		//function not in metamod module, try gamedll
 		func = dlsym_original(gamedll_module_handle, funcname);
 	}
 	
-	if(likely(!was_original_restored))
+	if(!was_original_restored)
 	{
 		//reset dlsym hook
 		reset_dlsym_hook();
@@ -349,7 +349,7 @@ int DLLINTERNAL init_linkent_replacement(DLHANDLE MetamodHandle, DLHANDLE GameDl
 	gamedll_module_handle = GameDllHandle;
 	
 	dlsym_original = (dlsym_func)get_real_func_ptr("/libdl.so", "dlsym", &errorcode);
-	if(unlikely(!dlsym_original)) {
+	if(!dlsym_original) {
 		//whine loud and exit
 		META_ERROR("Couldn't initialize dynamic linkents, get_real_func_ptr(libdl.so, dlsym) failed with errorcode: %d", errorcode);
 		return(0);

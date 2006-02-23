@@ -5,7 +5,7 @@
 //                   cmds, cvars, msgs, etc)
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -98,17 +98,17 @@ void DLLHIDDEN meta_command_handler(void) {
 
 	META_DEBUG(5, ("called: meta_command_handler; arg0=%s args='%s'", CMD_ARGV(0), CMD_ARGS()));
 	cmd=CMD_ARGV(0);
-	if(unlikely(!cmd)) {
+	if(!cmd) {
 		META_WARNING("Null command name in meta_command_handler() ??");
 		return;
 	}
 
 	icmd=RegCmds->find(cmd);
-	if(unlikely(!icmd)) {
+	if(!icmd) {
 		META_WARNING("Couldn't find registered plugin command: %s", cmd);
 		return;
 	}
-	if(unlikely(icmd->call() != mTRUE))
+	if(icmd->call() != mTRUE)
 		META_CONS("[metamod: command '%s' unavailable; plugin unloaded]", cmd);
 }
 
@@ -129,18 +129,18 @@ void DLLHIDDEN meta_AddServerCommand(char *cmd_name, void (*function) (void)) {
 	META_DEBUG(4, ("called: meta_AddServerCommand; cmd_name=%s, function=%d", cmd_name, function));
 
 	// try to find which plugin is registering this command
-	if(unlikely(!(iplug=Plugins->find_memloc((void *)function)))) {
+	if(!(iplug=Plugins->find_memloc((void *)function))) {
 		// if this isn't supported on this OS, don't log an error
-		if(likely(meta_errno != ME_OSNOTSUP))
+		if(meta_errno != ME_OSNOTSUP)
 			META_WARNING("Failed to find memloc for regcmd '%s'", cmd_name);
 	}
 
 	// See if this command was previously registered, ie a "reloaded" plugin.
 	icmd=RegCmds->find(cmd_name);
-	if(likely(!icmd)) {
+	if(!icmd) {
 		// If not found, add.
 		icmd=RegCmds->add(cmd_name);
-		if(unlikely(!icmd)) {
+		if(!icmd) {
 			// error details logged in add()
 			return;
 		}
@@ -152,7 +152,7 @@ void DLLHIDDEN meta_AddServerCommand(char *cmd_name, void (*function) (void)) {
 	icmd->status=RG_VALID;
 	// Store which plugin this is for, if we know.  We can use '0' for
 	// unknown plugin, since plugin index starts at 1.
-	if(likely(iplug))
+	if(iplug)
 		icmd->plugid = iplug->index;
 	else
 		icmd->plugid = 0;
@@ -178,9 +178,9 @@ void DLLHIDDEN meta_CVarRegister(cvar_t *pCvar) {
 	META_DEBUG(4, ("called: meta_CVarRegister; name=%s", pCvar->name));
 
 	// try to find which plugin is registering this cvar
-	if(unlikely(!(iplug=Plugins->find_memloc((void *)pCvar)))) {
+	if(!(iplug=Plugins->find_memloc((void *)pCvar))) {
 		// if this isn't supported on this OS, don't log an error
-		if(unlikely(meta_errno != ME_OSNOTSUP))
+		if(meta_errno != ME_OSNOTSUP)
 			// Note: if cvar_t was malloc'd by the plugin, we can't
 			// determine the calling plugin.  Thus, this becomes a Debug
 			// rather than Error message.
@@ -190,10 +190,10 @@ void DLLHIDDEN meta_CVarRegister(cvar_t *pCvar) {
 
 	// See if this cvar was previously registered, ie a "reloaded" plugin.
 	icvar=RegCvars->find(pCvar->name);
-	if(likely(!icvar)) {
+	if(!icvar) {
 		// If not found, add.
 		icvar=RegCvars->add(pCvar->name);
-		if(unlikely(!icvar)) {
+		if(!icvar) {
 			// error details logged in add()
 			return;
 		}
@@ -207,7 +207,7 @@ void DLLHIDDEN meta_CVarRegister(cvar_t *pCvar) {
 	icvar->status=RG_VALID;
 	// Store which plugin this is for, if we know.  Use '0' for unknown
 	// plugin, as plugin index starts at 1.
-	if(likely(iplug))
+	if(iplug)
 		icvar->plugid = iplug->index;
 	else
 		icvar->plugid = 0;

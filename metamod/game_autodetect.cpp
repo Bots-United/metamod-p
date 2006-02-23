@@ -4,7 +4,7 @@
 // autodetect.cpp - GameDLL search and autodetection.
 
 /*
- * Copyright (c) 2004-2005 Jussi Kivilinna
+ * Copyright (c) 2004-2006 Jussi Kivilinna
  *
  *    This file is part of "Metamod All-Mod-Support"-patch for Metamod.
  *
@@ -53,7 +53,7 @@ const char * DLLINTERNAL autodetect_gamedll(const gamedll_t *gamedll, const char
 		
 	// Generate dllpath
 	safevoid_snprintf(buf, sizeof(buf), "%s/dlls", gamedll->gamedir);
-	if(unlikely(!full_gamedir_path(buf, dllpath))) {
+	if(!full_gamedir_path(buf, dllpath)) {
 		//whine & return
 		META_WARNING("GameDLL-Autodetection: Directory '%s' doesn't exist.", buf);
 		return(0);
@@ -63,46 +63,46 @@ const char * DLLINTERNAL autodetect_gamedll(const gamedll_t *gamedll, const char
 	safevoid_snprintf(fnpath, sizeof(fnpath), "%s/%s", dllpath, knownfn);
 	
 	// Check if knownfn exists and is valid gamedll
-	if(likely(is_gamedll(fnpath))) {
+	if(is_gamedll(fnpath)) {
 		// knownfn exists and is loadable gamedll, return 0.
 		return(0);
 	}
 	
 	// Open directory
-	if(unlikely(!(dir = opendir(dllpath)))) {
+	if(!(dir = opendir(dllpath))) {
 		//whine & return
 		META_WARNING("GameDLL-Autodetection: Couldn't open directory '%s'.", dllpath);
 		return(0);
 	}
 	
-	while(likely((ent = readdir(dir)) != 0)) {
+	while((ent = readdir(dir)) != 0) {
 		fn_len = strlen(ent->d_name);
 		
-		if(unlikely(fn_len <= strlen(PLATFORM_DLEXT))) {
+		if(fn_len <= strlen(PLATFORM_DLEXT)) {
 			// Filename is too short
 			continue;
 		}
 		
 		// Compare end of filename with PLATFORM_DLEXT
-		if(unlikely(!strcasematch(&ent->d_name[fn_len - strlen(PLATFORM_DLEXT)], PLATFORM_DLEXT))) {
+		if(!strcasematch(&ent->d_name[fn_len - strlen(PLATFORM_DLEXT)], PLATFORM_DLEXT)) {
 			// File isn't dll
 			continue;
 		}
 		
 		// Exclude all metamods
-		if(unlikely(strncasematch(ent->d_name, "metamod", strlen("metamod")))) {
+		if(strncasematch(ent->d_name, "metamod", strlen("metamod"))) {
 			continue;
 		}
 		
 		// Exclude all bots
 		STRNCPY(buf, ent->d_name, sizeof(buf));
 		strlwr(buf);
-		if(unlikely(strstr(buf, "bot."))) {
+		if(strstr(buf, "bot.")) {
 			continue;
 		}
 #ifdef linux
 		//bot_iX86.so, bot_amd64.so, bot_x86_64.so
-		if(unlikely(strstr(buf, "bot_i")) || unlikely(strstr(buf, "bot_amd64.so")) || unlikely(strstr(buf, "bot_x86"))) {
+		if(strstr(buf, "bot_i") || strstr(buf, "bot_amd64.so") || strstr(buf, "bot_x86")) {
 			continue;
 		}
 #endif
@@ -111,7 +111,7 @@ const char * DLLINTERNAL autodetect_gamedll(const gamedll_t *gamedll, const char
 		safevoid_snprintf(fnpath, sizeof(fnpath), "%s/%s", dllpath, ent->d_name);
 		
 		// Check if dll is gamedll
-		if(likely(is_gamedll(fnpath))) {
+		if(is_gamedll(fnpath)) {
 			META_DEBUG(8, ("is_gamedll(%s): ok.", fnpath));
 			//gamedll detected
 			STRNCPY(buf, ent->d_name, sizeof(buf));

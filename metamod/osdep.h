@@ -4,7 +4,7 @@
 // osdep.h - operating system dependencies
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -119,7 +119,7 @@ extern mBOOL dlclose_handle_invalid DLLHIDDEN;
 	}
 	//dlclose crashes if handle is null.
 	inline int DLLINTERNAL DLCLOSE(DLHANDLE handle) {
-		if(unlikely(!handle)) {
+		if(!handle) {
 			dlclose_handle_invalid = mTRUE;
 			return(1);
 		}
@@ -128,7 +128,7 @@ extern mBOOL dlclose_handle_invalid DLLHIDDEN;
 		return(dlclose(handle));
 	}
 	inline const char * DLLINTERNAL DLERROR(void) {
-		if(unlikely(dlclose_handle_invalid))
+		if(dlclose_handle_invalid)
 			return("Invalid handle.");
 		return(dlerror());
 	}
@@ -142,7 +142,7 @@ extern mBOOL dlclose_handle_invalid DLLHIDDEN;
 		return(GetProcAddress(handle, string));
 	}
 	inline int DLLINTERNAL DLCLOSE(DLHANDLE handle) {
-		if(unlikely(!handle)) {
+		if(!handle) {
 			dlclose_handle_invalid = mTRUE;
 			return(1);
 		}
@@ -157,7 +157,7 @@ extern mBOOL dlclose_handle_invalid DLLHIDDEN;
 	// we make our own.
 	char * DLLINTERNAL str_GetLastError(void);
 	inline const char * DLLINTERNAL DLERROR(void) {
-		if(unlikely(dlclose_handle_invalid))
+		if(dlclose_handle_invalid)
 			return("Invalid handle.");
 		return(str_GetLastError());
 	}
@@ -265,10 +265,10 @@ void DLLINTERNAL normalize_pathname(char *path);
 //  - a UNC network address (ie "\\srv1\blah").
 // Also, handle both native and normalized pathnames.
 inline mBOOL DLLINTERNAL is_absolute_path(const char *path) {
-	if(likely(path[0]=='/')) return(mTRUE);
+	if(path[0]=='/') return(mTRUE);
 #ifdef _WIN32
-	if(likely(path[1]==':')) return(mTRUE);
-	if(unlikely(path[0]=='\\')) return(mTRUE);
+	if(path[1]==':') return(mTRUE);
+	if(path[0]=='\\') return(mTRUE);
 #endif /* _WIN32 */
 	return(mFALSE);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 Jussi Kivilinna
+ * Copyright (c) 2004-2006 Jussi Kivilinna
  *
  *    This file is part of "Metamod All-Mod-Support"-patch for Metamod.
  *
@@ -55,8 +55,8 @@ static void signal_handler_sigsegv(int) {
 	longjmp(signal_jmp_buf, 1);
 }
 
-#define invalid_elf_ptr(x) (unlikely(((unsigned long)&x) > file_end - 1))
-#define invalid_elf_offset(x) (unlikely(((unsigned long)x) > filesize - 1))
+#define invalid_elf_ptr(x) (((unsigned long)&(x)) > file_end - 1)
+#define invalid_elf_offset(x) (((unsigned long)(x)) > filesize - 1)
 #define elf_error_exit() \
 	do { \
 		sigaction(SIGSEGV, &oldaction, 0); \
@@ -66,6 +66,8 @@ static void signal_handler_sigsegv(int) {
 	} while(0)
 
 mBOOL DLLINTERNAL is_gamedll(const char *filename) {
+	// When these are not static there are some mysterious hidden bugs that I can't find/solve.
+	// So this is simple workaround.
 	static struct sigaction action;
 	static struct sigaction oldaction;
 	static ElfW(Ehdr)  * ehdr = 0;
@@ -99,7 +101,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	has_GetEntityAPI = 0;
 	
 	// Try open file and get filesize
-	if(likely((pf = fopen(filename, "rb")))) {
+	if((pf = fopen(filename, "rb"))) {
 		fseek(pf, 0, SEEK_END);
 		filesize = ftell(pf);
 		fseek(pf, 0, SEEK_SET);
@@ -110,7 +112,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	}
 	
 	// Check that filesize is atleast size of ELF header!
-	if(unlikely(filesize < sizeof(ElfW(Ehdr)))) {
+	if(filesize < sizeof(ElfW(Ehdr))) {
 #ifdef __x86_64__
 		META_DEBUG(3, ("is_gamedll(%s): Failed, file is too small to be ELF64. [%i < %i]", filename, filesize, sizeof(ElfW(Ehdr))));
 #else
@@ -129,14 +131,14 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	fclose(pf);
 	
 	// check if mmap was successful
-	if(unlikely(!ehdr) || unlikely((void*)ehdr==(void*)-1)) {
+	if(!ehdr || (void*)ehdr==(void*)-1) {
 		META_DEBUG(3, ("is_gamedll(%s): Failed, mmap() [0x%x]", filename, ehdr));
 		
 		return(mFALSE);
 	}
 	
 	//In case that ELF file is incomplete (because bad upload etc), we protect memory-mapping access with signal-handler
-	if(likely(!setjmp(signal_jmp_buf))) {
+	if(!setjmp(signal_jmp_buf)) {
 		memset(&action, 0, sizeof(struct sigaction));
 		memset(&oldaction, 0, sizeof(struct sigaction));
 		
@@ -156,7 +158,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 		return(mFALSE);
 	}
 	
-	if(unlikely(mm_strncmp((char *)ehdr, ELFMAG, SELFMAG) != 0) || unlikely(ehdr->e_ident[EI_VERSION] != EV_CURRENT)) {
+	if(mm_strncmp((char *)ehdr, ELFMAG, SELFMAG) != 0 || ehdr->e_ident[EI_VERSION] != EV_CURRENT) {
 		// Reset signal handler.
 		sigaction(SIGSEGV, &oldaction, 0);
 		
@@ -170,7 +172,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 
 #ifdef __x86_64__
 	// check if x86_64-shared-library
-	if(unlikely(ehdr->e_ident[EI_CLASS] != ELFCLASS64) || unlikely(ehdr->e_type != ET_DYN) || unlikely(ehdr->e_machine != EM_X86_64)) {
+	if(ehdr->e_ident[EI_CLASS] != ELFCLASS64 || ehdr->e_type != ET_DYN || ehdr->e_machine != EM_X86_64) {
 		// Reset signal handler.
 		sigaction(SIGSEGV, &oldaction, 0);
 		
@@ -183,7 +185,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	}
 #else
 	// check if x86-shared-library
-	if(unlikely(ehdr->e_ident[EI_CLASS] != ELFCLASS32) || unlikely(ehdr->e_type != ET_DYN) || unlikely(ehdr->e_machine != EM_386)) {
+	if(ehdr->e_ident[EI_CLASS] != ELFCLASS32 || ehdr->e_type != ET_DYN || ehdr->e_machine != EM_386) {
 		// Reset signal handler.
 		sigaction(SIGSEGV, &oldaction, 0);
 		
@@ -201,9 +203,9 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	if(invalid_elf_ptr(shdr[ehdr->e_shnum]))
 		elf_error_exit();
 	
-	for(i = 0; likely(i < ehdr->e_shnum); i++) {
+	for(i = 0; i < ehdr->e_shnum; i++) {
 		// searching for dynamic linker symbol table
-		if(unlikely(shdr[i].sh_type == SHT_DYNSYM)) {
+		if(shdr[i].sh_type == SHT_DYNSYM) {
 			if(invalid_elf_offset(shdr[i].sh_offset) ||
 			   invalid_elf_ptr(shdr[shdr[i].sh_link]) ||
 			   invalid_elf_offset(shdr[shdr[i].sh_link].sh_offset) ||
@@ -220,10 +222,10 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 		}
 	}
 	
-	if(unlikely(!symtab)) {
+	if(!symtab) {
 		//Another method for finding symtab
-		for(i = 0; likely(i < ehdr->e_shnum); i++) {
-			if(unlikely(shdr[i].sh_type == SHT_SYMTAB)) {
+		for(i = 0; i < ehdr->e_shnum; i++) {
+			if(shdr[i].sh_type == SHT_SYMTAB) {
 				if(invalid_elf_offset(shdr[i].sh_offset) ||
 				   invalid_elf_ptr(shdr[shdr[i].sh_link]) ||
 				   invalid_elf_offset(shdr[shdr[i].sh_link].sh_offset) ||
@@ -241,7 +243,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 		}
 	}
 	
-	if(unlikely(!symtab)) {
+	if(!symtab) {
 		// Reset signal handler.
 		sigaction(SIGSEGV, &oldaction, 0);
 		
@@ -253,40 +255,40 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	}
 	
 	//Search symbols for exports
-	for(i = 0; likely(i < nsyms); i++) {
+	for(i = 0; i < nsyms; i++) {
 #ifdef __x86_64__
 		// Export?
-		if(likely(ELF64_ST_TYPE(symtab[i].st_info) != STT_FUNC) || likely(ELF64_ST_BIND(symtab[i].st_info) != STB_GLOBAL))
+		if(ELF64_ST_TYPE(symtab[i].st_info) != STT_FUNC || ELF64_ST_BIND(symtab[i].st_info) != STB_GLOBAL)
 			continue;
 #else
 		// Export?
-		if(likely(ELF32_ST_TYPE(symtab[i].st_info) != STT_FUNC) || likely(ELF32_ST_BIND(symtab[i].st_info) != STB_GLOBAL))
+		if(ELF32_ST_TYPE(symtab[i].st_info) != STT_FUNC || ELF32_ST_BIND(symtab[i].st_info) != STB_GLOBAL)
 			continue;
 #endif
 		
 		// string outside strtab?
-		if(unlikely(symtab[i].st_name <= 0) || unlikely(symtab[i].st_name >= strtab_size))
+		if(symtab[i].st_name <= 0 || symtab[i].st_name >= strtab_size)
 			continue;
 		
 		funcname = &strtab[symtab[i].st_name];
 		
 		// Check
 		// Fast check for 'G' first
-		if(unlikely(funcname[0] == 'G')) {
+		if(funcname[0] == 'G') {
 			// Collect export information
-			if(likely(!has_GiveFnptrsToDll))
+			if(!has_GiveFnptrsToDll)
 				has_GiveFnptrsToDll = strmatch(funcname, "GiveFnptrsToDll");
-			if(likely(!has_GetEntityAPI2))
+			if(!has_GetEntityAPI2)
 				has_GetEntityAPI2   = strmatch(funcname, "GetEntityAPI2");
-	  		if(likely(!has_GetEntityAPI))
+	  		if(!has_GetEntityAPI)
 	  			has_GetEntityAPI    = strmatch(funcname, "GetEntityAPI");
 	  	}
 		// Check if metamod plugin
-		else if(unlikely(funcname[0] == 'M')) {
-			if(unlikely(strmatch(funcname, "Meta_Init")) || 
-			   unlikely(strmatch(funcname, "Meta_Query")) || 
-			   unlikely(strmatch(funcname, "Meta_Attach")) || 
-			   unlikely(strmatch(funcname, "Meta_Detach"))) {
+		else if(funcname[0] == 'M') {
+			if(strmatch(funcname, "Meta_Init") || 
+			   strmatch(funcname, "Meta_Query") || 
+			   strmatch(funcname, "Meta_Attach") || 
+			   strmatch(funcname, "Meta_Detach")) {
 				// Metamod plugin.. is not gamedll
 				META_DEBUG(5, ("is_gamedll(%s): Detected Metamod plugin, library exports [%s].", filename, funcname));
 		   		
@@ -301,7 +303,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	}
 	
 	// Check if gamedll
-	if(likely(has_GiveFnptrsToDll) && (likely(has_GetEntityAPI2) || unlikely(has_GetEntityAPI))) {
+	if(has_GiveFnptrsToDll && (has_GetEntityAPI2 || has_GetEntityAPI)) {
 		// This is gamedll!
 		META_DEBUG(5, ("is_gamedll(%s): Detected GameDLL.", filename));
 		

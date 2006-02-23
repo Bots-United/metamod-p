@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 Jussi Kivilinna
+ * Copyright (c) 2004-2006 Jussi Kivilinna
  *
  *    This file is part of "Metamod All-Mod-Support"-patch for Metamod.
  *
@@ -69,12 +69,12 @@ static IMAGE_NT_HEADERS * DLLINTERNAL_NOVIS get_ntheaders(HMODULE module)
 	
 	//Check if valid dos header
 	mem.mem = (unsigned long)module;
-	if(unlikely(IsBadReadPtr(mem.dos, sizeof(*mem.dos))) || unlikely(mem.dos->e_magic != IMAGE_DOS_SIGNATURE))
+	if(IsBadReadPtr(mem.dos, sizeof(*mem.dos)) || mem.dos->e_magic != IMAGE_DOS_SIGNATURE)
 		return(0);
 	
 	//Get and check pe header
 	mem.mem = rva_to_va(module, mem.dos->e_lfanew);
-	if(unlikely(IsBadReadPtr(mem.pe, sizeof(*mem.pe))) || unlikely(mem.pe->Signature != IMAGE_NT_SIGNATURE))
+	if(IsBadReadPtr(mem.pe, sizeof(*mem.pe)) || mem.pe->Signature != IMAGE_NT_SIGNATURE)
 		return(0);
 	
 	return(mem.pe);
@@ -95,15 +95,15 @@ static IMAGE_EXPORT_DIRECTORY * DLLINTERNAL_NOVIS get_export_table(HMODULE modul
 	
 	//Check module
 	mem.pe = get_ntheaders(module);
-	if(unlikely(!mem.pe))
+	if(!mem.pe)
 		return(0);
 	
 	//Check for exports
-	if(unlikely(!mem.pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress))
+	if(!mem.pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress)
 		return(0);
 	
 	mem.mem = rva_to_va(module, mem.pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
-	if(unlikely(IsBadReadPtr(mem.export_dir, sizeof(*mem.export_dir))))
+	if(IsBadReadPtr(mem.export_dir, sizeof(*mem.export_dir)))
 		return(0);
 	
 	return(mem.export_dir);
@@ -144,7 +144,7 @@ static int DLLINTERNAL_NOVIS combine_module_export_tables(HMODULE moduleMM, HMOD
 	//Get export tables
 	exportMM   = get_export_table(moduleMM);
 	exportGame = get_export_table(moduleGame);
-	if(unlikely(!exportMM) || unlikely(!exportGame))
+	if(!exportMM || !exportGame)
 	{
 		META_ERROR("Couldn't initialize dynamic linkents, exportMM: %i, exportGame: %i.  Exiting...", exportMM, exportGame);
 		return(0);
@@ -159,9 +159,9 @@ static int DLLINTERNAL_NOVIS combine_module_export_tables(HMODULE moduleMM, HMOD
 	*(void**)&newSort      = calloc(1, newNumberOfNames * sizeof(*newSort));
 	
 	//copy moduleMM to new export
-	for(funcCount = 0; likely(funcCount < exportMM->NumberOfFunctions); funcCount++)
+	for(funcCount = 0; funcCount < exportMM->NumberOfFunctions; funcCount++)
 		newFunctions[funcCount] = rva_to_va(moduleMM, ((unsigned long*)rva_to_va(moduleMM, exportMM->AddressOfFunctions))[funcCount]);
-	for(nameCount = 0; likely(nameCount < exportMM->NumberOfNames); nameCount++)
+	for(nameCount = 0; nameCount < exportMM->NumberOfNames; nameCount++)
 	{
 		//fix name address
 		newSort[nameCount].name = rva_to_va(moduleMM, ((unsigned long*)rva_to_va(moduleMM, exportMM->AddressOfNames))[nameCount]);
@@ -170,21 +170,21 @@ static int DLLINTERNAL_NOVIS combine_module_export_tables(HMODULE moduleMM, HMOD
 	}
 	
 	//copy moduleGame to new export
-	for(i = 0; likely(i < exportGame->NumberOfFunctions); i++)
+	for(i = 0; i < exportGame->NumberOfFunctions; i++)
 		newFunctions[funcCount + i] = rva_to_va(moduleGame, ((unsigned long*)rva_to_va(moduleGame, exportGame->AddressOfFunctions))[i]);
-	for(i = 0, listFix = 0; likely(i < exportGame->NumberOfNames); i++)
+	for(i = 0, listFix = 0; i < exportGame->NumberOfNames; i++)
 	{
 		const char * name = (const char *)rva_to_va(moduleGame, ((unsigned long*)rva_to_va(moduleGame, exportGame->AddressOfNames))[i]);
 		//Check if name already in the list
-		for(u = 0; likely(u < nameCount); u++)
+		for(u = 0; u < nameCount; u++)
 		{
-			if(unlikely(!stricmp(name, (const char*)newSort[u].name)))
+			if(!stricmp(name, (const char*)newSort[u].name))
 			{
 				listFix -= 1;
 				break;
 			}
 		}
-		if(unlikely(u < nameCount)) //already in the list.. skip
+		if(u < nameCount) //already in the list.. skip
 			continue;
 		
 		newSort[nameCount + i + listFix].name = (unsigned long)name;
@@ -201,7 +201,7 @@ static int DLLINTERNAL_NOVIS combine_module_export_tables(HMODULE moduleMM, HMOD
 	*(void**)&newNames        = VirtualAlloc(0, newNumberOfNames * sizeof(*newNames), MEM_COMMIT, PAGE_READWRITE);
 	*(void**)&newNameOrdinals = VirtualAlloc(0, newNumberOfNames * sizeof(*newNameOrdinals), MEM_COMMIT, PAGE_READWRITE);
 	
-	for(i = 0; likely(i < newNumberOfNames); i++)
+	for(i = 0; i < newNumberOfNames; i++)
 	{
 		newNames[i]        = newSort[i].name;
 		newNameOrdinals[i] = newSort[i].nameOrdinal;
@@ -210,16 +210,16 @@ static int DLLINTERNAL_NOVIS combine_module_export_tables(HMODULE moduleMM, HMOD
 	free(newSort);
 	
 	//translate VAs to RVAs
-	for(i = 0; likely(i < newNumberOfFunctions); i++)
+	for(i = 0; i < newNumberOfFunctions; i++)
 		newFunctions[i] = va_to_rva(moduleMM, newFunctions[i]);
-	for(i = 0; likely(i < newNumberOfNames); i++)
+	for(i = 0; i < newNumberOfNames; i++)
 	{
 		newNames[i] = va_to_rva(moduleMM, newNames[i]);
 		newNameOrdinals[i] = (unsigned short)va_to_rva(moduleMM, newNameOrdinals[i]);
 	}
 	
 	DWORD OldProtect;
-	if(unlikely(!VirtualProtect(exportMM, sizeof(*exportMM), PAGE_READWRITE, &OldProtect)))
+	if(!VirtualProtect(exportMM, sizeof(*exportMM), PAGE_READWRITE, &OldProtect))
 	{
 		META_ERROR("Couldn't initialize dynamic linkents, VirtualProtect failed: %i.  Exiting...", GetLastError());
 		return(0);

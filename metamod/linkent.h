@@ -4,7 +4,7 @@
 // linkent.h - export entities from mod "games" back to the HL engine
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -81,15 +81,15 @@ typedef void (*ENTITY_FN) (entvars_t *);
 		char *entStr; \
 		MPlugin *findp; \
 		entStr = STRINGIZE(entityName, 0); \
-		if(unlikely(missing)) \
+		if(missing) \
 			return; \
-		if(unlikely(!pfnEntity)) { \
-			if(unlikely(!(findp=Plugins->find_match(pluginName)))) { \
+		if(!pfnEntity) { \
+			if(!(findp=Plugins->find_match(pluginName))) { \
 				META_WARNING("Couldn't find loaded plugin '%s' for plugin entity '%s'", pluginName, entStr); \
 				missing=1; \
 				return; \
 			} \
-			if(likely(findp->info) && unlikely(findp->info->loadable != PT_STARTUP)) { \
+			if(findp->info && findp->info->loadable != PT_STARTUP) { \
 				META_WARNING("Can't link entity '%s' for plugin '%s'; loadable != startup: %s", entStr, pluginName, findp->str_loadable()); \
 				missing=1; \
 				return; \
@@ -97,7 +97,7 @@ typedef void (*ENTITY_FN) (entvars_t *);
 			META_DEBUG(9, ("Looking up plugin entity '%s'", entStr)); \
 			pfnEntity = (ENTITY_FN) DLSYM(findp->handle, entStr); \
 		} \
-		if(unlikely(!pfnEntity)) { \
+		if(!pfnEntity) { \
 			META_WARNING("Couldn't find plugin entity '%s' in plugin DLL '%s'", entStr, findp->file); \
 			missing=1; \
 			return; \

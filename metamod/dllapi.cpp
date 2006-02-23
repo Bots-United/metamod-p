@@ -4,7 +4,7 @@
 // dllapi.cpp - implementation of Half-Life DLL routines
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -163,7 +163,7 @@ static void mm_ClientPutInServer(edict_t *pEntity) {
 	RETURN_API_void();
 }
 static void mm_ClientCommand(edict_t *pEntity) {
-	if(likely(Config->clientmeta) && unlikely(strmatch(CMD_ARGV(0), "meta"))) {
+	if(Config->clientmeta && strmatch(CMD_ARGV(0), "meta")) {
 		client_meta(pEntity);
 	}
 	META_DLLAPI_HANDLE_void(FN_CLIENTCOMMAND, pfnClientCommand, p, (pEntity));
@@ -432,11 +432,11 @@ DLL_FUNCTIONS *g_pHookedDllFunctions = &gFunctionTable;
 C_DLLEXPORT int GetEntityAPI(DLL_FUNCTIONS *pFunctionTable, int interfaceVersion)
 {
 	META_DEBUG(3, ("called: GetEntityAPI; version=%d", interfaceVersion));
-	if(unlikely(!pFunctionTable) || unlikely(metamod_not_loaded)) {
+	if(!pFunctionTable || metamod_not_loaded) {
 		META_WARNING("GetEntityAPI called with null pFunctionTable");
 		return(FALSE);
 	}
-	else if(unlikely(interfaceVersion != INTERFACE_VERSION)) {
+	else if(interfaceVersion != INTERFACE_VERSION) {
 		META_WARNING("GetEntityAPI version mismatch; requested=%d ours=%d", interfaceVersion, INTERFACE_VERSION);
 		return(FALSE);
 	}
@@ -447,11 +447,11 @@ C_DLLEXPORT int GetEntityAPI(DLL_FUNCTIONS *pFunctionTable, int interfaceVersion
 C_DLLEXPORT int GetEntityAPI2(DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion)
 {
 	META_DEBUG(3, ("called: GetEntityAPI2; version=%d", *interfaceVersion));
-	if(unlikely(!pFunctionTable) || unlikely(metamod_not_loaded)) {
+	if(!pFunctionTable || metamod_not_loaded) {
 		META_WARNING("GetEntityAPI2 called with null pFunctionTable");
 		return(FALSE);
 	}
-	else if(unlikely(*interfaceVersion != INTERFACE_VERSION)) {
+	else if(*interfaceVersion != INTERFACE_VERSION) {
 		META_WARNING("GetEntityAPI2 version mismatch; requested=%d ours=%d", *interfaceVersion, INTERFACE_VERSION);
 		//! Tell engine what version we had, so it can figure out who is out of date.
 		*interfaceVersion = INTERFACE_VERSION;
@@ -490,11 +490,11 @@ C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *in
 {
 	META_DEBUG(6, ("called: GetNewDLLFunctions; version=%d", *interfaceVersion));
 	
-	if(unlikely(!pNewFunctionTable) || unlikely(metamod_not_loaded)) {
+	if(!pNewFunctionTable || metamod_not_loaded) {
 		META_WARNING("GetNewDLLFunctions called with null pNewFunctionTable");
 		return(FALSE);
 	}
-	else if(unlikely(*interfaceVersion != NEW_DLL_FUNCTIONS_VERSION)) {
+	else if(*interfaceVersion != NEW_DLL_FUNCTIONS_VERSION) {
 		META_WARNING("GetNewDLLFunctions version mismatch; requested=%d ours=%d", *interfaceVersion, NEW_DLL_FUNCTIONS_VERSION);
 		//! Tell engine what version we had, so it can figure out who is out of date.
 		*interfaceVersion = NEW_DLL_FUNCTIONS_VERSION;

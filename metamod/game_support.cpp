@@ -4,7 +4,7 @@
 // game_support.cpp - info to recognize different HL mod "games"
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -64,9 +64,9 @@ const game_modlist_t known_games = {
 const game_modinfo_t * DLLINTERNAL lookup_game(const char *name) {
 	const game_modinfo_t *imod;
 	int i;
-	for(i=0; likely(known_games[i].name); i++) {
+	for(i=0; known_games[i].name; i++) {
 		imod=&known_games[i];
-		if(unlikely(strcasematch(imod->name, name)))
+		if(strcasematch(imod->name, name))
 			return(imod);
 	}
 	// no match found
@@ -78,18 +78,18 @@ mBOOL DLLINTERNAL install_gamedll(char *from, const char *to) {
 	int length_in;
 	int length_out;
 	
-	if(unlikely(!from)) 
+	if(!from)
 		return mFALSE;
-	if(unlikely(!to))
+	if(!to)
 		to = from;
 	
 	byte* cachefile = LOAD_FILE_FOR_ME(from, &length_in);
 	
 	// If the file seems to exist in the cache.
-	if(likely(cachefile)) {
+	if(cachefile) {
 		int fd=open(to, O_WRONLY|O_CREAT|O_EXCL|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
 		
-		if(unlikely(fd < 0)) {
+		if(fd < 0) {
 			META_DEBUG(3, ("Installing gamedll from cache: Failed to create file %s: %s", to, strerror(errno)) );
 			FREE_FILE(cachefile);
 			return(mFALSE);
@@ -100,10 +100,10 @@ mBOOL DLLINTERNAL install_gamedll(char *from, const char *to) {
 		close(fd);
 		
 		// Writing the file was not successfull
-		if(unlikely(length_out != length_in)) {
+		if(length_out != length_in) {
 			META_DEBUG(3,("Installing gamedll from chache: Failed to write all %d bytes to file, only %d written: %s", length_in, length_out, strerror(errno)));
 			// Let's not leave a mess but clean up nicely.
-			if(likely(length_out >= 0))
+			if(length_out >= 0)
 				unlink(to);
 			
 			return(mFALSE);
@@ -137,22 +137,22 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 	int override=0;
 
 	// Check for old-style "metagame.ini" file and complain.
-	if(unlikely(valid_gamedir_file(OLD_GAMEDLL_TXT)))
+	if(valid_gamedir_file(OLD_GAMEDLL_TXT))
 		META_WARNING("File '%s' is no longer supported; instead, specify override gamedll in %s or with '+localinfo mm_gamedll <dllfile>'", OLD_GAMEDLL_TXT, CONFIG_INI);
 	// First, look for a known game, based on gamedir.
-	if(likely((known=lookup_game(gamedll->name)))) {
+	if((known=lookup_game(gamedll->name))) {
 #ifdef _WIN32
 		knownfn=known->win_dll;
 #elif defined(linux)
 		knownfn=known->linux_so;
 	#ifdef __x86_64__
 		//AMD64: convert _i386.so to _amd64.so
-		if(likely((cp = strstr(knownfn, "_i386.so"))) ||
-		   unlikely((cp = strstr(knownfn, "_i486.so"))) ||
-		   unlikely((cp = strstr(knownfn, "_i586.so"))) ||
-		   unlikely((cp = strstr(knownfn, "_i686.so")))) {
+		if((cp = strstr(knownfn, "_i386.so")) ||
+		   (cp = strstr(knownfn, "_i486.so")) ||
+		   (cp = strstr(knownfn, "_i586.so")) ||
+		   (cp = strstr(knownfn, "_i686.so"))) {
 		   	//make sure that it's the ending that has "_iX86.so"
-		   	if(likely(cp[strlen("_i386.so")] == 0)) {
+		   	if(cp[strlen("_i386.so")] == 0) {
 				STRNCPY(fixname_amd64, known->linux_so, 
 					MIN(((size_t)cp - (size_t)knownfn) + 1, 
 					sizeof(fixname_amd64)));
@@ -167,12 +167,12 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 #endif /* _WIN32 */
 		
 		// Do this before autodetecting gamedll from "dlls/*.dll"
-		if(likely(!Config->gamedll)) {
+		if(!Config->gamedll) {
 			safevoid_snprintf(gamedll->pathname, sizeof(gamedll->pathname), "dlls/%s", 
 				knownfn);
 			// Check if the gamedll file exists. If not, try to install it from
 			// the cache.
-			if(unlikely(!valid_gamedir_file(gamedll->pathname))) {
+			if(!valid_gamedir_file(gamedll->pathname)) {
 				safevoid_snprintf(install_path, sizeof(install_path), "%s/dlls/%s", 
 						gamedll->gamedir, knownfn);
 				install_gamedll(gamedll->pathname, install_path);
@@ -182,11 +182,11 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 		
 	// Then, autodetect gamedlls in "gamedir/dlls/"
 	// autodetect_gamedll returns 0 if knownfn exists and is valid gamedll.
-	if(likely(Config->autodetect) && likely((autofn=autodetect_gamedll(gamedll, knownfn)))) {
+	if(Config->autodetect && (autofn=autodetect_gamedll(gamedll, knownfn))) {
 		// If knownfn is set and autodetect_gamedll returns non-null
 		// then knownfn doesn't exists and we should use autodetected
 		// dll instead.
-		if(unlikely(knownfn)) {
+		if(knownfn) {
 			// Whine loud about fact that known-list dll doesn't exists!
 			//META_LOG(plapla);
 			knownfn = autofn;
@@ -194,28 +194,28 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 	}
 	
 	// Neither override nor known-list nor auto-detect found a gamedll.
-	if(unlikely(!known) && likely(!Config->gamedll) && unlikely(!autofn))
+	if(!known && !Config->gamedll && !autofn)
 			RETURN_ERRNO(mFALSE, ME_NOTFOUND);
 	
 	// Use override-dll if specified.
-	if(unlikely(Config->gamedll)) {
+	if(Config->gamedll) {
 		STRNCPY(gamedll->pathname, Config->gamedll, 
 				sizeof(gamedll->pathname));
 		override=1;
 
 		// If the path is relative, the gamedll file will be missing and
 		// it might be found in the cache file.
-		if(likely(!is_absolute_path(gamedll->pathname))) {
+		if(!is_absolute_path(gamedll->pathname)) {
 			safevoid_snprintf(install_path, sizeof(install_path),
 					"%s/%s", gamedll->gamedir, gamedll->pathname);
 			// If we could successfully install the gamedll from the cache we
 			// rectify the pathname to be a full pathname.
-			if(likely(install_gamedll(gamedll->pathname, install_path)))
+			if(install_gamedll(gamedll->pathname, install_path))
 				STRNCPY(gamedll->pathname, install_path, sizeof(gamedll->pathname));
 		}
 	}
 	// Else use Known-list dll.
-	else if(likely(known)) {
+	else if(known) {
 		safevoid_snprintf(gamedll->pathname, sizeof(gamedll->pathname), "%s/dlls/%s", 
 				gamedll->gamedir, knownfn);
 	}
@@ -227,7 +227,7 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 
 	// get filename from pathname
 	cp=strrchr(gamedll->pathname, '/');
-	if(likely(cp))
+	if(cp)
 		cp++;
 	else
 		cp=gamedll->pathname;
@@ -235,24 +235,24 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 
 	// If found, store also the supposed "real" dll path based on the
 	// gamedir, in case it differs from the "override" dll path.
-	if(likely(known) && unlikely(override))
+	if(known && override)
 		safevoid_snprintf(gamedll->real_pathname, sizeof(gamedll->real_pathname),
 				"%s/dlls/%s", gamedll->gamedir, knownfn);
-	else if(likely(known) && unlikely(autofn))
+	else if(known && autofn)
 		safevoid_snprintf(gamedll->real_pathname, sizeof(gamedll->real_pathname),
 				"%s/dlls/%s", gamedll->gamedir, knownfn);
 	else // !known or (!override and !autofn)
 		STRNCPY(gamedll->real_pathname, gamedll->pathname, 
 				sizeof(gamedll->real_pathname));
 	
-	if(unlikely(override)) {
+	if(override) {
 		// generate a desc
 		safevoid_snprintf(override_desc_buf, sizeof(override_desc_buf), "%s (override)", gamedll->file);
 		gamedll->desc=override_desc_buf;
 		// log result
 		META_LOG("Overriding game '%s' with dllfile '%s'", gamedll->name, gamedll->file);
 	}
-	else if(likely(known) && unlikely(autofn)) {
+	else if(known && autofn) {
 		// dll in known-list doesn't exists but we found new one with autodetect.
 		
 		// generate a desc
@@ -260,13 +260,13 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 		gamedll->desc=autodetect_desc_buf;
 		META_LOG("Recognized game '%s'; Autodetection override; using dllfile '%s'", gamedll->name, gamedll->file);
 	}
-	else if(unlikely(autofn)) {
+	else if(autofn) {
 		// generate a desc
 		safevoid_snprintf(autodetect_desc_buf, sizeof(autodetect_desc_buf), "%s (autodetect)", gamedll->file);
 		gamedll->desc=autodetect_desc_buf;
 		META_LOG("Autodetected game '%s'; using dllfile '%s'", gamedll->name, gamedll->file);
 	}
-	else if(likely(known)) {
+	else if(known) {
 		gamedll->desc=known->desc;
 		META_LOG("Recognized game '%s'; using dllfile '%s'", gamedll->name, gamedll->file);
 	}

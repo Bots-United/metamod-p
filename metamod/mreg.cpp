@@ -4,7 +4,7 @@
 // mreg.cpp - functions for registered items (classes MRegCmd, MRegCmdList)
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -78,14 +78,14 @@ mBOOL DLLINTERNAL MRegCmd::call(void) {
 	mBOOL ret;
 
 	// can we expect to call this function?
-	if(unlikely(status != RG_VALID))
+	if(status != RG_VALID)
 		RETURN_ERRNO(mFALSE, ME_BADREQ);
-	if(unlikely(!pfnCmd))
+	if(!pfnCmd)
 		RETURN_ERRNO(mFALSE, ME_ARGUMENT);
 
 	// try to call this function
 	ret=os_safe_call(pfnCmd);
-	if(unlikely(!ret)) {
+	if(!ret) {
 		META_DEBUG(4, ("Plugin reg_cmd '%s' called after unloaded; removed from list", name));
 		status=RG_INVALID;
 		pfnCmd=NULL;
@@ -106,7 +106,7 @@ MRegCmdList::MRegCmdList(void)
 	int i;
 	mlist = (MRegCmd *) calloc(1, size * sizeof(MRegCmd));
 	// initialize array
-	for(i=0; likely(i < size); i++)
+	for(i=0; i < size; i++)
 		mlist[i].init(i+1);		// 1-based index
 	endlist=0;
 }
@@ -116,8 +116,8 @@ MRegCmdList::MRegCmdList(void)
 //  - ME_NOTFOUND	couldn't find a matching function
 MRegCmd * DLLINTERNAL MRegCmdList::find(const char *findname) {
 	int i;
-	for(i=0; likely(i < endlist); i++) {
-		if(unlikely(!strcasecmp(mlist[i].name, findname)))
+	for(i=0; i < endlist; i++) {
+		if(!strcasecmp(mlist[i].name, findname))
 			return(&mlist[i]);
 	}
 	RETURN_ERRNO(NULL, ME_NOTFOUND);
@@ -131,21 +131,21 @@ MRegCmd * DLLINTERNAL MRegCmdList::find(const char *findname) {
 MRegCmd * DLLINTERNAL MRegCmdList::add(const char *addname) {
 	MRegCmd *icmd;
 
-	if(unlikely(endlist==size)) {
+	if(endlist==size) {
 		// grow array
 		MRegCmd *temp;
 		int i, newsize;
 		newsize=size+REG_CMD_GROWSIZE;
 		META_DEBUG(6, ("Growing reg cmd list from %d to %d", size, newsize));
 		temp = (MRegCmd *) realloc(mlist, newsize*sizeof(MRegCmd));
-		if(unlikely(!temp)) {
+		if(!temp) {
 			META_WARNING("Couldn't grow registered command list to %d for '%s': %s", newsize, addname, strerror(errno));
 			RETURN_ERRNO(NULL, ME_NOMEM);
 		}
 		mlist=temp;
 		size=newsize;
 		// initialize new (unused) entries
-		for(i=endlist; likely(i<size); i++) {
+		for(i=endlist; i<size; i++) {
 			memset(&mlist[i], 0, sizeof(mlist[i]));
 			mlist[i].init(i+1);		// 1-based
 		}
@@ -158,7 +158,7 @@ MRegCmd * DLLINTERNAL MRegCmdList::add(const char *addname) {
 	//  - Can't point to memory in mlist which might get moved later by 
 	//    realloc (again, segv).
 	icmd->name=strdup(addname);
-	if(unlikely(!icmd->name)) {
+	if(!icmd->name) {
 		META_WARNING("Couldn't strdup for adding reg cmd name '%s': %s", 
 				addname, strerror(errno));
 		RETURN_ERRNO(NULL, ME_NOMEM);
@@ -171,8 +171,8 @@ MRegCmd * DLLINTERNAL MRegCmdList::add(const char *addname) {
 // Disable any functions belonging to the given plugin (by index id).
 void DLLINTERNAL MRegCmdList::disable(int plugin_id) {
 	int i;
-	for(i=0; likely(i < size); i++) {
-		if(unlikely(mlist[i].plugid == plugin_id))
+	for(i=0; i < size; i++) {
+		if(mlist[i].plugid == plugin_id)
 			mlist[i].status = RG_INVALID;
 	}
 }
@@ -189,13 +189,13 @@ void DLLINTERNAL MRegCmdList::show(void) {
 			WIDTH_MAX_REG, "",
 			sizeof(bplug)-1, "plugin", "command");
 	
-	for(i=0; likely(i < endlist); i++) {
+	for(i=0; i < endlist; i++) {
 		icmd = &mlist[i];
 		
-		if(likely(icmd->status==RG_VALID)) {
+		if(icmd->status==RG_VALID) {
 			iplug=Plugins->find(icmd->plugid);
 		
-			if(likely(iplug))
+			if(iplug)
 				STRNCPY(bplug, iplug->desc, sizeof(bplug));
 			else
 				STRNCPY(bplug, "(unknown)", sizeof(bplug));
@@ -208,7 +208,7 @@ void DLLINTERNAL MRegCmdList::show(void) {
 				sizeof(bplug)-1, bplug,
 				icmd->name);
 		
-		if(likely(icmd->status==RG_VALID))
+		if(icmd->status==RG_VALID)
 			a++;
 		
 		n++;
@@ -226,16 +226,16 @@ void DLLINTERNAL MRegCmdList::show(int plugin_id) {
 	// If OS doesn't support DLFNAME, then we can't know what the plugin's
 	// registered cvars are.
 	DLFNAME(NULL);
-	if(unlikely(meta_errno==ME_OSNOTSUP)) {
+	if(meta_errno==ME_OSNOTSUP) {
 		META_CONS("Registered commands: unknown (can't get info under this OS)");
 		return;
 	}
 	*/
 	
 	META_CONS("Registered commands:");
-	for(i=0; likely(i < endlist); i++) {
+	for(i=0; i < endlist; i++) {
 		icmd = &mlist[i];
-		if(likely(icmd->plugid != plugin_id))
+		if(icmd->plugid != plugin_id)
 			continue;
 		META_CONS("   %s", icmd->name);
 		n++;
@@ -260,7 +260,7 @@ void DLLINTERNAL MRegCvar::init(int idx)
 // meta_errno values:
 //  - ME_ARGUMENT	given cvar doesn't match this cvar
 mBOOL DLLINTERNAL MRegCvar::set(cvar_t *src) {
-	if(unlikely(strcasecmp(src->name, data->name))) {
+	if(strcasecmp(src->name, data->name)) {
 		META_WARNING("Tried to set cvar with mismatched name; src=%s dst=%s",
 				src->name, data->name);
 		RETURN_ERRNO(mFALSE, ME_ARGUMENT);
@@ -284,7 +284,7 @@ MRegCvarList::MRegCvarList(void)
 	int i;
 	vlist = (MRegCvar *) calloc(1, size * sizeof(MRegCvar));
 	// initialize array
-	for(i=0; likely(i < size); i++)
+	for(i=0; i < size; i++)
 		vlist[i].init(i+1);		// 1-based
 	endlist=0;
 }
@@ -297,21 +297,21 @@ MRegCvarList::MRegCvarList(void)
 MRegCvar * DLLINTERNAL MRegCvarList::add(const char *addname) {
 	MRegCvar *icvar;
 
-	if(unlikely(endlist==size)) {
+	if(endlist==size) {
 		// grow array
 		MRegCvar *temp;
 		int i, newsize;
 		newsize=size+REG_CVAR_GROWSIZE;
 		META_DEBUG(6, ("Growing reg cvar list from %d to %d", size, newsize));
 		temp = (MRegCvar *) realloc(vlist, newsize*sizeof(MRegCvar));
-		if(unlikely(!temp)) {
+		if(!temp) {
 			META_WARNING("Couldn't grow registered cvar list to %d for '%s'; %s", newsize, addname, strerror(errno));
 			RETURN_ERRNO(NULL, ME_NOMEM);
 		}
 		vlist=temp;
 		size=newsize;
 		// initialize new (unused) entries
-		for(i=endlist; likely(i<size); i++) {
+		for(i=endlist; i<size; i++) {
 			memset(&vlist[i], 0, sizeof(vlist[i]));
 			vlist[i].init(i+1);		// 1-based
 		}
@@ -325,13 +325,13 @@ MRegCvar * DLLINTERNAL MRegCvarList::add(const char *addname) {
 	//  - Can't point to memory in vlist which might get moved later by 
 	//    realloc (again, segv).
 	icvar->data = (cvar_t *) calloc(1, sizeof(cvar_t));
-	if(unlikely(!icvar->data)) {
+	if(!icvar->data) {
 		META_WARNING("Couldn't malloc cvar for adding reg cvar name '%s': %s", 
 				addname, strerror(errno));
 		RETURN_ERRNO(NULL, ME_NOMEM);
 	}
 	icvar->data->name=strdup(addname);
-	if(unlikely(!icvar->data->name)) {
+	if(!icvar->data->name) {
 		META_WARNING("Couldn't strdup for adding reg cvar name '%s': %s", 
 				addname, strerror(errno));
 		RETURN_ERRNO(NULL, ME_NOMEM);
@@ -346,8 +346,8 @@ MRegCvar * DLLINTERNAL MRegCvarList::add(const char *addname) {
 //  - ME_NOTFOUND	couldn't find a matching cvar
 MRegCvar * DLLINTERNAL MRegCvarList::find(const char *findname) {
 	int i;
-	for(i=0; likely(i < endlist); i++) {
-		if(unlikely(!strcasecmp(vlist[i].data->name, findname)))
+	for(i=0; i < endlist; i++) {
+		if(!strcasecmp(vlist[i].data->name, findname))
 			return(&vlist[i]);
 	}
 	RETURN_ERRNO(NULL, ME_NOTFOUND);
@@ -357,9 +357,9 @@ MRegCvar * DLLINTERNAL MRegCvarList::find(const char *findname) {
 void DLLINTERNAL MRegCvarList::disable(int plugin_id) {
 	int i;
 	MRegCvar *icvar;
-	for(i=0; likely(i < size); i++) {
+	for(i=0; i < size; i++) {
 		icvar=&vlist[i];
-		if(unlikely(icvar->plugid == plugin_id)) {
+		if(icvar->plugid == plugin_id) {
 			icvar->status = RG_INVALID;
 			icvar->plugid = 0;
 			// Decided not to do this, in order to keep pre-existing values
@@ -384,11 +384,11 @@ void DLLINTERNAL MRegCvarList::show(void) {
 			sizeof(bval)-1, "float value",
 			"string value");
 	
-	for(i=0; likely(i < endlist); i++) {
+	for(i=0; i < endlist; i++) {
 		icvar = &vlist[i];
-		if(likely(icvar->status==RG_VALID)) {
+		if(icvar->status==RG_VALID) {
 			iplug=Plugins->find(icvar->plugid);
-			if(likely(iplug))
+			if(iplug)
 				STRNCPY(bplug, iplug->desc, sizeof(bplug));
 			else
 				STRNCPY(bplug, "(unknown)", sizeof(bplug));
@@ -403,7 +403,7 @@ void DLLINTERNAL MRegCvarList::show(void) {
 				sizeof(bname)-1, bname,
 				sizeof(bval)-1, bval,
 				icvar->data->string);
-		if(likely(icvar->status==RG_VALID))
+		if(icvar->status==RG_VALID)
 			a++;
 		n++;
 	}
@@ -420,7 +420,7 @@ void DLLINTERNAL MRegCvarList::show(int plugin_id) {
 	// If OS doesn't support DLFNAME, then we can't know what the plugin's
 	// registered cvars are.
 	DLFNAME(NULL);
-	if(unlikely(meta_errno==ME_OSNOTSUP)) {
+	if(meta_errno==ME_OSNOTSUP) {
 		META_CONS("Registered cvars: unknown (can't get info under this OS)");
 		return;
 	}
@@ -430,9 +430,9 @@ void DLLINTERNAL MRegCvarList::show(int plugin_id) {
 			sizeof(bname)-1, "Registered cvars:",
 			sizeof(bval)-1, "float value",
 			"string value");
-	for(i=0; likely(i < endlist); i++) {
+	for(i=0; i < endlist; i++) {
 		icvar = &vlist[i];
-		if(likely(icvar->plugid != plugin_id))
+		if(icvar->plugid != plugin_id)
 			continue;
 		STRNCPY(bname, icvar->data->name, sizeof(bname));
 		safevoid_snprintf(bval, sizeof(bval), "%f", icvar->data->value);
@@ -455,7 +455,7 @@ MRegMsgList::MRegMsgList(void)
 	int i;
 	// initialize array
 	memset(mlist, 0, sizeof(mlist));
-	for(i=0; likely(i < size); i++) {
+	for(i=0; i < size; i++) {
 		mlist[i].index=i+1;		// 1-based
 	}
 	endlist=0;
@@ -467,7 +467,7 @@ MRegMsgList::MRegMsgList(void)
 MRegMsg * DLLINTERNAL MRegMsgList::add(const char *addname, int addmsgid, int addsize) {
 	MRegMsg *imsg;
 
-	if(unlikely(endlist==size)) {
+	if(endlist==size) {
 		// all slots used
 		META_ERROR("Couldn't add registered msg '%s' to list; reached max msgs (%d)",
 				addname, size);
@@ -492,8 +492,8 @@ MRegMsg * DLLINTERNAL MRegMsgList::add(const char *addname, int addmsgid, int ad
 //  - ME_NOTFOUND	couldn't find a matching cvar
 MRegMsg * DLLINTERNAL MRegMsgList::find(const char *findname) {
 	int i;
-	for(i=0; likely(i < endlist); i++) {
-		if(unlikely(!mm_strcmp(mlist[i].name, findname)))
+	for(i=0; i < endlist; i++) {
+		if(!mm_strcmp(mlist[i].name, findname))
 			return(&mlist[i]);
 	}
 	RETURN_ERRNO(NULL, ME_NOTFOUND);
@@ -504,8 +504,8 @@ MRegMsg * DLLINTERNAL MRegMsgList::find(const char *findname) {
 //  - ME_NOTFOUND	couldn't find a matching cvar
 MRegMsg * DLLINTERNAL MRegMsgList::find(int findmsgid) {
 	int i;
-	for(i=0; likely(i < endlist); i++) {
-		if(unlikely(mlist[i].msgid == findmsgid))
+	for(i=0; i < endlist; i++) {
+		if(mlist[i].msgid == findmsgid)
 			return(&mlist[i]);
 	}
 	RETURN_ERRNO(NULL, ME_NOTFOUND);
@@ -519,7 +519,7 @@ void DLLINTERNAL MRegMsgList::show(void) {
 
 	META_CONS("%-*s    %5s  %5s", 
 			sizeof(bname)-1, "Game registered user msgs:", "msgid", "size");
-	for(i=0; likely(i < endlist); i++) {
+	for(i=0; i < endlist; i++) {
 		imsg = &mlist[i];
 		STRNCPY(bname, imsg->name, sizeof(bname));
 		META_CONS("   %-*s   %3d    %3d", 

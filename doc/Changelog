@@ -1,7 +1,9 @@
 # vim: set tw=75 ft=none :
 
-2006/01/27      1.19p28
+2006/02/27      1.19p28
 [Patch: Metamod-P v28 by Jussi Kivilinna]
+ - Clean up code, removed use of likely()/unlikely() macros in places where 
+   they don't give extra performance.
  - Added MakeRequestID() API
  - Added api for using hook tables from plugins (thanks to BAILOPAN)
  - Re-enabled fix for engine_api varargs log calls with very long log string.

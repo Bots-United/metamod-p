@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 Jussi Kivilinna
+ * Copyright (c) 2004-2006 Jussi Kivilinna
  *
  *    This file is part of "Metamod All-Mod-Support"-patch for Metamod.
  *
@@ -107,7 +107,7 @@ void DLLINTERNAL main_hook_function_void(unsigned long api_info_offset, enum_api
 			continue;
 		
 		api_table = iplug->get_api_table(api);
-		if(unlikely(!api_table)) {
+		if(likely(!api_table)) {
 			//plugin doesn't provide this api table
 			continue;
 		}
@@ -179,7 +179,7 @@ void DLLINTERNAL main_hook_function_void(unsigned long api_info_offset, enum_api
 			continue;
 		
 		api_table = iplug->get_api_post_table(api);
-		if(unlikely(!api_table)) {
+		if(likely(!api_table)) {
 			//plugin doesn't provide this api table
 			continue;
 		}
@@ -263,7 +263,7 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned long 
 			continue;
 		
 		api_table = iplug->get_api_table(api);
-		if(unlikely(!api_table)) {
+		if(likely(!api_table)) {
 			//plugin doesn't provide this api table
 			continue;
 		}
@@ -351,7 +351,7 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned long 
 			continue;
 		
 		api_table = iplug->get_api_post_table(api);
-		if(unlikely(!api_table)) {
+		if(likely(!api_table)) {
 			//plugin doesn't provide this api table
 			continue;
 		}

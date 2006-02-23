@@ -4,7 +4,7 @@
 // mutil.cpp - utility functions to provide to plugins
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -69,7 +69,7 @@ static void mutil_LogConsole(plid_t /* plid */, const char *fmt, ...) {
 	va_end(ap);
 	// end msg with newline
 	len=strlen(buf);
-	if(likely(len < sizeof(buf)-2))		// -1 null, -1 for newline
+	if(len < sizeof(buf)-2)		// -1 null, -1 for newline
 		strcat(buf, "\n");
 	else
 		buf[len-1] = '\n';
@@ -109,7 +109,7 @@ static void mutil_LogDeveloper(plid_t plid, const char *fmt, ...) {
 	char buf[MAX_LOGMSG_LEN];
 	plugin_info_t *plinfo;
 
-	if(likely((int)CVAR_GET_FLOAT("developer") == 0))
+	if((int)CVAR_GET_FLOAT("developer") == 0)
 		return;
 
 	plinfo=(plugin_info_t *)plid;
@@ -131,7 +131,7 @@ static void mutil_CenterSayVarargs(plid_t plid, hudtextparms_t tparms,
 	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
 
 	mutil_LogMessage(plid, "(centersay) %s", buf);
-	for(n=1; likely(n <= gpGlobals->maxClients); n++) {
+	for(n=1; n <= gpGlobals->maxClients; n++) {
 		pEntity=INDEXENT(n);
 		META_UTIL_HudMessage(pEntity, tparms, buf);
 	}
@@ -165,7 +165,7 @@ static qboolean mutil_CallGameEntity(plid_t plid, const char *entStr, entvars_t 
 	META_DEBUG(8, ("Looking up game entity '%s' for plugin '%s'", entStr,
 				plinfo->name));
 	pfnEntity = (ENTITY_FN) DLSYM(GameDLL.handle, entStr);
-	if(unlikely(!pfnEntity)) {
+	if(!pfnEntity) {
 		META_WARNING("Couldn't find game entity '%s' in game DLL '%s' for plugin '%s'", entStr, GameDLL.name, plinfo->name);
 		return(false);
 	}
@@ -185,8 +185,8 @@ static int mutil_GetUserMsgID(plid_t plid, const char *msgname, int *size) {
 	META_DEBUG(8, ("Looking up usermsg name '%s' for plugin '%s'", msgname,
 				plinfo->name));
 	umsg=RegMsgs->find(msgname);
-	if(likely(umsg)) {
-		if(unlikely(size))
+	if(umsg) {
+		if(size)
 			*size=umsg->size;
 		return(umsg->msgid);
 	}
@@ -205,7 +205,7 @@ static const char *mutil_GetUserMsgName(plid_t plid, int msgid, int *size) {
 				plinfo->name));
 	// Guess names for any built-in Engine messages mentioned in the SDK;
 	// from dlls/util.h.
-	if(unlikely(msgid < 64)) {
+	if(msgid < 64) {
 		switch(msgid) {
 			case SVC_TEMPENTITY:
 				if(size) *size=-1;
@@ -228,8 +228,8 @@ static const char *mutil_GetUserMsgName(plid_t plid, int msgid, int *size) {
 		}
 	}
 	umsg=RegMsgs->find(msgid);
-	if(likely(umsg)) {
-		if(unlikely(size))
+	if(umsg) {
+		if(size)
 			*size=umsg->size;
 		// 'name' is assumed to be a constant string, allocated in the
 		// gamedll.
@@ -245,7 +245,7 @@ static const char *mutil_GetPluginPath(plid_t plid) {
 	MPlugin *plug;
 
 	plug=Plugins->find(plid);
-	if(unlikely(!plug)) {
+	if(!plug) {
 		META_WARNING("GetPluginPath: couldn't find plugin '%s'",
 				plid->name);
 		return(NULL);
@@ -290,17 +290,17 @@ static int mutil_LoadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME no
 {
 	MPlugin *pl_loaded;
 	
-	if(unlikely(NULL == fname)) {
+	if(NULL == fname) {
 		return(ME_ARGUMENT);
 	}
 
 	meta_errno = ME_NOERROR;
-	if(unlikely(!(pl_loaded=Plugins->plugin_addload(plid, fname, now)))) {
-		if(likely(plugin_handle))
+	if(!(pl_loaded=Plugins->plugin_addload(plid, fname, now))) {
+		if(plugin_handle)
 			*plugin_handle = NULL;
 		return(meta_errno);
 	} else {
-		if(likely(plugin_handle))
+		if(plugin_handle)
 			*plugin_handle = (void*)pl_loaded->handle;
 		return(0);
 	}
@@ -312,22 +312,22 @@ static int mutil_UnloadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME 
 	int pindex;
 	char* endptr;
 
-	if(unlikely(NULL == fname)) {
+	if(NULL == fname) {
 		return(ME_ARGUMENT);
 	}
 
 	pindex = strtol(fname, &endptr, 10);
-	if(likely(*fname != '\0') && likely(*endptr == '\0'))
+	if(*fname != '\0' && *endptr == '\0')
 		findp = Plugins->find(pindex);
 	else
 		findp = Plugins->find_match(fname);
 
-	if(unlikely(!findp))
+	if(!findp)
 		return(meta_errno);
 
 	meta_errno = ME_NOERROR;
 
-	if(likely(findp->plugin_unload(plid, now, reason)))
+	if(findp->plugin_unload(plid, now, reason))
 		return(0);
 	
 	return(meta_errno);
@@ -337,16 +337,16 @@ static int mutil_UnloadMetaPluginByHandle(plid_t plid, void *plugin_handle, PLUG
 {
 	MPlugin *findp;
 
-	if(unlikely(NULL == plugin_handle)) {
+	if(NULL == plugin_handle) {
 		return(ME_ARGUMENT);
 	}
 
-	if(unlikely(!(findp=Plugins->find((DLHANDLE)plugin_handle))))
+	if(!(findp=Plugins->find((DLHANDLE)plugin_handle)))
 		return(ME_NOTFOUND);
 	
 	meta_errno = ME_NOERROR;
 
-	if(likely(findp->plugin_unload(plid, now, reason)))
+	if(findp->plugin_unload(plid, now, reason))
 		return(0);
 
 	return(meta_errno);

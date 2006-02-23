@@ -4,7 +4,7 @@
 // mplugin.h - class and types to describe an individual plugin
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -187,16 +187,16 @@ class MPlugin : public class_metamod_new {
 		inline const char * DLLINTERNAL str_source(void)		{ return(str_source(SO_SIMPLE)); };
 
 		inline const char * DLLINTERNAL str_loadable(void) { 
-			return(likely(info)?str_loadtime(info->loadable, SL_SIMPLE):" -");
+			return(info?str_loadtime(info->loadable, SL_SIMPLE):" -");
 		};
 		inline const char * DLLINTERNAL str_unloadable(void) { 
-			return(likely(info)?str_loadtime(info->unloadable, SL_SIMPLE):" -");
+			return(info?str_loadtime(info->unloadable, SL_SIMPLE):" -");
 		};
 		inline const char * DLLINTERNAL str_loadable(STR_LOADTIME fmt) { 
-			return(likely(info)?str_loadtime(info->loadable, fmt):" -");
+			return(info?str_loadtime(info->loadable, fmt):" -");
 		};
 		inline const char * DLLINTERNAL str_unloadable(STR_LOADTIME fmt) { 
-			return(likely(info)?str_loadtime(info->unloadable, fmt):" -");
+			return(info?str_loadtime(info->unloadable, fmt):" -");
 		};
 	private:
 		mBOOL DLLINTERNAL query(void);
@@ -214,8 +214,8 @@ class MPlugin : public class_metamod_new {
 	{ \
 		const api_info_t * ainfo = (const api_info_t *)&api_info; \
 		const void ** table = (const void **)api_table; \
-		for(int i = 0; likely(&ainfo[i] < &api_info.END); i++) { \
-			if(unlikely(table[i])) { \
+		for(int i = 0; &ainfo[i] < &api_info.END; i++) { \
+			if(table[i]) { \
 				META_CONS("%s%s%s", pre_str, ainfo[i].name, post_str); \
 				n++; \
 			} \

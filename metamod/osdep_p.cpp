@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 Jussi Kivilinna
+ * Copyright (c) 2004-2006 Jussi Kivilinna
  *
  *    This file is part of "Metamod All-Mod-Support"-patch for Metamod.
  *
@@ -59,7 +59,7 @@ DIR * DLLINTERNAL my_opendir(const char *path)
 	
 	// Start searching
 	dir->handle = FindFirstFile(search_path, &dir->find_data);
-	if(unlikely(dir->handle == INVALID_HANDLE_VALUE)) {
+	if(dir->handle == INVALID_HANDLE_VALUE) {
 		free(dir);
 		return(0);
 	}
@@ -73,7 +73,7 @@ DIR * DLLINTERNAL my_opendir(const char *path)
 struct dirent * DLLINTERNAL my_readdir(DIR *dir)
 {
 	// If not found stop
-	if(unlikely(!dir) || unlikely(dir->not_found))
+	if(!dir || dir->not_found)
 		return(0);
 	
 	// Set filename
@@ -87,7 +87,7 @@ struct dirent * DLLINTERNAL my_readdir(DIR *dir)
 
 void DLLINTERNAL my_closedir(DIR *dir)
 {
-	if(unlikely(!dir))
+	if(!dir)
 		return;
 	
 	FindClose(dir->handle);
@@ -102,7 +102,7 @@ DLHANDLE DLLINTERNAL get_module_handle_of_memptr(void * memptr)
 	Dl_info dli;
 	memset(&dli, 0, sizeof(dli));
 	
-	if(likely(dladdr(memptr, &dli)))
+	if(dladdr(memptr, &dli))
 		return(dlopen(dli.dli_fname, RTLD_NOW));
 	else
 		return((void*)0);
@@ -112,11 +112,11 @@ DLHANDLE DLLINTERNAL get_module_handle_of_memptr(void * memptr)
 {
 	MEMORY_BASIC_INFORMATION MBI;
 	
-	if(unlikely(!VirtualQuery(memptr, &MBI, sizeof(MBI))))
+	if(!VirtualQuery(memptr, &MBI, sizeof(MBI)))
 		return(NULL);
-	if(unlikely(MBI.State != MEM_COMMIT))
+	if(MBI.State != MEM_COMMIT)
 		return(NULL);
-	if(unlikely(!MBI.AllocationBase))
+	if(!MBI.AllocationBase)
 		return(NULL);
 	
 	return((DLHANDLE)MBI.AllocationBase);	

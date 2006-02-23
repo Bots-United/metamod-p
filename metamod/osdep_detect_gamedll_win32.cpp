@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 Jussi Kivilinna
+ * Copyright (c) 2004-2006 Jussi Kivilinna
  *
  *    This file is part of "Metamod All-Mod-Support"-patch for Metamod.
  *
@@ -35,7 +35,7 @@
 #include "support_meta.h"		// STRNCPY
 
 //check for invalid handle values
-#define is_invalid_handle(X) (unlikely((X)==0) || unlikely((X)==INVALID_HANDLE_VALUE))
+#define is_invalid_handle(X) ((X)==0 || (X)==INVALID_HANDLE_VALUE)
 
 //relative virtual address to virtual address
 #define rva_to_va(base, rva) ((unsigned long)base + (unsigned long)rva)
@@ -44,8 +44,8 @@
 
 //
 static unsigned long DLLINTERNAL_NOVIS va_to_mapaddr(void * mapview, IMAGE_SECTION_HEADER * sections, int num_sects, unsigned long vaddr) {
-	for(int i = 0; likely(i < num_sects); i++)
-		if(unlikely(vaddr >= sections[i].VirtualAddress) && unlikely(vaddr < sections[i].VirtualAddress + sections[i].SizeOfRawData))
+	for(int i = 0; i < num_sects; i++)
+		if(vaddr >= sections[i].VirtualAddress && vaddr < sections[i].VirtualAddress + sections[i].SizeOfRawData)
 			return(rva_to_va(mapview, (vaddr - sections[i].VirtualAddress + sections[i].PointerToRawData)));
 	
 	return(0);
@@ -61,12 +61,12 @@ static IMAGE_NT_HEADERS * DLLINTERNAL_NOVIS get_ntheaders(void * mapview) {
 	
 	//Check if valid dos header
 	mem.mem = (unsigned long)mapview;
-	if(unlikely(IsBadReadPtr(mem.dos, sizeof(*mem.dos))) || unlikely(mem.dos->e_magic != IMAGE_DOS_SIGNATURE))
+	if(IsBadReadPtr(mem.dos, sizeof(*mem.dos)) || mem.dos->e_magic != IMAGE_DOS_SIGNATURE)
 		return(0);
 	
 	//Get and check pe header
 	mem.mem = rva_to_va(mapview, mem.dos->e_lfanew);
-	if(unlikely(IsBadReadPtr(mem.pe, sizeof(*mem.pe))) || unlikely(mem.pe->Signature != IMAGE_NT_SIGNATURE))
+	if(IsBadReadPtr(mem.pe, sizeof(*mem.pe)) || mem.pe->Signature != IMAGE_NT_SIGNATURE)
 		return(0);
 	
 	return(mem.pe);
@@ -85,11 +85,11 @@ static IMAGE_EXPORT_DIRECTORY * DLLINTERNAL_NOVIS get_export_table(void * mapvie
 	mem.pe = ntheaders;
 	
 	//Check for exports
-	if(unlikely(!mem.pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress))
+	if(!mem.pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress)
 		return(0);
 	
 	mem.mem = va_to_mapaddr(mapview, sections, num_sects, mem.pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
-	if(unlikely(IsBadReadPtr(mem.export_dir, sizeof(*mem.export_dir))))
+	if(IsBadReadPtr(mem.export_dir, sizeof(*mem.export_dir)))
 		return(0);
 	
 	return(mem.export_dir);
@@ -125,7 +125,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	
 	//
 	mapview = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
-	if(unlikely(!mapview)) {
+	if(!mapview) {
 		META_DEBUG(3, ("is_gamedll(%s): MapViewOfFile() failed.", filename));
 		CloseHandle(hMap);
 		CloseHandle(hFile);
@@ -133,7 +133,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	}
 	
 	ntheaders = get_ntheaders(mapview);
-	if(unlikely(!ntheaders)) {
+	if(!ntheaders) {
 		META_DEBUG(3, ("is_gamedll(%s): get_ntheaders() failed.", filename));
 		UnmapViewOfFile(mapview);
 		CloseHandle(hMap);
@@ -144,7 +144,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	//Sections for va_to_mapaddr function
 	sections = IMAGE_FIRST_SECTION(ntheaders);
 	num_sects = ntheaders->FileHeader.NumberOfSections;
-	if(unlikely(IsBadReadPtr(sections, num_sects * sizeof(IMAGE_SECTION_HEADER)))) {
+	if(IsBadReadPtr(sections, num_sects * sizeof(IMAGE_SECTION_HEADER))) {
 		META_DEBUG(3, ("is_gamedll(%s): IMAGE_FIRST_SECTION() failed.", filename));
 		UnmapViewOfFile(mapview);
 		CloseHandle(hMap);
@@ -154,7 +154,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	
 	//
 	exports = get_export_table(mapview, ntheaders, sections, num_sects);
-	if(unlikely(!exports)) {
+	if(!exports) {
 		META_DEBUG(3, ("is_gamedll(%s): get_export_table() failed.", filename));
 		UnmapViewOfFile(mapview);
 		CloseHandle(hMap);
@@ -164,7 +164,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	
 	//
 	unsigned long * names = (unsigned long *)va_to_mapaddr(mapview, sections, num_sects, exports->AddressOfNames);
-	if(unlikely(IsBadReadPtr(names, exports->NumberOfNames * sizeof(unsigned long)))) {
+	if(IsBadReadPtr(names, exports->NumberOfNames * sizeof(unsigned long))) {
 		META_DEBUG(3, ("is_gamedll(%s): Pointer to exported function names is invalid.", filename));
 		UnmapViewOfFile(mapview);
 		CloseHandle(hMap);
@@ -172,29 +172,29 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 		return(mFALSE);
 	}
 	
-	for(unsigned int i = 0; likely(i < exports->NumberOfNames); i++) {
+	for(unsigned int i = 0; i < exports->NumberOfNames; i++) {
 		//get function name with valid address
 		char * funcname = (char *)va_to_mapaddr(mapview, sections, num_sects, names[i]);
-		if(unlikely(IsBadStringPtr(funcname, 128)))
+		if(IsBadStringPtr(funcname, 128))
 			continue;
 		
 		// Check
 		// Fast check for 'G' first
-		if(unlikely(funcname[0] == 'G')) {
+		if(funcname[0] == 'G') {
 			// Collect export information
-			if(likely(!has_GiveFnptrsToDll))
+			if(!has_GiveFnptrsToDll)
 				has_GiveFnptrsToDll = strmatch(funcname, "GiveFnptrsToDll");
-			if(likely(!has_GetEntityAPI2))
+			if(!has_GetEntityAPI2)
 				has_GetEntityAPI2   = strmatch(funcname, "GetEntityAPI2");
-	  		if(likely(!has_GetEntityAPI))
+	  		if(!has_GetEntityAPI)
 	  			has_GetEntityAPI    = strmatch(funcname, "GetEntityAPI");
 	  	}
 		// Check if metamod plugin
-		else if(unlikely(funcname[0] == 'M')) {
-			if(unlikely(strmatch(funcname, "Meta_Init")) || 
-			   unlikely(strmatch(funcname, "Meta_Query")) || 
-			   unlikely(strmatch(funcname, "Meta_Attach")) || 
-			   unlikely(strmatch(funcname, "Meta_Detach"))) {
+		else if(funcname[0] == 'M') {
+			if(strmatch(funcname, "Meta_Init") || 
+			   strmatch(funcname, "Meta_Query") || 
+			   strmatch(funcname, "Meta_Attach") || 
+			   strmatch(funcname, "Meta_Detach")) {
 				// Metamod plugin.. is not gamedll
 				META_DEBUG(5, ("is_gamedll(%s): Detected Metamod plugin, library exports [%s].", filename, funcname));
 		   		
@@ -212,7 +212,7 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename) {
 	CloseHandle(hFile);
 	
 	// Check if gamedll
-	if(likely(has_GiveFnptrsToDll) && (likely(has_GetEntityAPI2) || unlikely(has_GetEntityAPI))) {
+	if(has_GiveFnptrsToDll && (has_GetEntityAPI2 || has_GetEntityAPI)) {
 		// This is gamedll!
 		META_DEBUG(5, ("is_gamedll(%s): Detected GameDLL.", filename));
 

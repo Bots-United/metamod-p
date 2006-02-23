@@ -4,7 +4,7 @@
 // support_meta.cpp - generic support routines
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -59,36 +59,36 @@ int DLLINTERNAL valid_gamedir_file(const char *path) {
 	struct stat st;
 	int ret, reg, size;
 
-	if(unlikely(!path))
+	if(!path)
 		return(FALSE);
 
-	if(unlikely(strmatch(path, "/dev/null")))
+	if(strmatch(path, "/dev/null"))
 		return(TRUE);
 
-	if(likely(is_absolute_path(path)))
+	if(is_absolute_path(path))
 		STRNCPY(buf, path, sizeof(buf));
 	else
 		safevoid_snprintf(buf, sizeof(buf), "%s/%s", GameDLL.gamedir, path);
 
 	ret=stat(buf, &st);
-	if(unlikely(ret != 0)) {
+	if(ret != 0) {
 		META_DEBUG(5, ("Unable to stat '%s': %s", buf, strerror(errno)));
 		return(FALSE);
 	}
 
 	reg=S_ISREG(st.st_mode);
-	if(unlikely(!reg)) {
+	if(!reg) {
 		META_DEBUG(5, ("Not a regular file: %s", buf));
 		return(FALSE);
 	}
 
 	size=st.st_size;
-	if(unlikely(!size)) {
+	if(!size) {
 		META_DEBUG(5, ("Empty file: %s", buf));
 		return(FALSE);
 	}
 
-	if(likely(ret==0) && likely(reg) && likely(size))
+	if(ret==0 && reg && size)
 		return(TRUE);
 	else
 		return(FALSE);
@@ -105,12 +105,12 @@ char * DLLINTERNAL full_gamedir_path(const char *path, char *fullpath) {
 	char buf[PATH_MAX];
 
 	// Build pathname from filename, plus gamedir if relative path.
-	if(likely(is_absolute_path(path)))
+	if(is_absolute_path(path))
 		STRNCPY(buf, path, sizeof(buf));
 	else
 		safevoid_snprintf(buf, sizeof(buf), "%s/%s", GameDLL.gamedir, path);
 	// Remove relative path components, if possible.
-	if(unlikely(!realpath(buf, fullpath))) {
+	if(!realpath(buf, fullpath)) {
 		META_DEBUG(4, ("Unable to get realpath for '%s': %s", buf,
 				str_os_error()));
 		STRNCPY(fullpath, path, PATH_MAX);

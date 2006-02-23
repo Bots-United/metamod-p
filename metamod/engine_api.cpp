@@ -4,7 +4,7 @@
 // engine_api.cpp - implementation of Half-Life engine functions
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -75,9 +75,9 @@
 			va_start(vargs, szFmt); \
 			len = safe_vsnprintf(strbuf, sizeof(strbuf), szFmt, vargs); \
 			va_end(vargs); \
-			if(unlikely((unsigned)len >= sizeof(strbuf))) { \
+			if((unsigned)len >= sizeof(strbuf)) { \
 				buf = (char *)malloc(len + 1); \
-				if(likely(buf)) { \
+				if(buf) { \
 					va_start(vargs, szFmt); \
 					safevoid_vsnprintf(buf, len + 1, szFmt, vargs); \
 					va_end(vargs); \
@@ -87,7 +87,7 @@
 			} \
 		}
 	#define CLEAN_FORMATED_STRING() \
-		if(unlikely(buf != strbuf)) \
+		if(buf != strbuf) \
 			free(buf);
 #else
 	#define MAKE_FORMATED_STRING(szFmt) \
@@ -465,8 +465,8 @@ static int mm_RegUserMsg(const char *pszName, int iSize) {
 	// Add the msgid, name, and size to our saved list, if we haven't
 	// already.
 	nmsg=RegMsgs->find(imsgid);
-	if(unlikely(nmsg)) {
-		if(likely(FStrEq(pszName, nmsg->name)))
+	if(nmsg) {
+		if(FStrEq(pszName, nmsg->name))
 			// This name/msgid pair was already registered.
 			META_DEBUG(3, ("user message registered again: name=%s, msgid=%d", pszName, imsgid));
 		else

@@ -4,7 +4,7 @@
 // commands_meta.cpp - implementation of various console commands
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -52,7 +52,7 @@ unsigned long long count_tsc=0;
 unsigned long long active_tsc=0;
 
 void DLLINTERNAL cmd_meta_tsc(void) {
-	if(unlikely(!count_tsc))
+	if(!count_tsc)
 		return;
 	
 	META_CONS(" ");
@@ -81,48 +81,48 @@ void DLLHIDDEN svr_meta(void) {
 	const char *cmd;
 	cmd=CMD_ARGV(1);
 	// arguments: none
-	if(unlikely(!strcasecmp(cmd, "version")))
+	if(!strcasecmp(cmd, "version"))
 		cmd_meta_version();
-	else if(unlikely(!strcasecmp(cmd, "gpl")))
+	else if(!strcasecmp(cmd, "gpl"))
 		cmd_meta_gpl();
-	else if(unlikely(!strcasecmp(cmd, "refresh")))
+	else if(!strcasecmp(cmd, "refresh"))
 		cmd_meta_refresh();
-	else if(unlikely(!strcasecmp(cmd, "list")))
+	else if(!strcasecmp(cmd, "list"))
 		cmd_meta_pluginlist();
-	else if(unlikely(!strcasecmp(cmd, "cmds")))
+	else if(!strcasecmp(cmd, "cmds"))
 		cmd_meta_cmdlist();
-	else if(unlikely(!strcasecmp(cmd, "cvars")))
+	else if(!strcasecmp(cmd, "cvars"))
 		cmd_meta_cvarlist();
-	else if(unlikely(!strcasecmp(cmd, "game")))
+	else if(!strcasecmp(cmd, "game"))
 		cmd_meta_game();
-	else if(unlikely(!strcasecmp(cmd, "config")))
+	else if(!strcasecmp(cmd, "config"))
 		cmd_meta_config();
 	// arguments: existing plugin(s)
-	else if(unlikely(!strcasecmp(cmd, "pause")))
+	else if(!strcasecmp(cmd, "pause"))
 		cmd_doplug(PC_PAUSE);
-	else if(unlikely(!strcasecmp(cmd, "unpause")))
+	else if(!strcasecmp(cmd, "unpause"))
 		cmd_doplug(PC_UNPAUSE);
-	else if(unlikely(!strcasecmp(cmd, "unload")))
+	else if(!strcasecmp(cmd, "unload"))
 		cmd_doplug(PC_UNLOAD);
-	else if(unlikely(!strcasecmp(cmd, "force_unload")))
+	else if(!strcasecmp(cmd, "force_unload"))
 		cmd_doplug(PC_FORCE_UNLOAD);
-	else if(unlikely(!strcasecmp(cmd, "reload")))
+	else if(!strcasecmp(cmd, "reload"))
 		cmd_doplug(PC_RELOAD);
-	else if(unlikely(!strcasecmp(cmd, "retry")))
+	else if(!strcasecmp(cmd, "retry"))
 		cmd_doplug(PC_RETRY);
-	else if(unlikely(!strcasecmp(cmd, "clear")))
+	else if(!strcasecmp(cmd, "clear"))
 		cmd_doplug(PC_CLEAR);
-	else if(unlikely(!strcasecmp(cmd, "info")))
+	else if(!strcasecmp(cmd, "info"))
 		cmd_doplug(PC_INFO);
-	else if(unlikely(!strcasecmp(cmd, "require")))
+	else if(!strcasecmp(cmd, "require"))
 		cmd_doplug(PC_REQUIRE);
 	// arguments: filename, description
-	else if(unlikely(!strcasecmp(cmd, "load")))
+	else if(!strcasecmp(cmd, "load"))
 		cmd_meta_load();
 #ifdef META_PERFMON
-	else if(unlikely(!strcasecmp(cmd, "tsc")))
+	else if(!strcasecmp(cmd, "tsc"))
 		cmd_meta_tsc();
-	else if(unlikely(!strcasecmp(cmd, "reset_tsc")))
+	else if(!strcasecmp(cmd, "reset_tsc"))
 		cmd_meta_reset_tsc();
 #endif /*META_PERFMON*/
 	// unrecognized
@@ -140,11 +140,11 @@ void DLLINTERNAL client_meta(edict_t *pEntity) {
 	META_LOG("ClientCommand 'meta %s' from player '%s'", 
 				CMD_ARGS(), STRING(pEntity->v.netname));
 	// arguments: none
-	if(unlikely(strmatch(cmd, "version")))
+	if(strmatch(cmd, "version"))
 		client_meta_version(pEntity);
-	else if(unlikely(strmatch(cmd, "list")))
+	else if(strmatch(cmd, "list"))
 		client_meta_pluginlist(pEntity);
-	else if(unlikely(strmatch(cmd, "aybabtu")))
+	else if(strmatch(cmd, "aybabtu"))
 		client_meta_aybabtu(pEntity);
 	// unrecognized
 	else {
@@ -192,7 +192,7 @@ void DLLINTERNAL client_meta_aybabtu(edict_t *pEntity) {
 
 // "meta version" console command.
 void DLLINTERNAL cmd_meta_version(void) {
-	if(unlikely(CMD_ARGC() != 2)) {
+	if(CMD_ARGC() != 2) {
 		META_CONS("usage: meta version");
 		return;
 	}
@@ -207,7 +207,7 @@ void DLLINTERNAL cmd_meta_version(void) {
 
 // "meta version" client command.
 void DLLINTERNAL client_meta_version(edict_t *pEntity) {
-	if(unlikely(CMD_ARGC() != 2)) {
+	if(CMD_ARGC() != 2) {
 		META_CLIENT(pEntity, "usage: meta version");
 		return;
 	}
@@ -256,7 +256,7 @@ void DLLINTERNAL cmd_meta_gpl(void) {
 
 // "meta game" console command.
 void DLLINTERNAL cmd_meta_game(void) {
-	if(unlikely(CMD_ARGC() != 2)) {
+	if(CMD_ARGC() != 2) {
 		META_CONS("usage: meta game");
 		return;
 	}
@@ -271,19 +271,19 @@ void DLLINTERNAL cmd_meta_game(void) {
 
 // "meta refresh" console command.
 void DLLINTERNAL cmd_meta_refresh(void) {
-	if(unlikely(CMD_ARGC() != 2)) {
+	if(CMD_ARGC() != 2) {
 		META_CONS("usage: meta refresh");
 		return;
 	}
 	META_LOG("Refreshing the plugins on demand...");
-	if(unlikely(Plugins->refresh(PT_ANYTIME) != mTRUE)) {
+	if(Plugins->refresh(PT_ANYTIME) != mTRUE) {
 		META_LOG("Refresh failed.");
 	}
 }
 
 // "meta list" console command.
 void DLLINTERNAL cmd_meta_pluginlist(void) {
-	if(unlikely(CMD_ARGC() != 2)) {
+	if(CMD_ARGC() != 2) {
 		META_CONS("usage: meta list");
 		return;
 	}
@@ -292,7 +292,7 @@ void DLLINTERNAL cmd_meta_pluginlist(void) {
 
 // "meta list" client command.
 void DLLINTERNAL client_meta_pluginlist(edict_t *pEntity) {
-	if(unlikely(CMD_ARGC() != 2)) {
+	if(CMD_ARGC() != 2) {
 		META_CLIENT(pEntity, "usage: meta list");
 		return;
 	}
@@ -301,7 +301,7 @@ void DLLINTERNAL client_meta_pluginlist(edict_t *pEntity) {
 
 // "meta cmds" console command.
 void DLLINTERNAL cmd_meta_cmdlist(void) {
-	if(unlikely(CMD_ARGC() != 2)) {
+	if(CMD_ARGC() != 2) {
 		META_CONS("usage: meta cmds");
 		return;
 	}
@@ -310,7 +310,7 @@ void DLLINTERNAL cmd_meta_cmdlist(void) {
 
 // "meta cvars" console command.
 void DLLINTERNAL cmd_meta_cvarlist(void) {
-	if(unlikely(CMD_ARGC() != 2)) {
+	if(CMD_ARGC() != 2) {
 		META_CONS("usage: meta cvars");
 		return;
 	}
@@ -319,7 +319,7 @@ void DLLINTERNAL cmd_meta_cvarlist(void) {
 
 // "meta config" console command.
 void DLLINTERNAL cmd_meta_config(void) {
-	if(unlikely(CMD_ARGC() != 2)) {
+	if(CMD_ARGC() != 2) {
 		META_CONS("usage: meta cvars");
 		return;
 	}
@@ -343,7 +343,7 @@ void DLLINTERNAL cmd_meta_load(void) {
 	int argc;
 	const char *args;
 	argc=CMD_ARGC();
-	if(unlikely(argc < 3)) {
+	if(argc < 3) {
 		META_CONS("usage: meta load <name> [<description>]");
 		META_CONS("   where <name> is an identifier used to locate the plugin file.");
 		META_CONS("   The system will look for a number of files based on this name, including:");
@@ -384,14 +384,14 @@ void DLLINTERNAL cmd_doplug(PLUG_CMD pcmd) {
 
 	argc=CMD_ARGC();
 	cmd=CMD_ARGV(1);
-	if(unlikely(argc < 3)) {
+	if(argc < 3) {
 		META_CONS("usage: meta %s <plugin> [<plugin> ...]", cmd);
 		META_CONS("   where <plugin> can be either the plugin index #");
 		META_CONS("   or a non-ambiguous prefix string matching name, desc, file, or logtag");
 		return;
 	}
 	// i=2 to skip first arg, as that's the "cmd"
-	for(i=2; likely(i < argc); i++) {
+	for(i=2; i < argc; i++) {
 		int pindex;
 		char *endptr;
 		
@@ -399,7 +399,7 @@ void DLLINTERNAL cmd_doplug(PLUG_CMD pcmd) {
 		
 		// try to match plugin id first
 		pindex = strtol(arg, &endptr, 10);
-		if(likely(*arg) && likely(!*endptr))
+		if(*arg && !*endptr)
 			findp=Plugins->find(pindex);
 		// else try to match some string (prefix)
 		else
@@ -409,19 +409,19 @@ void DLLINTERNAL cmd_doplug(PLUG_CMD pcmd) {
 		//  - specified plugin was found in the list of current plugins
 		//  - plugin successfully loaded and began running
 		// Otherwise, print error and exit.
-		if(unlikely(pcmd==PC_REQUIRE)) {
-			if(likely(findp) && unlikely(findp->status >= PL_RUNNING)) {
+		if(pcmd==PC_REQUIRE) {
+			if(findp && findp->status >= PL_RUNNING) {
 				META_DEBUG(3, ("Required plugin '%s' found loaded and running.",
 						arg));
 				return;
 			}
 			// Output to both places, because we don't want the admin
 			// to miss this..
-			if(unlikely(!findp) && unlikely(meta_errno == ME_NOTUNIQ)) {
+			if(!findp && meta_errno == ME_NOTUNIQ) {
 				META_ERROR("Unique match for required plugin '%s' was not found!  Exiting.", arg);
 				META_CONS("\nERROR: Unique match for required plugin '%s' was not found!  Exiting.\n", arg);
 			}
-			else if(unlikely(!findp)) {
+			else if(!findp) {
 				META_ERROR("Required plugin '%s' was not found!  Exiting.",
 						arg);
 				META_CONS("\nERROR: Required plugin '%s' was not found!  Exiting.\n",
@@ -435,72 +435,72 @@ void DLLINTERNAL cmd_doplug(PLUG_CMD pcmd) {
 			do_exit(1);
 		}
 
-		if(unlikely(!findp)) {
-			if(unlikely(meta_errno == ME_NOTUNIQ))
+		if(!findp) {
+			if(meta_errno == ME_NOTUNIQ)
 				META_CONS("Couldn't find unique plugin matching '%s'", arg);
 			else
 				META_CONS("Couldn't find plugin matching '%s'", arg);
 			return;
 		}
 
-		if(unlikely(pcmd==PC_PAUSE)) {
-			if(likely(findp->pause()))
+		if(pcmd==PC_PAUSE) {
+			if(findp->pause())
 				META_CONS("Paused plugin '%s'", findp->desc);
 			else
 				META_CONS("Pause failed for plugin '%s'", findp->desc);
 		}
-		else if(unlikely(pcmd==PC_UNPAUSE)) {
-			if(likely(findp->unpause()))
+		else if(pcmd==PC_UNPAUSE) {
+			if(findp->unpause())
 				META_CONS("Unpaused plugin '%s'", findp->desc);
 			else
 				META_CONS("Unpause failed for plugin '%s'", findp->desc);
 		}
-		else if(unlikely(pcmd==PC_UNLOAD)) {
+		else if(pcmd==PC_UNLOAD) {
 			findp->action=PA_UNLOAD;
-			if(likely(findp->unload(PT_ANYTIME, PNL_COMMAND, PNL_COMMAND))) {
+			if(findp->unload(PT_ANYTIME, PNL_COMMAND, PNL_COMMAND)) {
 				META_CONS("Unloaded plugin '%s'", findp->desc);
 				Plugins->show();
 			}
-			else if(unlikely(meta_errno == ME_DELAYED))
+			else if(meta_errno == ME_DELAYED)
 				META_CONS("Unload delayed for plugin '%s'", findp->desc);
 			else
 				META_CONS("Unload failed for plugin '%s'", findp->desc);
 		}
-		else if(unlikely(pcmd==PC_FORCE_UNLOAD)) {
+		else if(pcmd==PC_FORCE_UNLOAD) {
 			findp->action=PA_UNLOAD;
-			if(likely(findp->unload(PT_ANYTIME, PNL_CMD_FORCED, PNL_CMD_FORCED))) {
+			if(findp->unload(PT_ANYTIME, PNL_CMD_FORCED, PNL_CMD_FORCED)) {
 				META_CONS("Forced unload plugin '%s'", findp->desc);
 				Plugins->show();
 			}
 			else
 				META_CONS("Forced unload failed for plugin '%s'", findp->desc);
 		}
-		else if(unlikely(pcmd==PC_RELOAD)) {
+		else if(pcmd==PC_RELOAD) {
 			findp->action=PA_RELOAD;
-			if(likely(findp->reload(PT_ANYTIME, PNL_COMMAND)))
+			if(findp->reload(PT_ANYTIME, PNL_COMMAND))
 				META_CONS("Reloaded plugin '%s'", findp->desc);
-			else if(unlikely(meta_errno == ME_DELAYED))
+			else if(meta_errno == ME_DELAYED)
 				META_CONS("Reload delayed for plugin '%s'", findp->desc);
-			else if(unlikely(meta_errno == ME_NOTALLOWED))
+			else if(meta_errno == ME_NOTALLOWED)
 				META_CONS("Reload not allowed for plugin '%s' now, only allowed %s", findp->desc, findp->str_loadable(SL_ALLOWED));
 			else
 				META_CONS("Reload failed for plugin '%s'", findp->desc);
 		}
-		else if(unlikely(pcmd==PC_RETRY)) {
-			if(likely(findp->retry(PT_ANYTIME, PNL_COMMAND)))
+		else if(pcmd==PC_RETRY) {
+			if(findp->retry(PT_ANYTIME, PNL_COMMAND))
 				META_CONS("Retry succeeded for plugin '%s'", findp->desc);
 			else
 				META_CONS("Retry failed for plugin '%s'", findp->desc);
 		}
-		else if(unlikely(pcmd==PC_CLEAR)) {
-			if(likely(findp->clear())) {
+		else if(pcmd==PC_CLEAR) {
+			if(findp->clear()) {
 				META_CONS("Cleared failed plugin '%s' from list", findp->desc);
 				Plugins->show();
 			}
 			else
 				META_CONS("Clear failed for plugin '%s'", findp->desc);
 		}
-		else if(likely(pcmd==PC_INFO))
+		else if(pcmd==PC_INFO)
 			findp->show();
 		else {
 			META_WARNING("Unexpected plug_cmd: %d", pcmd);

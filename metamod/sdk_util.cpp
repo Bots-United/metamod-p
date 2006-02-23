@@ -55,10 +55,10 @@ short DLLINTERNAL FixedSigned16(float value, float scale)
 	
 	output = (int)(value * scale);
 	
-	if(unlikely(output > 32767))
+	if(output > 32767)
 		output = 32767;
 	
-	if(unlikely(output < -32768))
+	if(output < -32768)
 		output = -32768;
 	
 	return((short)output);
@@ -69,9 +69,9 @@ unsigned short DLLINTERNAL FixedUnsigned16(float value, float scale)
 	int output;
 	
 	output = (int)(value * scale);
-	if(unlikely(output < 0))
+	if(output < 0)
 		output = 0;
-	if(unlikely(output > 0xFFFF))
+	if(output > 0xFFFF)
 		output = 0xFFFF;
 
 	return((unsigned short)output);
@@ -80,7 +80,7 @@ unsigned short DLLINTERNAL FixedUnsigned16(float value, float scale)
 
 void DLLINTERNAL META_UTIL_HudMessage(edict_t *pEntity, const hudtextparms_t &textparms, const char *pMessage)
 {
-	if(unlikely(fast_FNullEnt(pEntity)) || unlikely(pEntity->free))
+	if(fast_FNullEnt(pEntity) || pEntity->free)
 		return;
 
 	MESSAGE_BEGIN( MSG_ONE, SVC_TEMPENTITY, NULL, pEntity );
@@ -105,10 +105,10 @@ void DLLINTERNAL META_UTIL_HudMessage(edict_t *pEntity, const hudtextparms_t &te
 		WRITE_SHORT( FixedUnsigned16( textparms.fadeoutTime, 1<<8 ) );
 		WRITE_SHORT( FixedUnsigned16( textparms.holdTime, 1<<8 ) );
 
-		if(unlikely(textparms.effect == 2))
+		if(textparms.effect == 2)
 			WRITE_SHORT( FixedUnsigned16( textparms.fxTime, 1<<8 ) );
 		
-		if(likely(strlen( pMessage ) < 512))
+		if(strlen( pMessage ) < 512)
 		{
 			WRITE_STRING( pMessage );
 		}

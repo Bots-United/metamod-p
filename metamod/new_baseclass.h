@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 Jussi Kivilinna
+ * Copyright (c) 2004-2006 Jussi Kivilinna
  *
  *    This file is part of "Metamod All-Mod-Support"-patch for Metamod.
  *
@@ -44,24 +44,24 @@ public:
 	
 	// Operators
 	inline void * operator new(size_t size) {
-		if(unlikely(size==0))
+		if(size==0)
 			return(calloc(1, 1));
 		return(calloc(1, size));
 	}
 	
 	inline void * operator new[](size_t size) {
-		if(unlikely(size==0))
+		if(size==0)
 			return(calloc(1, 1));
 		return(calloc(1, size));
 	}
 	
 	inline void operator delete(void *ptr) {
-		if(likely(ptr))
+		if(ptr)
 			free(ptr); 
 	}
 	
 	inline void operator delete[](void *ptr) {
-		if(likely(ptr))
+		if(ptr)
 			free(ptr); 
 	}
 };

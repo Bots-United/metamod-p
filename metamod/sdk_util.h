@@ -4,7 +4,7 @@
 // sdk_util.h - wrapper & extension of util.h from HL SDK
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -105,7 +105,7 @@ inline void DLLINTERNAL SET_LOCALINFO(char *key, char *value) {
 }
 
 inline int DLLINTERNAL fast_FNullEnt(const edict_t* pent) {
-	return(unlikely(!pent) || unlikely(!(*g_engfuncs.pfnEntOffsetOfPEntity)(pent)));
+	return(!pent || !(*g_engfuncs.pfnEntOffsetOfPEntity)(pent));
 }
 
 // Our slightly modified version, using an edict_t pointer instead of a

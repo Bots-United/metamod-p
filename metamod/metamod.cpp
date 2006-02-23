@@ -4,7 +4,7 @@
 // metamod.cpp - (main) implementation of metamod operations
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -98,7 +98,7 @@ int DLLINTERNAL metamod_startup(void) {
 
 	META_CONS("   ");
 	META_CONS("   %s version %s Copyright (c) 2001-%s %s", VNAME, VVERSION, COPYRIGHT_YEAR, VAUTHOR);
-	META_CONS("     Patch: %s v%d Copyright (c) 2004-2005 %s", VPATCH_NAME, VPATCH_IVERSION, VPATCH_AUTHOR);
+	META_CONS("     Patch: %s v%d Copyright (c) 2004-2006 %s", VPATCH_NAME, VPATCH_IVERSION, VPATCH_AUTHOR);
 	META_CONS("   %s comes with ABSOLUTELY NO WARRANTY; for details type `meta gpl'.", VNAME);
 	META_CONS("   This is free software, and you are welcome to redistribute it");
 	META_CONS("   under certain conditions; type `meta gpl' for details.");
@@ -114,12 +114,12 @@ int DLLINTERNAL metamod_startup(void) {
 
 	// If running with "+developer", allow an opportunity to break in with
 	// a debugger.
-	if(unlikely((int)CVAR_GET_FLOAT("developer") != 0))
+	if((int)CVAR_GET_FLOAT("developer") != 0)
 		sleep(1);
 
 	// Get gamedir, very early on, because it seems we need it all over the
 	// place here at the start.
-	if(unlikely(!meta_init_gamedll())) {
+	if(!meta_init_gamedll()) {
 		META_ERROR("Failure to init game DLL; exiting...");
 		return(0);
 	}
@@ -143,7 +143,7 @@ int DLLINTERNAL metamod_startup(void) {
 
 	// Set a slight debug level for developer mode, if debug level not
 	// already set.
-	if(unlikely((int)CVAR_GET_FLOAT("developer") != 0) && likely((int)meta_debug.value == 0)) {
+	if((int)CVAR_GET_FLOAT("developer") != 0 && (int)meta_debug.value == 0) {
 		CVAR_SET_FLOAT("meta_debug", 3.0);
 #ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
 		meta_debug_value = 3;
@@ -154,42 +154,42 @@ int DLLINTERNAL metamod_startup(void) {
 	Config->init(global_options);
 	// Find config file
 	cfile=CONFIG_INI;
-	if(unlikely((cp=LOCALINFO("mm_configfile"))) && unlikely(*cp != '\0')) {
+	if((cp=LOCALINFO("mm_configfile")) && *cp != '\0') {
 		META_LOG("Configfile specified via localinfo: %s", cp);
-		if(likely(valid_gamedir_file(cp)))
+		if(valid_gamedir_file(cp))
 			cfile=cp;
 		else
 			META_WARNING("Empty/missing config.ini file: %s; falling back to %s",
 					cp, cfile);
 	}
 	// Load config file
-	if(likely(valid_gamedir_file(cfile)))
+	if(valid_gamedir_file(cfile))
 		Config->load(cfile);
 	else
 		META_DEBUG(2, ("No config.ini file found: %s", CONFIG_INI));
 
 	// Now, override config options with localinfo commandline options.
-	if(unlikely((cp=LOCALINFO("mm_debug"))) && unlikely(*cp != '\0')) {
+	if((cp=LOCALINFO("mm_debug")) && *cp != '\0') {
 		META_LOG("Debuglevel specified via localinfo: %s", cp);
 		Config->set("debuglevel", cp);
 	}
-	if(unlikely((cp=LOCALINFO("mm_gamedll"))) && unlikely(*cp != '\0')) {
+	if((cp=LOCALINFO("mm_gamedll")) && *cp != '\0') {
 		META_LOG("Gamedll specified via localinfo: %s", cp);
 		Config->set("gamedll", cp);
 	}
-	if(unlikely((cp=LOCALINFO("mm_pluginsfile"))) && unlikely(*cp != '\0')) {
+	if((cp=LOCALINFO("mm_pluginsfile")) && *cp != '\0') {
 		META_LOG("Pluginsfile specified via localinfo: %s", cp);
 		Config->set("plugins_file", cp);
 	}
-	if(unlikely((cp=LOCALINFO("mm_execcfg"))) && unlikely(*cp != '\0')) {
+	if((cp=LOCALINFO("mm_execcfg")) && *cp != '\0') {
 		META_LOG("Execcfg specified via localinfo: %s", cp);
 		Config->set("exec_cfg", cp);
 	}
-	if(unlikely((cp=LOCALINFO("mm_autodetect"))) && unlikely(*cp != '\0')) {
+	if((cp=LOCALINFO("mm_autodetect")) && *cp != '\0') {
 		META_LOG("Autodetect specified via localinfo: %s", cp);
 		Config->set("autodetect", cp);
 	}
-	if(unlikely((cp=LOCALINFO("mm_clientmeta"))) && unlikely(*cp != '\0')) {
+	if((cp=LOCALINFO("mm_clientmeta")) && *cp != '\0') {
 		META_LOG("Clientmeta specified via localinfo: %s", cp);
 		Config->set("clientmeta", cp);
 	}
@@ -197,7 +197,7 @@ int DLLINTERNAL metamod_startup(void) {
 
 	// Check for an initial debug level, since cfg files don't get exec'd
 	// until later.
-	if(unlikely(Config->debuglevel != 0)) {
+	if(Config->debuglevel != 0) {
 		CVAR_SET_FLOAT("meta_debug", (float)Config->debuglevel);
 #ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
 		meta_debug_value = Config->debuglevel;
@@ -221,11 +221,11 @@ int DLLINTERNAL metamod_startup(void) {
 	Engine.pl_funcs->pfnCVarRegister = meta_CVarRegister;
 	Engine.pl_funcs->pfnCvar_RegisterVariable = meta_CVarRegister;
 	Engine.pl_funcs->pfnRegUserMsg = meta_RegUserMsg;
-	if(likely(IS_VALID_PTR((void*)Engine.pl_funcs->pfnQueryClientCvarValue)))
+	if(IS_VALID_PTR((void*)Engine.pl_funcs->pfnQueryClientCvarValue))
 		Engine.pl_funcs->pfnQueryClientCvarValue = meta_QueryClientCvarValue;
 	else
 		Engine.pl_funcs->pfnQueryClientCvarValue = NULL;
-	if(unlikely(!IS_VALID_PTR((void*)Engine.pl_funcs->pfnQueryClientCvarValue2)))
+	if(!IS_VALID_PTR((void*)Engine.pl_funcs->pfnQueryClientCvarValue2))
 		Engine.pl_funcs->pfnQueryClientCvarValue2 = NULL;
 	
 	// Before, we loaded plugins before loading the game DLL, so that if no
@@ -252,9 +252,9 @@ int DLLINTERNAL metamod_startup(void) {
 
 	// Fall back to old plugins filename, if configured one isn't found.
 	mmfile=PLUGINS_INI;
-	if(unlikely(!valid_gamedir_file(PLUGINS_INI)) && unlikely(valid_gamedir_file(OLD_PLUGINS_INI)))
+	if(!valid_gamedir_file(PLUGINS_INI) && valid_gamedir_file(OLD_PLUGINS_INI))
 		mmfile=OLD_PLUGINS_INI;
-	if(unlikely(valid_gamedir_file(Config->plugins_file)))
+	if(valid_gamedir_file(Config->plugins_file))
 		mmfile=Config->plugins_file;
 	else
 		META_WARNING("Plugins file is empty/missing: %s; falling back to %s", 
@@ -262,11 +262,11 @@ int DLLINTERNAL metamod_startup(void) {
 
 	Plugins = new MPluginList(mmfile);
 
-	if(unlikely(!meta_load_gamedll())) {
+	if(!meta_load_gamedll()) {
 		META_ERROR("Failure to load game DLL; exiting...");
 		return(0);
 	}
-	if(unlikely(!Plugins->load())) {
+	if(!Plugins->load()) {
 		META_WARNING("Failure to load plugins...");
 		// Exit on failure here?  Dunno...
 	}
@@ -277,15 +277,15 @@ int DLLINTERNAL metamod_startup(void) {
 	// Only attempt load if the file appears to exist and be non-empty, to
 	// avoid confusing users with "couldn't exec exec.cfg" console
 	// messages.
-	if(unlikely(valid_gamedir_file(Config->exec_cfg)))
+	if(valid_gamedir_file(Config->exec_cfg))
 		mmfile=Config->exec_cfg;
-	else if(unlikely(valid_gamedir_file(OLD_EXEC_CFG)))
+	else if(valid_gamedir_file(OLD_EXEC_CFG))
 		mmfile=OLD_EXEC_CFG;
 	else
 		mmfile=NULL;
 	
-	if(unlikely(mmfile)) {
-		if(unlikely(mmfile[0]=='/'))
+	if(mmfile) {
+		if(mmfile[0]=='/')
 			META_WARNING("Cannot exec absolute pathnames: %s", mmfile);
 		else {
 			char cmd[NAME_MAX];
@@ -320,7 +320,7 @@ mBOOL DLLINTERNAL meta_init_gamedll(void) {
 	// Note: the code has always assumed the server op wouldn't do:
 	//    hlds -game other/firearms
 	//
-	if(unlikely(is_absolute_path(gamedir))) {
+	if(is_absolute_path(gamedir)) {
 		// Old style; GET_GAME_DIR returned full pathname.  Copy this into
 		// our gamedir, and truncate to get the game name.
 		// (note check for both linux and win32 full pathname.)
@@ -332,7 +332,7 @@ mBOOL DLLINTERNAL meta_init_gamedll(void) {
 		// New style; GET_GAME_DIR returned game name.  Copy this into our
 		// game name, and prepend the current working directory.
 		char buf[PATH_MAX];
-		if(unlikely(!getcwd(buf, sizeof(buf)))) {
+		if(!getcwd(buf, sizeof(buf))) {
 			META_WARNING("dll: Couldn't get cwd; %s", strerror(errno));
 			RETURN_ERRNO(mFALSE, ME_NULLRESULT);
 		}
@@ -360,14 +360,14 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 	GETENTITYAPI2_FN pfn_getapi2;
 	GETENTITYAPI_FN pfn_getapi;
 
-	if(unlikely(!setup_gamedll(&GameDLL))) {
+	if(!setup_gamedll(&GameDLL)) {
 		META_WARNING("dll: Unrecognized game: %s", GameDLL.name);
 		// meta_errno should be already set in lookup_game()
 		return(mFALSE);
 	}
 
 	// open the game DLL
-	if(unlikely(!(GameDLL.handle=DLOPEN(GameDLL.pathname)))) {
+	if(!(GameDLL.handle=DLOPEN(GameDLL.pathname))) {
 		META_WARNING("dll: Couldn't load game DLL %s: %s", GameDLL.pathname, 
 				DLERROR());
 		RETURN_ERRNO(mFALSE, ME_DLOPEN);
@@ -377,7 +377,7 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 	// wanted to catch one of the functions, but now that plugins are
 	// dynamically loadable at any time, we have to always pass our table,
 	// so that any plugin loaded later can catch what they need to.
-	if(likely((pfn_give_engfuncs = (GIVE_ENGINE_FUNCTIONS_FN) DLSYM(GameDLL.handle, "GiveFnptrsToDll"))))
+	if((pfn_give_engfuncs = (GIVE_ENGINE_FUNCTIONS_FN) DLSYM(GameDLL.handle, "GiveFnptrsToDll")))
 	{
 			//add extra function bytes to meta_engfuncs
 			memcpy((void*)&meta_engfuncs.extra_functions[0], (void*)&g_engfuncs.extra_functions[0], sizeof(g_engfuncs.extra_functions));
@@ -389,7 +389,7 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 			//activate linkent-replacement after give_engfuncs so that if game dll is 
 			//plugin too and uses same method we get combined export table of plugin 
 			//and game dll
-			if(unlikely(!init_linkent_replacement(metamod_handle, GameDLL.handle))) {
+			if(!init_linkent_replacement(metamod_handle, GameDLL.handle)) {
 				META_WARNING("dll: Couldn't load linkent replacement for game DLL");
 				RETURN_ERRNO(mFALSE, ME_DLERROR);
 			}
@@ -402,12 +402,12 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 
 	// Yes...another macro.
 #define GET_FUNC_TABLE_FROM_GAME(gamedll, pfnGetFuncs, STR_GetFuncs, struct_field, API_TYPE, TABLE_TYPE, vers_pass, vers_int, vers_want, gotit) \
-		if(likely((pfnGetFuncs = (API_TYPE) DLSYM(gamedll.handle, STR_GetFuncs)))) { \
+		if((pfnGetFuncs = (API_TYPE) DLSYM(gamedll.handle, STR_GetFuncs))) { \
 			gamedll.funcs.struct_field = (TABLE_TYPE*) calloc(1, sizeof(TABLE_TYPE)); \
-			if(unlikely(!gamedll.funcs.struct_field)) {\
+			if(!gamedll.funcs.struct_field) {\
 				META_WARNING("malloc failed for gamedll struct_field: %s", STR_GetFuncs); \
 			} \
-			else if(likely(pfnGetFuncs(gamedll.funcs.struct_field, vers_pass))) { \
+			else if(pfnGetFuncs(gamedll.funcs.struct_field, vers_pass)) { \
 				META_DEBUG(3, ("dll: Game '%s': Found %s", gamedll.name, STR_GetFuncs)); \
 				gotit=1; \
 			} \
@@ -415,13 +415,13 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 				META_WARNING("dll: Failure calling %s in game '%s'", STR_GetFuncs, gamedll.name); \
 				free(gamedll.funcs.struct_field); \
 				gamedll.funcs.struct_field=NULL; \
-				if(unlikely(vers_int != vers_want)) { \
+				if(vers_int != vers_want) { \
 					META_WARNING("dll: Interface version didn't match; we wanted %d, they had %d", vers_want, vers_int); \
 					/* reproduce error from engine */ \
 					META_CONS("=================="); \
 					META_CONS("Game DLL version mismatch"); \
 					META_CONS("DLL version is %d, engine version is %d", vers_int, vers_want); \
-					if(unlikely(vers_int > vers_want)) \
+					if(vers_int > vers_want) \
 						META_CONS("Engine appears to be outdated, check for updates"); \
 					else \
 						META_CONS("The game DLL for %s appears to be outdated, check for updates", GameDLL.name); \
@@ -450,7 +450,7 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 			&iface_vers, iface_vers, INTERFACE_VERSION, found);
 
 	// Look for API-1 in plugin, if API2 interface wasn't found.
-	if(unlikely(!found)) {
+	if(!found) {
 		found=0;
 		GET_FUNC_TABLE_FROM_GAME(GameDLL, pfn_getapi, "GetEntityAPI", dllapi_table, 
 				GETENTITYAPI_FN, DLL_FUNCTIONS,
@@ -458,7 +458,7 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 	}
 
 	// If didn't find either, return failure.
-	if(unlikely(!found)) {
+	if(!found) {
 		META_WARNING("dll: Couldn't find either GetEntityAPI nor GetEntityAPI2 in game DLL '%s'", GameDLL.name);
 		RETURN_ERRNO(mFALSE, ME_DLMISSING);
 	}
