@@ -5,7 +5,7 @@
 //                 functions
 
 /*
- * Copyright (c) 2001-2003 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *

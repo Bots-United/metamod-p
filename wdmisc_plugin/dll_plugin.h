@@ -4,7 +4,7 @@
 // dll_plugin.h - prototypes and typedefs plugin's HL DLL routines
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *

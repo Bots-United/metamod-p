@@ -5,7 +5,7 @@
 //               list of players (class MPlayerList).
 
 /*
- * Copyright (c) 2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2005-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *

@@ -4,7 +4,7 @@
 // info_name.h - name, desc, author, etc
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -49,6 +49,6 @@
 #define RC_DESC			"HLSDK API Trace Metamod Plugin DLL"
 #define RC_FILENAME		"TRACE_MM.DLL"
 #define RC_INTERNAL		"TRACE_MM"
-#define RC_COPYRIGHT	"Copyright© 2001-2003 Will Day; licensed under the GPL"
+#define RC_COPYRIGHT	"Copyright© 2001-2006 Will Day; licensed under the GPL"
 
 #endif /* INFO_NAME_H */

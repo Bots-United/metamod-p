@@ -4,7 +4,7 @@
 // trace_api.cpp - (main) implementation of HL API tracing operations
 
 /*
- * Copyright (c) 2001-2005 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
