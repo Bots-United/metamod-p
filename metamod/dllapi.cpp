@@ -77,7 +77,7 @@
 
 // From SDK dlls/game.cpp:
 static void mm_GameDLLInit(void) {
-	META_DLLAPI_HANDLE_void(FN_GAMEINIT, pfnGameInit, void, ());
+	META_DLLAPI_HANDLE_void(FN_GAMEINIT, pfnGameInit, void, (VOID_ARG));
 	RETURN_API_void();
 }
 
@@ -139,7 +139,7 @@ static void mm_RestoreGlobalState(SAVERESTOREDATA *pSaveData) {
 	RETURN_API_void();
 }
 static void mm_ResetGlobalState(void) {
-	META_DLLAPI_HANDLE_void(FN_RESETGLOBALSTATE, pfnResetGlobalState, void, ());
+	META_DLLAPI_HANDLE_void(FN_RESETGLOBALSTATE, pfnResetGlobalState, void, (VOID_ARG));
 	RETURN_API_void();
 }
 
@@ -178,7 +178,7 @@ static void mm_ServerActivate(edict_t *pEdictList, int edictCount, int clientMax
 	RETURN_API_void();
 }
 static void mm_ServerDeactivate(void) {
-	META_DLLAPI_HANDLE_void(FN_SERVERDEACTIVATE, pfnServerDeactivate, void, ());
+	META_DLLAPI_HANDLE_void(FN_SERVERDEACTIVATE, pfnServerDeactivate, void, (VOID_ARG));
 	// Update loaded plugins.  Look for new plugins in inifile, as well as
 	// any plugins waiting for a changelevel to load.  
 	//
@@ -211,19 +211,19 @@ static void mm_StartFrame(void) {
 #ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
 	meta_debug_value = (int)meta_debug.value;
 #endif	
-	META_DLLAPI_HANDLE_void(FN_STARTFRAME, pfnStartFrame, void, ());
+	META_DLLAPI_HANDLE_void(FN_STARTFRAME, pfnStartFrame, void, (VOID_ARG));
 	RETURN_API_void();
 }
 static void mm_ParmsNewLevel(void) {
-	META_DLLAPI_HANDLE_void(FN_PARMSNEWLEVEL, pfnParmsNewLevel, void, ());
+	META_DLLAPI_HANDLE_void(FN_PARMSNEWLEVEL, pfnParmsNewLevel, void, (VOID_ARG));
 	RETURN_API_void();
 }
 static void mm_ParmsChangeLevel(void) {
-	META_DLLAPI_HANDLE_void(FN_PARMSCHANGELEVEL, pfnParmsChangeLevel, void, ());
+	META_DLLAPI_HANDLE_void(FN_PARMSCHANGELEVEL, pfnParmsChangeLevel, void, (VOID_ARG));
 	RETURN_API_void();
 }
 static const char *mm_GetGameDescription(void) {
-	META_DLLAPI_HANDLE(const char *, NULL, FN_GETGAMEDESCRIPTION, pfnGetGameDescription, void, ());
+	META_DLLAPI_HANDLE(const char *, NULL, FN_GETGAMEDESCRIPTION, pfnGetGameDescription, void, (VOID_ARG));
 	RETURN_API(const char *);
 }
 static void mm_PlayerCustomization(edict_t *pEntity, customization_t *pCust) {
@@ -279,7 +279,7 @@ static void mm_CreateBaseline(int player, int eindex, struct entity_state_s *bas
 	RETURN_API_void();
 }
 static void mm_RegisterEncoders(void) {
-	META_DLLAPI_HANDLE_void(FN_REGISTERENCODERS, pfnRegisterEncoders, void, ());
+	META_DLLAPI_HANDLE_void(FN_REGISTERENCODERS, pfnRegisterEncoders, void, (VOID_ARG));
 	RETURN_API_void();
 }
 static int mm_GetWeaponData(struct edict_s *player, struct weapon_data_s *info) {
@@ -303,7 +303,7 @@ static int mm_GetHullBounds(int hullnumber, float *mins, float *maxs) {
 	RETURN_API(int);
 }
 static void mm_CreateInstancedBaselines (void) {
-	META_DLLAPI_HANDLE_void(FN_CREATEINSTANCEDBASELINES, pfnCreateInstancedBaselines, void, ());
+	META_DLLAPI_HANDLE_void(FN_CREATEINSTANCEDBASELINES, pfnCreateInstancedBaselines, void, (VOID_ARG));
 	RETURN_API_void();
 }
 static int mm_InconsistentFile(const edict_t *player, const char *filename, char *disconnect_message) {
@@ -311,7 +311,7 @@ static int mm_InconsistentFile(const edict_t *player, const char *filename, char
 	RETURN_API(int);
 }
 static int mm_AllowLagCompensation(void) {
-	META_DLLAPI_HANDLE(int, 0, FN_ALLOWLAGCOMPENSATION, pfnAllowLagCompensation, void, ());
+	META_DLLAPI_HANDLE(int, 0, FN_ALLOWLAGCOMPENSATION, pfnAllowLagCompensation, void, (VOID_ARG));
 	RETURN_API(int);
 }
 
@@ -323,7 +323,7 @@ static void mm_OnFreeEntPrivateData(edict_t *pEnt) {
 	RETURN_API_void();
 }
 static void mm_GameShutdown(void) {
-	META_NEWAPI_HANDLE_void(FN_GAMESHUTDOWN, pfnGameShutdown, void, ());
+	META_NEWAPI_HANDLE_void(FN_GAMESHUTDOWN, pfnGameShutdown, void, (VOID_ARG));
 	RETURN_API_void();
 }
 static int mm_ShouldCollide(edict_t *pentTouched, edict_t *pentOther) {

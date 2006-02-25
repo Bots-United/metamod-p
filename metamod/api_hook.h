@@ -52,7 +52,8 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned long 
 #define API_PACK_ARGS(type, args) \
 	_COMBINE2(pack_args_type_, type) packed_args = { OPEN_ARGS args }
 
-typedef struct {                                } pack_args_type_void;
+#define VOID_ARG 0 
+typedef struct { int empty;             } pack_args_type_void;
 typedef struct { int i1; 			} pack_args_type_i;
 typedef struct { int i1,i2; 			} pack_args_type_2i;
 typedef struct { int i1,i2,i3; 			} pack_args_type_3i;

@@ -33,7 +33,11 @@
 #define COMP_DEP_H
 
 #define DECLSPEC(kw)
-#define ATTRIBUTE(kw) __attribute__((kw))
+#if defined WIN32 && defined _MSC_VER
+	#define ATTRIBUTE(kw) 
+#else
+	#define ATTRIBUTE(kw) __attribute__((kw))
+#endif
 #define MM_CDECL
 
 // We use these macros to hide our internal globals from being exported 
@@ -51,8 +55,21 @@
 	#endif
 #else
 	#define DLLHIDDEN
+#if defined WIN32 && defined _MSC_VER
+	#define DLLINTRNAL_NOVIS
+	#define DLLINTERNAL
+#else
 	#define DLLINTERNAL_NOVIS __attribute__((regparm(3)))
 	#define DLLINTERNAL DLLINTERNAL_NOVIS
+#endif //defined WIN32
+#endif
+
+#if defined WIN32 && defined _MSC_VER
+	#define align16
+	#define __PACKED
+#else
+	#define align16 __attribute__ ((aligned (16)))
+	#define __PACKED __attribute__ ((packed))
 #endif
 
 // Some systems that do not supply va_copy have __va_copy instead, since 
@@ -69,10 +86,6 @@
 	#define likely(x) __builtin_expect((long int)(x), true)
 	#define unlikely(x) __builtin_expect((long int)(x), false)
 #endif
-
-// 
-#define align16 __attribute__ ((aligned (16)))
-#define __PACKED __attribute__ ((packed))
 
 // Opening macros with variable number of arguments
 #if defined(__GNUC__) && __GNUC__ < 3

@@ -290,7 +290,7 @@ const char * DLLINTERNAL DLFNAME(void *memptr) {
 	
 	// MSDN indicates that GetModuleFileName will leave string
 	// null-terminated, even if it's truncated because buffer is too small.
-	if(!GetModuleFileName((HMODULE)MBI.AllocationBase, fname, sizeof(fname)-1))
+	if(!GetModuleFileNameA((HMODULE)MBI.AllocationBase, fname, sizeof(fname)-1))
 		RETURN_ERRNO(NULL, ME_NOTFOUND);
 	if(!fname[0])
 		RETURN_ERRNO(NULL, ME_NOTFOUND);
@@ -328,15 +328,15 @@ void DLLINTERNAL normalize_pathname(char *path) {
 // string of PATH_MAX length.
 char * DLLINTERNAL realpath(const char *file_name, char *resolved_name) {
 	int ret;
-	ret=GetFullPathName(file_name, PATH_MAX, resolved_name, NULL);
+	ret=GetFullPathNameA(file_name, PATH_MAX, resolved_name, NULL);
 	if(ret > PATH_MAX) {
 		errno=ENAMETOOLONG;
 		return(NULL);
 	}
 	else if(ret > 0) {
 		HANDLE handle;
-		WIN32_FIND_DATA find_data;
-		handle=FindFirstFile(resolved_name, &find_data);
+		WIN32_FIND_DATAA find_data;
+		handle=FindFirstFileA(resolved_name, &find_data);
 		if(INVALID_HANDLE_VALUE == handle) {
 			errno=ENOENT;
 			return(NULL);

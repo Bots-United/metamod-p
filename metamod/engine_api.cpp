@@ -211,7 +211,7 @@ static void mm_AngleVectors(const float *rgflVector, float *forward, float *righ
 }
 
 static edict_t *mm_CreateEntity(void) {
-	META_ENGINE_HANDLE(edict_t *, NULL, FN_CREATEENTITY, pfnCreateEntity, void, ());
+	META_ENGINE_HANDLE(edict_t *, NULL, FN_CREATEENTITY, pfnCreateEntity, void, (VOID_ARG));
 	RETURN_API(edict_t *)
 }
 static void mm_RemoveEntity(edict_t *e) {
@@ -292,7 +292,7 @@ static void mm_ServerCommand(char *str) {
 	RETURN_API_void()
 }
 static void mm_ServerExecute(void) {
-	META_ENGINE_HANDLE_void(FN_SERVEREXECUTE, pfnServerExecute, void, ());
+	META_ENGINE_HANDLE_void(FN_SERVEREXECUTE, pfnServerExecute, void, (VOID_ARG));
 	RETURN_API_void()
 }
 static void mm_engClientCommand(edict_t *pEdict, char *szFmt, ...) {
@@ -322,7 +322,7 @@ static void mm_MessageBegin(int msg_dest, int msg_type, const float *pOrigin, ed
 	RETURN_API_void()
 }
 static void mm_MessageEnd(void) {
-	META_ENGINE_HANDLE_void(FN_MESSAGEEND, pfnMessageEnd, void, ());
+	META_ENGINE_HANDLE_void(FN_MESSAGEEND, pfnMessageEnd, void, (VOID_ARG));
 	RETURN_API_void()
 }
 
@@ -519,7 +519,7 @@ static void mm_ServerPrint( const char *szMsg ) {
 
 //! these 3 added so game DLL can easily access client 'cmd' strings
 static const char *mm_Cmd_Args( void ) {
-	META_ENGINE_HANDLE(const char *, NULL, FN_CMD_ARGS, pfnCmd_Args, void, ());
+	META_ENGINE_HANDLE(const char *, NULL, FN_CMD_ARGS, pfnCmd_Args, void, (VOID_ARG));
 	RETURN_API(const char *)
 }
 static const char *mm_Cmd_Argv( int argc ) {
@@ -527,7 +527,7 @@ static const char *mm_Cmd_Argv( int argc ) {
 	RETURN_API(const char *)
 }
 static int mm_Cmd_Argc( void ) {
-	META_ENGINE_HANDLE(int, 0, FN_CMD_ARGC, pfnCmd_Argc, void, ());
+	META_ENGINE_HANDLE(int, 0, FN_CMD_ARGC, pfnCmd_Argc, void, (VOID_ARG));
 	RETURN_API(int)
 }
 
@@ -574,7 +574,7 @@ static void mm_SetView(const edict_t *pClient, const edict_t *pViewent ) {
 	RETURN_API_void()
 }
 static float mm_Time( void ) {
-	META_ENGINE_HANDLE(float, 0.0, FN_TIME, pfnTime, void, ());
+	META_ENGINE_HANDLE(float, 0.0, FN_TIME, pfnTime, void, (VOID_ARG));
 	RETURN_API(float)
 }
 static void mm_CrosshairAngle(const edict_t *pClient, float pitch, float yaw) {
@@ -626,7 +626,7 @@ static void mm_RunPlayerMove(edict_t *fakeclient, const float *viewangles, float
 	RETURN_API_void()
 }
 static int mm_NumberOfEntities(void) {
-	META_ENGINE_HANDLE(int, 0, FN_NUMBEROFENTITIES, pfnNumberOfEntities, void, ());
+	META_ENGINE_HANDLE(int, 0, FN_NUMBEROFENTITIES, pfnNumberOfEntities, void, (VOID_ARG));
 	RETURN_API(int)
 }
 
@@ -672,7 +672,7 @@ static void mm_BuildSoundMsg(edict_t *entity, int channel, const char *sample, f
 }
 //! is this a dedicated server?
 static int mm_IsDedicatedServer(void) {
-	META_ENGINE_HANDLE(int, 0, FN_ISDEDICATEDSERVER, pfnIsDedicatedServer, void, ());
+	META_ENGINE_HANDLE(int, 0, FN_ISDEDICATEDSERVER, pfnIsDedicatedServer, void, (VOID_ARG));
 	RETURN_API(int)
 }
 static cvar_t *mm_CVarGetPointer(const char *szVarName) {
@@ -738,7 +738,7 @@ static void mm_DeltaAddEncoder( char *name, void (*conditionalencode)( struct de
 	RETURN_API_void()
 }
 static int mm_GetCurrentPlayer( void ) {
-	META_ENGINE_HANDLE(int, 0, FN_GETCURRENTPLAYER, pfnGetCurrentPlayer, void, ());
+	META_ENGINE_HANDLE(int, 0, FN_GETCURRENTPLAYER, pfnGetCurrentPlayer, void, (VOID_ARG));
 	RETURN_API(int)
 }
 static int mm_CanSkipPlayer( const edict_t *player ) {
@@ -836,7 +836,7 @@ static unsigned int mm_GetApproxWavePlayLen(const char *filepath) {
 }
 
 static int mm_IsCareerMatch(void) {
-	META_ENGINE_HANDLE(int, 0, FN_ISCAREERMATCH, pfnIsCareerMatch, void, ());
+	META_ENGINE_HANDLE(int, 0, FN_ISCAREERMATCH, pfnIsCareerMatch, void, (VOID_ARG));
 	RETURN_API(int)
 }
 
@@ -866,7 +866,7 @@ static void mm_ConstructTutorMessageDecayBuffer(int *buffer, int bufferLength) {
 }
 
 static void mm_ResetTutorMessageDecayData(void) {
-	META_ENGINE_HANDLE_void(FN_RESETTUTORMESSAGEDECAYDATA, pfnResetTutorMessageDecayData, void, ());
+	META_ENGINE_HANDLE_void(FN_RESETTUTORMESSAGEDECAYDATA, pfnResetTutorMessageDecayData, void, (VOID_ARG));
 	RETURN_API_void()
 }
 

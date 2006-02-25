@@ -58,7 +58,7 @@ DIR * DLLINTERNAL my_opendir(const char *path)
 	dir = (DIR*)calloc(1, sizeof(DIR));
 	
 	// Start searching
-	dir->handle = FindFirstFile(search_path, &dir->find_data);
+	dir->handle = FindFirstFileA(search_path, &dir->find_data);
 	if(dir->handle == INVALID_HANDLE_VALUE) {
 		free(dir);
 		return(0);
@@ -80,7 +80,7 @@ struct dirent * DLLINTERNAL my_readdir(DIR *dir)
 	STRNCPY(dir->ent.d_name, dir->find_data.cFileName, sizeof(dir->ent.d_name));
 	
 	// Search next
-	dir->not_found = !FindNextFile(dir->handle, &dir->find_data);
+	dir->not_found = !FindNextFileA(dir->handle, &dir->find_data);
 	
 	return(&dir->ent);
 }

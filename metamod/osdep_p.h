@@ -47,8 +47,8 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename);
 		char d_name[PATH_MAX];
 	};
 	typedef struct {
-		HANDLE		 handle;
-		WIN32_FIND_DATA	 find_data;
+		HANDLE			 handle;
+		WIN32_FIND_DATAA find_data;
 		struct my_dirent ent;
 		int              not_found;
 	} my_DIR;

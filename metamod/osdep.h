@@ -136,7 +136,7 @@ extern mBOOL dlclose_handle_invalid DLLHIDDEN;
 	typedef HINSTANCE DLHANDLE;
 	typedef FARPROC DLFUNC;
 	inline DLHANDLE DLLINTERNAL DLOPEN(const char *filename) {
-		return(LoadLibrary(filename));
+		return(LoadLibraryA(filename));
 	}
 	inline DLFUNC DLLINTERNAL DLSYM(DLHANDLE handle, const char *string) {
 		return(GetProcAddress(handle, string));
@@ -209,16 +209,23 @@ mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn);
 	#define snprintf	_snprintf
 	#define vsnprintf	_vsnprintf
 	#define sleep(x)	Sleep(x*1000)
-	#define strcasecmp	stricmp
+	#define unlink		_unlink
+	#define strlwr		_strlwr
+	#define strdup		_strdup
+	#define strcasecmp	_stricmp
 	#define strncasecmp	_strnicmp
+	#define getcwd		_getcwd
     #include <io.h>
+	#include <direct.h>
     #define open _open
     #define read _read
     #define write _write
     #define close _close
 #endif /* _WIN32 */
 
+#if !defined WIN32 && !defined _MSC_VER
 #include <unistd.h>	// getcwd
+#endif
 
 #include <sys/stat.h>
 #ifndef S_ISREG
