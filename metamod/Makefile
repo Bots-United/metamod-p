@@ -22,7 +22,11 @@ endif
 
 ifdef COMSPEC
 	ifeq "$(HOST)" "cygwin"
-		OS=linux
+		ifeq "$(TARGET)" "win32"
+			OS=windows
+		else
+			OS=linux
+		endif
 	else
 		OS=windows
 	endif
@@ -89,6 +93,10 @@ endif
 CC_WIN=gcc
 RES_WIN=windres
 
+ifeq "$(HOST)" "cygwin"
+	CC_WIN += -mno-cygwin
+endif
+
 OBJDIR_LINUX_OPT=opt.linux_$(TARGETTYPE)
 OBJDIR_LINUX_DBG=debug.linux_$(TARGETTYPE)
 OBJDIR_WIN_OPT=opt.win32
@@ -99,8 +107,13 @@ OBJDIR_WIN_DBG=debug.win32
 # COMPILE OPTIONS - ARCHITECTURE AND OPTIMIZATIONS
 #############################################################################
 
-GCCMAJ = $(shell $(CC) -dumpversion | sed -e 's/\.[0-9][0-9]*\.[0-9]//')
-GCCMIN = $(shell $(CC) -dumpversion | sed -e 's/[0-9]\.//;s/\.[0-9]//')
+ifeq "$(OS)" "linux"
+	GCCMAJ = $(shell $(CC) -dumpversion | sed -e 's/\.[0-9][0-9]*\.[0-9]//')
+	GCCMIN = $(shell $(CC) -dumpversion | sed -e 's/[0-9]\.//;s/\.[0-9]//')
+else
+	GCCMAJ = $(shell $(CC_WIN) -dumpversion | sed -e 's/\.[0-9][0-9]*\.[0-9]//')
+	GCCMIN = $(shell $(CC_WIN) -dumpversion | sed -e 's/[0-9]\.//;s/\.[0-9]//')
+endif
 
 ifeq "$(HOST)" "cygwin"
 	ifeq "$(TARGETTYPE)" "amd64"
@@ -133,6 +146,12 @@ ifeq "$(GCCMAJ)" "3"
 endif
 ifeq "$(GCCMAJ)" "4"
 	MCPU=-mtune
+endif
+
+ifeq "$(OS)" "linux"
+	CC_DEP=$(CC)
+else
+	CC_DEP=$(CC_WIN)
 endif
 
 # Note! About gcc optimization levels.
@@ -452,6 +471,6 @@ snap:	.snap
 depend: $(OBJDIR)/Rules.depend
 
 $(OBJDIR)/Rules.depend: Makefile $(SRCFILES) $(OBJDIR)
-	$(CC) -MM $(INCLUDEDIRS) $(SRCFILES) | sed "s;\(^[^ 	]*\):\(.*\);$(OBJDIR)/\1: Makefile Config.mak \2;" > $@
+	$(CC_DEP) -MM $(INCLUDEDIRS) $(SRCFILES) | sed "s;\(^[^ 	]*\):\(.*\);$(OBJDIR)/\1: Makefile Config.mak \2;" > $@
 
 include $(OBJDIR)/Rules.depend
