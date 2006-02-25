@@ -1,7 +1,7 @@
 MODNAME = metamod
 
 #__METAMOD_BUILD__ for our special eiface.h
-EXTRA_CFLAGS = -D__METAMOD_BUILD__ -D__META_DEBUG_VALUE__CACHE_AS_INT__ -DFIX_VARARG_ENGINE_API_WARPERS
+EXTRA_CFLAGS += -D__METAMOD_BUILD__ -D__META_DEBUG_VALUE__CACHE_AS_INT__ -DFIX_VARARG_ENGINE_API_WARPERS
 #-DMETA_PERFMON
 
 SRCFILES = api_hook.cpp api_info.cpp commands_meta.cpp conf_meta.cpp \
@@ -17,10 +17,10 @@ RESFILE = res_meta.rc
 
 ifeq "$(OS)" "linux"
 	SRCFILES+=osdep_linkent_linux.cpp osdep_detect_gamedll_linux.cpp
-	EXTRA_LINK=
+	EXTRA_LINK+=
 else
 	SRCFILES+=osdep_linkent_win32.cpp osdep_detect_gamedll_win32.cpp
-	EXTRA_LINK=-Xlinker --script -Xlinker i386pe.merge
+	EXTRA_LINK+=-Xlinker --script -Xlinker i386pe.merge
 endif
 
 #STLFILES = mreg.cpp

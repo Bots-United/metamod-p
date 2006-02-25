@@ -95,6 +95,7 @@ RES_WIN=windres
 
 ifeq "$(HOST)" "cygwin"
 	CC_WIN += -mno-cygwin
+	EXTRA_LINK += -L/lib/w32api
 endif
 
 OBJDIR_LINUX_OPT=opt.linux_$(TARGETTYPE)

@@ -43,7 +43,7 @@
 #define va_to_rva(base, va) ((unsigned long)va - (unsigned long)base)
 
 //
-static unsigned long va_to_mapaddr(void * mapview, IMAGE_SECTION_HEADER * sections, int num_sects, unsigned long vaddr) {
+static unsigned long DLLINTERNAL_NOVIS va_to_mapaddr(void * mapview, IMAGE_SECTION_HEADER * sections, int num_sects, unsigned long vaddr) {
 	for(int i = 0; i < num_sects; i++)
 		if(vaddr >= sections[i].VirtualAddress && vaddr < sections[i].VirtualAddress + sections[i].SizeOfRawData)
 			return(rva_to_va(mapview, (vaddr - sections[i].VirtualAddress + sections[i].PointerToRawData)));
@@ -52,7 +52,7 @@ static unsigned long va_to_mapaddr(void * mapview, IMAGE_SECTION_HEADER * sectio
 }
 
 // Checks module signatures and return ntheaders pointer for valid module
-static IMAGE_NT_HEADERS * get_ntheaders(void * mapview) {
+static IMAGE_NT_HEADERS * DLLINTERNAL_NOVIS get_ntheaders(void * mapview) {
 	union { 
 		unsigned long      mem;
 		IMAGE_DOS_HEADER * dos;
@@ -73,7 +73,7 @@ static IMAGE_NT_HEADERS * get_ntheaders(void * mapview) {
 }
 
 // Returns export table for valid module
-static IMAGE_EXPORT_DIRECTORY * get_export_table(void * mapview, IMAGE_NT_HEADERS * ntheaders, IMAGE_SECTION_HEADER * sections, int num_sects) {
+static IMAGE_EXPORT_DIRECTORY * DLLINTERNAL_NOVIS get_export_table(void * mapview, IMAGE_NT_HEADERS * ntheaders, IMAGE_SECTION_HEADER * sections, int num_sects) {
 	union { 
 		unsigned long            mem;
 		void *                   pvoid;

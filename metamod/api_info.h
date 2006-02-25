@@ -54,7 +54,7 @@ typedef enum enum_api_t {
 } enum_api_t;
 
 // API caller function prototype
-typedef void * (*api_caller_func_t)(const void * func, const void * packed_args);
+typedef void * (DLLINTERNAL_NOVIS * api_caller_func_t)(const void * func, const void * packed_args);
 
 
 typedef struct api_info_s {

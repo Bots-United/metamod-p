@@ -55,13 +55,13 @@
 	#endif
 #else
 	#define DLLHIDDEN
-#if defined WIN32 && defined _MSC_VER
-	#define DLLINTRNAL_NOVIS
-	#define DLLINTERNAL
-#else
-	#define DLLINTERNAL_NOVIS __attribute__((regparm(3)))
-	#define DLLINTERNAL DLLINTERNAL_NOVIS
-#endif //defined WIN32
+	#if defined WIN32 && defined _MSC_VER
+		#define DLLINTRNAL_NOVIS
+		#define DLLINTERNAL
+	#else
+		#define DLLINTERNAL_NOVIS __attribute__((regparm(3)))
+		#define DLLINTERNAL DLLINTERNAL_NOVIS
+	#endif //defined WIN32
 #endif
 
 #if defined WIN32 && defined _MSC_VER
@@ -74,8 +74,12 @@
 
 // Some systems that do not supply va_copy have __va_copy instead, since 
 // that was the name used in the draft proposal.
-#if !defined(__GNUC__) || __GNUC__ < 3
-	#define va_copy __va_copy
+#if defined WIN32 && defined _MSC_VER
+	#define va_copy(dst,src) ((dst)=(src))
+#else
+	#if !defined(__GNUC__) || __GNUC__ < 3
+		#define va_copy __va_copy
+	#endif
 #endif
 
 // Manual branch optimization for GCC 3.0.0 and newer

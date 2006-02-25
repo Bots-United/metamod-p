@@ -33,12 +33,10 @@
 #  ifndef _GNU_SOURCE
 #    define _GNU_SOURCE
 #  endif
-#if !defined WIN32 && !defined _MSC_VER
 #include <dlfcn.h>			// dlopen, dladdr, etc
-#include <sys/mman.h>			// mmap, munmap, mprotect, etc
-#endif
 #include <signal.h>			// sigaction, etc
 #include <setjmp.h>			// sigsetjmp, longjmp, etc
+#include <sys/mman.h>			// mmap, munmap, mprotect, etc
 #include <link.h>
 #include <elf.h>
 
