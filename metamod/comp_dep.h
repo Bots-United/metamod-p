@@ -65,12 +65,14 @@
 #endif
 
 #if defined WIN32 && defined _MSC_VER
-	#define align16
 	#define __PACKED
+	#define attr_packed
 #else
-	#define align16 __attribute__ ((aligned (16)))
 	#define __PACKED __attribute__ ((packed))
+	#define attr_packed __PACKED
 #endif
+
+#define align16
 
 #if defined WIN32 && defined _MSC_VER
 	// On x86 va_list is just a pointer.
@@ -88,8 +90,8 @@
 	#define likely(x) (x)
 	#define unlikely(x) (x)
 #else
-	#define likely(x) __builtin_expect((long int)(!!x), true)
-	#define unlikely(x) __builtin_expect((long int)(!!x), false)
+	#define likely(x) __builtin_expect((long int)(x), true)
+	#define unlikely(x) __builtin_expect((long int)(x), false)
 #endif
 
 // Opening macros with variable number of arguments
