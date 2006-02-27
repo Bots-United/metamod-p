@@ -865,12 +865,12 @@ mBOOL DLLINTERNAL MPlugin::attach(PLUG_LOADTIME now) {
 
 	// Rather than duplicate code, we use another ugly macro.  Again,
 	// a function isn't an option since we have varying types.
-#define GET_FUNC_TABLE_FROM_PLUGIN(pfnGetFuncs, STR_GetFuncs, struct_field, API_TYPE, TABLE_TYPE, vers_pass, vers_int, vers_want) \
+#define GET_FUNC_TABLE_FROM_PLUGIN(pfnGetFuncs, STR_GetFuncs, struct_field, API_TYPE, TABLE_TYPE, TABLE_SIZE, vers_pass, vers_int, vers_want) \
 	if(meta_table.pfnGetFuncs) { \
 		if(!struct_field) { \
-			struct_field = (TABLE_TYPE*)calloc(1, sizeof(TABLE_TYPE)); \
+			struct_field = (TABLE_TYPE*)calloc(1, TABLE_SIZE); \
 		} else { \
-			memset(struct_field, 0, sizeof(TABLE_TYPE)); \
+			memset(struct_field, 0, TABLE_SIZE); \
 		} \
 		if(meta_table.pfnGetFuncs(struct_field, vers_pass)) { \
 			META_DEBUG(3, ("dll: Plugin '%s': Found %s", desc, STR_GetFuncs)); \
@@ -893,35 +893,35 @@ mBOOL DLLINTERNAL MPlugin::attach(PLUG_LOADTIME now) {
 	iface_vers=NEW_DLL_FUNCTIONS_VERSION;
 	GET_FUNC_TABLE_FROM_PLUGIN(pfnGetNewDLLFunctions, 
 			"GetNewDLLFunctions", tables.newapi, 
-			NEW_DLL_FUNCTIONS_FN, NEW_DLL_FUNCTIONS,
+			NEW_DLL_FUNCTIONS_FN, NEW_DLL_FUNCTIONS, sizeof(NEW_DLL_FUNCTIONS),
 			&iface_vers, iface_vers, NEW_DLL_FUNCTIONS_VERSION);
 	iface_vers=NEW_DLL_FUNCTIONS_VERSION;
 	GET_FUNC_TABLE_FROM_PLUGIN(pfnGetNewDLLFunctions_Post, 
 			"GetNewDLLFunctions_Post", post_tables.newapi, 
-			NEW_DLL_FUNCTIONS_FN, NEW_DLL_FUNCTIONS,
+			NEW_DLL_FUNCTIONS_FN, NEW_DLL_FUNCTIONS, sizeof(NEW_DLL_FUNCTIONS),
 			&iface_vers, iface_vers, NEW_DLL_FUNCTIONS_VERSION);
 
 	// Look for API2 interface in plugin; preferred over API-1.
 	iface_vers=INTERFACE_VERSION;
 	GET_FUNC_TABLE_FROM_PLUGIN(pfnGetEntityAPI2, 
 			"GetEntityAPI2", tables.dllapi, 
-			APIFUNCTION2, DLL_FUNCTIONS,
+			APIFUNCTION2, DLL_FUNCTIONS, sizeof(DLL_FUNCTIONS),
 			&iface_vers, iface_vers, INTERFACE_VERSION);
 	iface_vers=INTERFACE_VERSION;
 	GET_FUNC_TABLE_FROM_PLUGIN(pfnGetEntityAPI2_Post, 
 			"GetEntityAPI2_Post", post_tables.dllapi, 
-			APIFUNCTION2, DLL_FUNCTIONS,
+			APIFUNCTION2, DLL_FUNCTIONS, sizeof(DLL_FUNCTIONS),
 			&iface_vers, iface_vers, INTERFACE_VERSION);
 
 	// Look for old-style API in plugin, if API2 interface wasn't found.
 	if(!tables.dllapi && !post_tables.dllapi) {
 		GET_FUNC_TABLE_FROM_PLUGIN(pfnGetEntityAPI, 
 				"GetEntityAPI", tables.dllapi, 
-				APIFUNCTION, DLL_FUNCTIONS,
+				APIFUNCTION, DLL_FUNCTIONS, sizeof(DLL_FUNCTIONS),
 				INTERFACE_VERSION, INTERFACE_VERSION, INTERFACE_VERSION);
 		GET_FUNC_TABLE_FROM_PLUGIN(pfnGetEntityAPI_Post, 
 				"GetEntityAPI_Post", post_tables.dllapi, 
-				APIFUNCTION, DLL_FUNCTIONS,
+				APIFUNCTION, DLL_FUNCTIONS, sizeof(DLL_FUNCTIONS),
 				INTERFACE_VERSION, INTERFACE_VERSION, INTERFACE_VERSION);
 	}
 
@@ -929,12 +929,12 @@ mBOOL DLLINTERNAL MPlugin::attach(PLUG_LOADTIME now) {
 	iface_vers=ENGINE_INTERFACE_VERSION;
 	GET_FUNC_TABLE_FROM_PLUGIN(pfnGetEngineFunctions, 
 			"GetEngineFunctions", tables.engine, 
-			GET_ENGINE_FUNCTIONS_FN, enginefuncs_t,
+			GET_ENGINE_FUNCTIONS_FN, enginefuncs_t, (sizeof(enginefuncs_t) - sizeof(((enginefuncs_t*)0)->extra_functions)),
 			&iface_vers, iface_vers, ENGINE_INTERFACE_VERSION);
 	iface_vers=ENGINE_INTERFACE_VERSION;
 	GET_FUNC_TABLE_FROM_PLUGIN(pfnGetEngineFunctions_Post, 
 			"GetEngineFunctions_Post", post_tables.engine, 
-			GET_ENGINE_FUNCTIONS_FN, enginefuncs_t,
+			GET_ENGINE_FUNCTIONS_FN, enginefuncs_t, (sizeof(enginefuncs_t) - sizeof(((enginefuncs_t*)0)->extra_functions)),
 			&iface_vers, iface_vers, ENGINE_INTERFACE_VERSION);
 
 	if(!tables.dllapi && !post_tables.dllapi
