@@ -56,7 +56,7 @@
 #else
 	#define DLLHIDDEN
 	#if defined WIN32 && defined _MSC_VER
-		#define DLLINTRNAL_NOVIS
+		#define DLLINTERNAL_NOVIS
 		#define DLLINTERNAL
 	#else
 		#define DLLINTERNAL_NOVIS __attribute__((regparm(3)))
