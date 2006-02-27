@@ -88,8 +88,8 @@
 	#define likely(x) (x)
 	#define unlikely(x) (x)
 #else
-	#define likely(x) __builtin_expect((long int)(x), true)
-	#define unlikely(x) __builtin_expect((long int)(x), false)
+	#define likely(x) __builtin_expect((long int)(!!x), true)
+	#define unlikely(x) __builtin_expect((long int)(!!x), false)
 #endif
 
 // Opening macros with variable number of arguments

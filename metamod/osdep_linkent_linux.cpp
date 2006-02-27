@@ -37,7 +37,8 @@
 
 #include <dlfcn.h>
 #include <sys/mman.h>
-#include <unistd.h>
+#include <asm/page.h>
+#define PAGE_ALIGN(addr) (((addr)+PAGE_SIZE-1)&PAGE_MASK)
 #include <pthread.h>
 #include <link.h>
 
@@ -69,13 +70,13 @@
 		// "Small position independent code model"
 		// see: http://www.x86-64.org/documentation/abi.pdf
 		unsigned char * bytes = (unsigned char *)x;
-		long end_of_instruction = (long)x + JMP_SIZE + 4;
+		unsigned long end_of_instruction = (unsigned long)x + JMP_SIZE + 4;
 		
 		// Jump over opcode
 		bytes += JMP_SIZE;
 		
 		// read function address
-		long func = *(long *)(end_of_instruction + (long)*(int *)bytes);
+		unsigned long func = *(unsigned long *)(end_of_instruction + (unsigned long)*(unsigned int *)bytes);
 		return((void *)func);
 	}
 	
@@ -360,14 +361,23 @@ int DLLINTERNAL init_linkent_replacement(DLHANDLE MetamodHandle, DLHANDLE GameDl
 	//Construct new bytes: "jmp dword ptr[replacement_dlsym]"
 	construct_jmp_instruction((void*)&dlsym_new_bytes[0], (void*)&__replacement_dlsym);
 	
-	//Check if bytes overlap page border.
-	const int pagesize = getpagesize();
-	long align = (long)dlsym_original % pagesize;
-	long start_of_page = (long)dlsym_original - align;
-	long number_of_pages = ((align + BYTES_SIZE) + (pagesize - 1)) / pagesize;
+	//Check if bytes overlap page border.	
+	unsigned long start_of_page = PAGE_ALIGN((long)dlsym_original) - PAGE_SIZE;
+	unsigned long size_of_pages = 0;
+	
+	if((unsigned long)dlsym_original + BYTES_SIZE > PAGE_ALIGN((unsigned long)dlsym_original))
+	{
+		//bytes are located on two pages
+		size_of_pages = PAGE_SIZE*2;
+	}
+	else
+	{
+		//bytes are located entirely on one page.
+		size_of_pages = PAGE_SIZE;
+	}
 	
 	//Remove PROT_READ restriction
-	if(mprotect((void*)start_of_page, number_of_pages * pagesize, PROT_READ|PROT_WRITE|PROT_EXEC))
+	if(mprotect((void*)start_of_page, size_of_pages, PROT_READ|PROT_WRITE|PROT_EXEC))
 	{
 		META_ERROR("Couldn't initialize dynamic linkents, mprotect failed: %i.  Exiting...", errno);
 		return(0);
