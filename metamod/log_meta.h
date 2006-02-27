@@ -78,14 +78,18 @@
 	#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
 		#define META_DEBUG(level, args) \
 			do { \
-				if(unlikely(meta_debug_value >= level)) \
-					META_DO_DEBUG(level, OPEN_ARGS args); \
+				if(unlikely(meta_debug_value >= level)) { \
+					META_DEBUG_SET_LEVEL(level); \
+					META_DO_DEBUG args; \
+				} \
 			} while(0)
 	#else
 		#define META_DEBUG(level, args) \
 			do { \
-				if(unlikely(meta_debug.value >= (float)level)) \
-					META_DO_DEBUG(level, OPEN_ARGS args); \
+				if(unlikely(meta_debug.value >= (float)level)) { \
+					META_DEBUG_SET_LEVEL(level); \
+					META_DO_DEBUG args; \
+				} \
 			} while(0)
 	#endif
 #endif
@@ -116,7 +120,8 @@ void DLLINTERNAL META_ERROR(const char *fmt, ...);
 void DLLINTERNAL META_LOG(const char *fmt, ...);
 void DLLINTERNAL META_CLIENT(edict_t *pEntity, const char *fmt, ...);
 #ifndef __BUILD_FAST_METAMOD__
-	void DLLINTERNAL META_DO_DEBUG(int level, const char *fmt, ...);
+	void DLLINTERNAL META_DEBUG_SET_LEVEL(int level);
+	void DLLINTERNAL META_DO_DEBUG(const char *fmt, ...);
 #endif
 
 #endif /* LOG_META_H */

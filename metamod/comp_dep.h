@@ -50,8 +50,13 @@
 		#define DLLINTERNAL __attribute__((visibility("internal")))
 		#define DLLINTERNAL_NOVIS
 	#else	
-		#define DLLINTERNAL __attribute__((visibility("internal"), regparm(3)))
-		#define DLLINTERNAL_NOVIS __attribute__((regparm(3)))
+		#ifdef __INTERNALS_USE_REGPARAMS__
+			#define DLLINTERNAL __attribute__((visibility("internal"), regparm(3)))
+			#define DLLINTERNAL_NOVIS __attribute__((regparm(3)))
+		#else
+			#define DLLINTERNAL __attribute__((visibility("internal")))
+			#define DLLINTERNAL_NOVIS
+		#endif
 	#endif
 #else
 	#define DLLHIDDEN
@@ -59,20 +64,15 @@
 		#define DLLINTERNAL_NOVIS
 		#define DLLINTERNAL
 	#else
-		#define DLLINTERNAL_NOVIS __attribute__((regparm(3)))
-		#define DLLINTERNAL DLLINTERNAL_NOVIS
+		#ifdef __INTERNALS_USE_REGPARAMS__
+			#define DLLINTERNAL_NOVIS __attribute__((regparm(3)))
+			#define DLLINTERNAL DLLINTERNAL_NOVIS
+		#else
+			#define DLLINTERNAL_NOVIS 
+			#define DLLINTERNAL 
+		#endif
 	#endif //defined WIN32
 #endif
-
-#if defined WIN32 && defined _MSC_VER
-	#define __PACKED
-	#define attr_packed
-#else
-	#define __PACKED __attribute__ ((packed))
-	#define attr_packed __PACKED
-#endif
-
-#define align16
 
 #if defined WIN32 && defined _MSC_VER
 	// On x86 va_list is just a pointer.
@@ -92,13 +92,6 @@
 #else
 	#define likely(x) __builtin_expect((long int)(x), true)
 	#define unlikely(x) __builtin_expect((long int)(x), false)
-#endif
-
-// Opening macros with variable number of arguments
-#if defined(__GNUC__) && __GNUC__ < 3
-#  define OPEN_ARGS(args...) args
-#else
-#  define OPEN_ARGS(...) __VA_ARGS__
 #endif
 
 #endif /*COMP_DEP_H*/

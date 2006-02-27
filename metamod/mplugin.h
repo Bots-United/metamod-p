@@ -205,7 +205,7 @@ class MPlugin : public class_metamod_new {
 		
 		gamedll_funcs_t gamedll_funcs;
 		mutil_funcs_t mutil_funcs;
-} align16;
+};
 
 // Macros used by MPlugin::show(), to list the functions that the plugin
 // catches.

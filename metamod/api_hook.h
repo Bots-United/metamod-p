@@ -47,133 +47,269 @@ void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_
 void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args);
 
 //
-// API function args structures
+// API function args structures/classes
 //
 #define API_PACK_ARGS(type, args) \
-	_COMBINE2(pack_args_type_, type) packed_args = { OPEN_ARGS args }
+	_COMBINE2(pack_args_type_, type) packed_args args;
 
-#if defined WIN32 && defined _MSC_VER
-	#define VOID_ARG 0 
-	typedef struct { int empty;             } pack_args_type_void;
-#else
-	// GCC supports empty structures better than MSVC
-	#define VOID_ARG 
-	typedef struct {                        } pack_args_type_void;
-#endif
-typedef struct { int i1; 			} pack_args_type_i;
-typedef struct { int i1,i2; 			} pack_args_type_2i;
-typedef struct { int i1,i2,i3; 			} pack_args_type_3i;
-typedef struct { unsigned int ui1;		} pack_args_type_ui;
-typedef struct { unsigned long ul1;		} pack_args_type_ul;
-typedef struct { float f1;			} pack_args_type_f;
-typedef struct { float f1,f2;			} pack_args_type_2f;
-typedef struct { const void *p1;		} pack_args_type_p;
-typedef struct { const void *p1,*p2;		} pack_args_type_2p;
-typedef struct { const void *p1,*p2,*p3;	} pack_args_type_3p;
-typedef struct { const void *p1,*p2,*p3,*p4;	} pack_args_type_4p;
-typedef struct { const void *p1,*p2,*str;	} pack_args_type_2pV;
-typedef struct { int i1;
-		 const void *p1,*str;		} pack_args_type_ipV;
-typedef struct { int i1,i2; 
-		 const void *p1,*p2;		} pack_args_type_2i2p;
-typedef struct { const void *p1,*p2;
-		 float f1,f2;	 		} pack_args_type_2p2f;
-typedef struct { const void *p1,*p2;
-		 int i1,i2; 
-		 const void *p3,*p4;		} pack_args_type_2p2i2p;
-typedef struct { const void *p1,*p2;
-		 float f1,f2,f3;
-		 unsigned /*short*/int us1;
-		 unsigned /*char*/int uc1,uc2;	} pack_args_type_2p3fus2uc;
-typedef struct { const void *p1,*p2;
-		 float f1;			} pack_args_type_2pf;
-typedef struct { const void *p1,*p2;
-		 float f1;
-		 int i1;			} pack_args_type_2pfi;
-typedef struct { const void *p1,*p2;
-		 int i1;			} pack_args_type_2pi;
-typedef struct { const void *p1,*p2;
-		 int i1;
-		 const void *p3,*p4;		} pack_args_type_2pi2p;
-typedef struct { const void *p1,*p2;
-		 int i1;
-		 float f1;
-		 const void *p3,*p4;		} pack_args_type_2pifp2;
-typedef struct { const void *p1,*p2,*p3;	
-		 float f1,f2;
-		 int i1,i2;			} pack_args_type_3p2f2i;
-typedef struct { const void *p1,*p2,*p3;
-		 int i1;
-		 const void *p4,*p5;		} pack_args_type_3pi2p;
-typedef struct { int i1;
-		 const void *p1,*p2,*p3;	} pack_args_type_i3p;
-typedef struct { int i1;
-		 const void *p1;		} pack_args_type_ip;
-typedef struct { int i1;
-		 const void *p1;
-		 unsigned /*short*/int us1;
-		 float f1;
-		 const void *p2,*p3;
-		 float f2,f3;
-		 int i2,i3,i4,i5;		} pack_args_type_ipusf2p2f4i;
-typedef struct { const void *p1,*p2,*p3;
-		 int i1;			} pack_args_type_3pi;
-typedef struct { const void *p1,*p2,*p3,*p4;
-		 int i1;			} pack_args_type_4pi;
-typedef struct { const void *p1;
-		 float f1;			} pack_args_type_pf;
-typedef struct { const void *p1;
-		 float f1;
-		 const void *p2;		} pack_args_type_pfp;
-typedef struct { const void *p1;
-		 int i1;			} pack_args_type_pi;
-typedef struct { const void *p1;
-		 int i1;
-		 const void *p2,*p3;		} pack_args_type_pi2p;
-typedef struct { const void *p1;
-		 int i1;
-		 const void *p2;		} pack_args_type_pip;
-typedef struct { const void *p1;
-		 int i1;
-		 const void *p2;
-		 float f1,f2;
-		 int i2,i3;			} pack_args_type_pip2f2i;
-typedef struct { const void *p1;
-		 int i1;
-		 const void *p2;
-		 float f1,f2;
-		 int i2,i3,i4,i5;
-		 const void *p3,*p4;		} pack_args_type_pip2f4i2p;
-typedef struct { const void *p1;
-		 unsigned /*char*/int uc1;	} pack_args_type_puc;
-typedef struct { int i1,i2; 
-		 const void *p1,*p2;
-		 int i3;
-		 const void *p3,*p4;		} pack_args_type_2i2pi2p;
-typedef struct { const void *p1,*p2;
-		 int i1;
-		 float f1;
-		 const void *p3,*p4;		} pack_args_type_2pif2p;
-typedef struct { const void *p1,*p2;
-		 unsigned int ui1;		} pack_args_type_2pui;
-typedef struct { int i1;
-		 const void *p1,*p2;		} pack_args_type_i2p;
-typedef struct { const void *p1;
-		 float f1,f2;			} pack_args_type_p2f;
-typedef struct { const void *p1;
-		 float f1,f2;
-		 int i1;			} pack_args_type_p2fi;
-typedef struct { const void *p1;
-		 int i1,i2;			} pack_args_type_p2i;
-typedef struct { const void *p1;
-		 int i1,i2,i3;			} pack_args_type_p3i;
-typedef struct { const void *p1;
-		 int i1,i2,i3,i4;		} pack_args_type_p4i;
-typedef struct { const void *p1;
-		 int i1;
-		 const void *p2,*p3;
-		 int i2,i3;
-		 const void *p4;		} pack_args_type_pi2p2ip;
+#define PACK_ARGS_CLASS_HEADER(type, constructor_args) \
+	class _COMBINE2(pack_args_type_, type) : public class_metamod_new { \
+		public: inline _COMBINE2(pack_args_type_, type) constructor_args
+
+#define PACK_ARGS_END };
+
+#define VOID_ARG 0
+
+PACK_ARGS_CLASS_HEADER(void, (int)) {};
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(i, (int _i1)): i1(_i1) {}; 
+	int i1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2i, (int _i1, int _i2)): i1(_i1), i2(_i2) {}; 
+	int i1,i2;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(3i, (int _i1, int _i2, int _i3)): i1(_i1), i2(_i2), i3(_i3) {};
+	int i1,i2,i3;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(ui, (unsigned int _ui1)): ui1(_ui1) {}; 
+	unsigned int ui1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(ul, (unsigned long _ul1)): ul1(_ul1) {}; 
+	unsigned long ul1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(f, (float _f1)): f1(_f1) {}; 
+	float f1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2f, (float _f1, float _f2)): f1(_f1), f2(_f2) {}; 
+	float f1,f2;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(p, (const void *_p1)): p1(_p1) {}; 
+	const void *p1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2p, (const void *_p1, const void *_p2)): p1(_p1), p2(_p2) {}; 
+	const void *p1,*p2;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(3p, (const void *_p1, const void *_p2, const void *_p3)): p1(_p1), p2(_p2), p3(_p3) {}; 
+	const void *p1,*p2,*p3;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(4p, (const void *_p1, const void *_p2, const void *_p3, const void *_p4)): p1(_p1), p2(_p2), p3(_p3), p4(_p4) {}; 
+	const void *p1,*p2,*p3,*p4;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2pV, (const void *_p1, const void *_p2, const void *_str)): p1(_p1), p2(_p2), str(_str) {}; 
+	const void *p1,*p2,*str;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(ipV, (int _i1, const void *_p1, const void *_str)): i1(_i1), p1(_p1), str(_str) {}; 
+	int i1;
+	const void *p1,*str;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2i2p, (int _i1, int _i2, const void *_p1, const void *_p2)): i1(_i1), i2(_i2), p1(_p1), p2(_p2) {}; 
+	int i1,i2;
+	const void *p1,*p2;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2p2f, (const void *_p1, const void *_p2, float _f1, float _f2)): p1(_p1), p2(_p2), f1(_f1), f2(_f2) {}; 
+	const void *p1,*p2;
+	float f1,f2;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2p2i2p, (const void *_p1, const void *_p2, int _i1, int _i2, const void *_p3, const void *_p4)): p1(_p1), p2(_p2), i1(_i1), i2(_i2), p3(_p3), p4(_p4) {}; 
+	const void *p1,*p2;
+	int i1,i2;
+	const void *p3,*p4;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2p3fus2uc, (const void *_p1, const void *_p2, float _f1, float _f2, float _f3, unsigned short _us1, unsigned char _uc1, unsigned char _uc2)): p1(_p1), p2(_p2), f1(_f1), f2(_f2), f3(_f3), us1(_us1), uc1(_uc1), uc2(_uc2) {}; 
+	const void *p1,*p2;
+	float f1,f2,f3;
+	unsigned int us1;
+	unsigned int uc1,uc2;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2pf, (const void *_p1, const void *_p2, float _f1)): p1(_p1), p2(_p2), f1(_f1) {}; 
+	const void *p1,*p2;
+	float f1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2pfi, (const void *_p1, const void *_p2, float _f1, int _i1)): p1(_p1), p2(_p2), f1(_f1), i1(_i1) {}; 
+	const void *p1,*p2;
+	float f1;
+	int i1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2pi, (const void *_p1, const void *_p2, int _i1)): p1(_p1), p2(_p2), i1(_i1) {}; 
+	const void *p1,*p2;
+	int i1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2pi2p, (const void *_p1, const void *_p2, int _i1, const void *_p3, const void *_p4)): p1(_p1), p2(_p2), i1(_i1), p3(_p3), p4(_p4) {}; 
+	const void *p1,*p2;
+	int i1;
+	const void *p3,*p4;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2pif2p, (const void *_p1, const void *_p2, int _i1, float _f1, const void *_p3, const void *_p4)): p1(_p1), p2(_p2), i1(_i1), f1(_f1), p3(_p3), p4(_p4) {}; 
+	const void *p1,*p2;
+	int i1;
+	float f1;
+	const void *p3,*p4;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(3p2f2i, (const void *_p1, const void *_p2, const void *_p3, float _f1, float _f2, int _i1, int _i2)): p1(_p1), p2(_p2), p3(_p3), f1(_f1), f2(_f2), i1(_i1), i2(_i2) {}; 
+	const void *p1,*p2,*p3;	
+	float f1,f2;
+	int i1,i2;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(3pi2p, (const void *_p1, const void *_p2, const void *_p3, int _i1, const void *_p4, const void *_p5)): p1(_p1), p2(_p2), p3(_p3), i1(_i1), p4(_p4), p5(_p5) {}; 
+	const void *p1,*p2,*p3;	
+	int i1;
+	const void *p4,*p5;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(i3p, (int _i1, const void *_p1, const void *_p2, const void *_p3)): i1(_i1), p1(_p1), p2(_p2), p3(_p3) {}; 
+	int i1;
+	const void *p1,*p2,*p3;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(ip, (int _i1, const void *_p1)): i1(_i1), p1(_p1) {}; 
+	int i1;
+	const void *p1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(ipusf2p2f4i, (int _i1, const void *_p1, unsigned short _us1, float _f1, const void *_p2, const void *_p3, float _f2, float _f3, int _i2, int _i3, int _i4, int _i5)): i1(_i1), p1(_p1), us1(_us1), f1(_f1), p2(_p2), p3(_p3), f2(_f2), f3(_f3), i2(_i2), i3(_i3), i4(_i4), i5(_i5) {}; 
+	int i1;
+	const void *p1;
+	unsigned int us1;
+	float f1;
+	const void *p2,*p3;
+	float f2,f3;
+	int i2,i3,i4,i5;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(3pi, (const void *_p1, const void *_p2, const void *_p3, int _i1)): p1(_p1), p2(_p2), p3(_p3), i1(_i1) {}; 
+	const void *p1,*p2,*p3;
+	int i1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(4pi, (const void *_p1, const void *_p2, const void *_p3, const void *_p4, int _i1)): p1(_p1), p2(_p2), p3(_p3), p4(_p4), i1(_i1) {}; 
+	const void *p1,*p2,*p3,*p4;
+	int i1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(pf, (const void *_p1, float _f1)): p1(_p1), f1(_f1) {}; 
+	const void *p1;
+	float f1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(pfp, (const void *_p1, float _f1, const void *_p2)): p1(_p1), f1(_f1), p2(_p2) {}; 
+	const void *p1;
+	float f1;
+	const void *p2;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(pi, (const void *_p1, int _i1)): p1(_p1), i1(_i1) {}; 
+	const void *p1;
+	int i1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(pi2p, (const void *_p1, int _i1, const void *_p2, const void *_p3)): p1(_p1), i1(_i1), p2(_p2), p3(_p3) {}; 
+	const void *p1;
+	int i1;
+	const void *p2, *p3;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(pip, (const void *_p1, int _i1, const void *_p2)): p1(_p1), i1(_i1), p2(_p2) {}; 
+	const void *p1;
+	int i1;
+	const void *p2;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(pip2f2i, (const void *_p1, int _i1, const void *_p2, float _f1, float _f2, int _i2, int _i3)): p1(_p1), i1(_i1), p2(_p2), f1(_f1), f2(_f2), i2(_i2), i3(_i3) {}; 
+	const void *p1;
+	int i1;
+	const void *p2;
+	float f1,f2;
+	int i2,i3;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(pip2f4i2p, (const void *_p1, int _i1, const void *_p2, float _f1, float _f2, int _i2, int _i3, int _i4, int _i5, const void *_p3, const void *_p4)): p1(_p1), i1(_i1), p2(_p2), f1(_f1), f2(_f2), i2(_i2), i3(_i3), i4(_i4), i5(_i5), p3(_p3), p4(_p4) {}; 
+	const void *p1;
+	int i1;
+	const void *p2;
+	float f1,f2;
+	int i2,i3,i4,i5;
+	const void *p3,*p4;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(puc, (const void *_p1, unsigned char _uc1)): p1(_p1), uc1(_uc1) {}; 
+	const void *p1;
+	unsigned int uc1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2i2pi2p, (int _i1, int _i2, const void *_p1, const void *_p2, int _i3, const void *_p3, const void *_p4)): i1(_i1), i2(_i2), p1(_p1), p2(_p2), i3(_i3), p3(_p3), p4(_p4) {}; 
+	int i1,i2;
+	const void *p1,*p2;
+	int i3;
+	const void *p3,*p4;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(2pui, (const void *_p1, const void *_p2, unsigned int _ui1)): p1(_p1), p2(_p2), ui1(_ui1) {}; 
+	const void *p1,*p2;
+	unsigned int ui1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(i2p, (int _i1, const void *_p1, const void *_p2)): i1(_i1), p1(_p1), p2(_p2) {}; 
+	int i1;
+	const void *p1,*p2;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(p2f, (const void *_p1, float _f1, float _f2)): p1(_p1), f1(_f1), f2(_f2) {}; 
+	const void *p1;
+	float f1,f2;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(p2fi, (const void *_p1, float _f1, float _f2, int _i1)): p1(_p1), f1(_f1), f2(_f2), i1(_i1) {}; 
+	const void *p1;
+	float f1,f2;
+	int i1;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(p2i, (const void *_p1, int _i1, int _i2)): p1(_p1), i1(_i1), i2(_i2) {}; 
+	const void *p1;
+	int i1,i2;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(p3i, (const void *_p1, int _i1, int _i2, int _i3)): p1(_p1), i1(_i1), i2(_i2), i3(_i3) {}; 
+	const void *p1;
+	int i1,i2,i3;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(p4i, (const void *_p1, int _i1, int _i2, int _i3, int _i4)): p1(_p1), i1(_i1), i2(_i2), i3(_i3), i4(_i4) {}; 
+	const void *p1;
+	int i1,i2,i3,i4;
+PACK_ARGS_END
+
+PACK_ARGS_CLASS_HEADER(pi2p2ip, (const void *_p1, int _i1, const void *_p2, const void *_p3, int _i2, int _i3, const void *_p4)): p1(_p1), i1(_i1), p2(_p2), p3(_p3), i2(_i2), i3(_i3), p4(_p4) {}; 
+	const void *p1;
+	int i1;
+	const void *p2,*p3;
+	int i2,i3;
+	const void *p4;
+PACK_ARGS_END
 
 //
 // API function callers.

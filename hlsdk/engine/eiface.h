@@ -313,7 +313,7 @@ typedef struct enginefuncs_s
 
 #ifdef __METAMOD_BUILD__
 	//extra (future updates)
-	void * extra_functions[128];
+	void * extra_functions[16];
 #endif /*__METAMOD_BUILD__*/
 } enginefuncs_t;
 

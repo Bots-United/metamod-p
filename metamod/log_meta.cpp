@@ -152,7 +152,13 @@ void DLLINTERNAL META_CLIENT(edict_t *pEntity, const char *fmt, ...) {
 
 #ifndef __BUILD_FAST_METAMOD__
 
-void DLLINTERNAL META_DO_DEBUG(int level, const char *fmt, ...) {
+static int debug_level;
+
+void DLLINTERNAL META_DEBUG_SET_LEVEL(int level) {
+	debug_level = level;
+}
+
+void DLLINTERNAL META_DO_DEBUG(const char *fmt, ...) {
 	char meta_debug_str[1024];
 	va_list ap;
 	
@@ -160,7 +166,7 @@ void DLLINTERNAL META_DO_DEBUG(int level, const char *fmt, ...) {
 	safevoid_vsnprintf(meta_debug_str, sizeof(meta_debug_str), fmt, ap);
 	va_end(ap);
 	
-	ALERT(at_logged, "[META] (debug:%d) %s\n", level, meta_debug_str);
+	ALERT(at_logged, "[META] (debug:%d) %s\n", debug_level, meta_debug_str);
 }
 
 #endif /*!__BUILD_FAST_METAMOD__*/
