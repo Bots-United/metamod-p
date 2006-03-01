@@ -48,14 +48,22 @@ void DLLINTERNAL do_exit(int exitval);
 
 //use pointer to avoid inlining of strcmp
 inline int DLLINTERNAL mm_strcmp(const char *s1, const char *s2) {
+#if 0
 	int (*__strcmp)(const char*, const char*) = &strcmp;
 	return((*__strcmp)(s1, s2));
+#else
+	return(strcmp(s1,s2));
+#endif
 }
 
 //use pointer to avoid inlining of strncmp
 inline int DLLINTERNAL mm_strncmp(const char *s1, const char *s2, size_t n) {
+#if 0
 	int (*__strncmp)(const char*, const char*, size_t) = &strncmp;
 	return((*__strncmp)(s1, s2, n));
+#else
+	return(strncmp(s1,s2,n));
+#endif
 }
 
 // Unlike snprintf(), strncpy() doesn't necessarily null-terminate the
