@@ -97,8 +97,8 @@
 // max buffer size for printed messages
 #define MAX_LOGMSG_LEN	1024
 
-// max buffer size for client messages
-#define MAX_CLIENTMSG_LEN 128
+// max buffer size for client messages (this used to be 128 before 1.19p29, leading to one byte stack overflow in engine)
+#define MAX_CLIENTMSG_LEN 127
 
 extern cvar_t meta_debug DLLHIDDEN;
 
