@@ -445,7 +445,7 @@ inline int meta_enginefuncs_t::version( void )
 struct HL_enginefuncs_t : public meta_enginefuncs_t {
 
 	// functions :
-	HL_enginefuncs_t() DLLINTERNAL : meta_enginefuncs_t() { };
+	HL_enginefuncs_t() DLLINTERNAL;
 
 	// Fill this object with pointers copied from an enginefuncs_t struct
 	// and fixup the interface.
@@ -469,6 +469,9 @@ struct HL_enginefuncs_t : public meta_enginefuncs_t {
 	// version as some pointers may be invalid.
 	void DLLINTERNAL fixup_engine_interface( void );
 };
+
+
+inline HL_enginefuncs_t :: HL_enginefuncs_t() : meta_enginefuncs_t() { };
 
 
 #endif /* META_EIFACE_H */

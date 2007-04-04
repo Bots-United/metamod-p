@@ -98,7 +98,7 @@ int DLLINTERNAL metamod_startup(void) {
 
 	META_CONS("   ");
 	META_CONS("   %s version %s Copyright (c) 2001-%s %s", VNAME, VVERSION, COPYRIGHT_YEAR, VAUTHOR);
-	META_CONS("     Patch: %s v%d Copyright (c) 2004-2006 %s", VPATCH_NAME, VPATCH_IVERSION, VPATCH_AUTHOR);
+	META_CONS("     Patch: %s v%d Copyright (c) 2004-%s %s", VPATCH_NAME, VPATCH_IVERSION, VPATCH_COPYRIGHT_YEAR, VPATCH_AUTHOR);
 	META_CONS("   %s comes with ABSOLUTELY NO WARRANTY; for details type `meta gpl'.", VNAME);
 	META_CONS("   This is free software, and you are welcome to redistribute it");
 	META_CONS("   under certain conditions; type `meta gpl' for details.");

@@ -1,14 +1,12 @@
 # vim: set tw=75 ft=none :
 
-
 2007/04/05      1.19p31
 [Patch: Metamod-P v31 by Jussi Kivilinna]
+ - Enabled 'regparam' for internal functions. Means that function arguments are
+   passed through registers instead of stack, which increases performance.
  - Merged in changes from Metamod 1.19 that I didn't initially notice:
-   - Fixed a bug where Windows DLL load failures produced an empty message.
    - Fixed a bug where plugins could not catch NewDLL calls for GameDLLs that
      do not provide NewDLL information.
-   - Fixed a bug corrupting memory when using Metamod with engines or game dlls
-     with a different interface than the one compiled against, e.g. older engines.
 
 2007/04/04      1.19p30
 [Patch: Metamod-P v30 by Jussi Kivilinna]

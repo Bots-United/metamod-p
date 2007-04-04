@@ -44,6 +44,7 @@
 
 
 #define VDATE 			"2007/04/05"
+#define VPATCH_COPYRIGHT_YEAR   "2007"
 #define VMETA_VERSION		"1.19"
 
 #define VPATCH_NAME		"Metamod-P (mm-p)"

@@ -31,10 +31,10 @@
 // Current mask for checking engine function addresses 
 // in VAC protected engine dlls on Win32. This is gonna fail
 // on Win64.
-const unsigned long c_VacDllEngineFuncsRangeMask DLLHIDDEN = 0xFFF00000;
-const unsigned long c_VacDllEngineFuncsRangeMark DLLHIDDEN = 0x01D00000;
-void* const c_VacDllEngineFuncsRangeStart DLLHIDDEN = (void*)0x01D00000;
-void* const c_VacDllEngineFuncsRangeEnd DLLHIDDEN = (void*)0x01E00000;
+const unsigned long c_VacDllEngineFuncsRangeMask = 0xFFF00000;
+const unsigned long c_VacDllEngineFuncsRangeMark = 0x01D00000;
+void* const c_VacDllEngineFuncsRangeStart = (void*)0x01D00000;
+void* const c_VacDllEngineFuncsRangeEnd = (void*)0x01E00000;
 
 
 bool DLLINTERNAL EngineInfo::check_for_engine_module( const char* _pName )
