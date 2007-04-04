@@ -1,12 +1,5 @@
 # vim: set tw=75 ft=none :
 
-2007/04/02      1.19p29
-[Patch: Metamod-P v29 by Jussi Kivilinna]
- - Fixed crashing when client using 'meta list' on server with lots of plugins.
-      - Bug causes one byte stack overflow in engine when calling CLIENT_PRINTF
-        with too long strings. CLIENT_PRINTF can only handle string buffer size
-        of 127 bytes, previous metamod versions used 128 byte buffer.
-
 2006/03/04      1.19p28
 [Patch: Metamod-P v28 by Jussi Kivilinna]
  - Removed use of __VA_ARGS__ (should be easy to port to msvc now).
