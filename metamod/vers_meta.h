@@ -39,7 +39,7 @@
 #define VERS_META_H
 
 #ifndef OPT_TYPE
-#  define OPT_TYPE		"default"
+	#define OPT_TYPE	"default"
 #endif /* not OPT_TYPE */
 
 
