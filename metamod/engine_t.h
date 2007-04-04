@@ -1,8 +1,7 @@
 // vi: set ts=4 sw=4 :
 // vim: set tw=75 :
 
-// vers_meta.h - version info, intended to be common among DLLs distributed
-// with metamod.
+// engine_t.h - The engine_t type
 
 /*
  * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
@@ -35,26 +34,49 @@
  *
  */
 
-#ifndef VERS_META_H
-#define VERS_META_H
+#ifndef MM_ENGINE_T_H
+#define MM_ENGINE_T_H
 
-#ifndef OPT_TYPE
-	#define OPT_TYPE	"default"
-#endif /* not OPT_TYPE */
+#include "eiface.h"             // engfuncs_t, globalvars_t
+#include "engineinfo.h"         // EngineInfo
+#include "comp_dep.h"
+#include "osdep.h"	//unlikely, OPEN_ARGS
+
+// Our structure for storing engine references.
+struct engine_t {
+	engine_t() DLLINTERNAL;
+	engine_t(const engine_t&) DLLINTERNAL;
+	engine_t& operator=(const engine_t&) DLLINTERNAL;
+
+	enginefuncs_t	*funcs;			// engine funcs
+	globalvars_t	*globals;		// engine globals
+	enginefuncs_t	*pl_funcs;		// "modified" eng funcs we give to plugins
+	EngineInfo       info;          // some special info elements
+};
+
+inline engine_t::engine_t() 
+    : funcs(NULL), globals(NULL), pl_funcs(NULL), info() 
+{
+}
 
 
-#define VDATE 			"2007/04/05"
-#define VMETA_VERSION		"1.19"
-
-#define VPATCH_NAME		"Metamod-P (mm-p)"
-#define VPATCH_IVERSION		31
-#define VPATCH_VERSION		"31"
-#define VPATCH_AUTHOR		"Jussi Kivilinna"
-#define VPATCH_WEBSITE		"http://metamod-p.sourceforge.net/"
-
-#define VVERSION		VMETA_VERSION "p" VPATCH_VERSION
-#define RC_VERS_DWORD		1,19,0,VPATCH_IVERSION	// Version Windows DLL Resources in res_meta.rc
+inline engine_t::engine_t(const engine_t& _rhs) 
+    : funcs(_rhs.funcs), globals(_rhs.globals), pl_funcs(_rhs.pl_funcs), info(_rhs.info) 
+{
+}
 
 
+inline engine_t& engine_t::operator=(const engine_t& _rhs) 
+{
+    funcs = _rhs.funcs;
+    globals = _rhs.globals;
+    pl_funcs = _rhs.pl_funcs;
+    info = _rhs.info;
+    return *this;
+}
 
-#endif /* VERS_META_H */
+
+extern engine_t Engine DLLHIDDEN;
+
+#endif /* MM_ENGINE_T_H */
+

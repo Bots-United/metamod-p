@@ -900,215 +900,213 @@ static void mm_QueryClientCvarValue2(const edict_t *player, const char *cvarName
 	RETURN_API_void()
 }
 
-enginefuncs_t meta_engfuncs = {
-	mm_PrecacheModel,			// pfnPrecacheModel()
-	mm_PrecacheSound,			// pfnPrecacheSound()
-	mm_SetModel,				// pfnSetModel()
-	mm_ModelIndex,				// pfnModelIndex()
-	mm_ModelFrames,			// pfnModelFrames()
+meta_enginefuncs_t meta_engfuncs (
+	&mm_PrecacheModel,			// pfnPrecacheModel()
+	&mm_PrecacheSound,			// pfnPrecacheSound()
+	&mm_SetModel,				// pfnSetModel()
+	&mm_ModelIndex,				// pfnModelIndex()
+	&mm_ModelFrames,			// pfnModelFrames()
 
-	mm_SetSize,				// pfnSetSize()
-	mm_ChangeLevel,			// pfnChangeLevel()
-	mm_GetSpawnParms,			// pfnGetSpawnParms()
-	mm_SaveSpawnParms,			// pfnSaveSpawnParms()
+	&mm_SetSize,				// pfnSetSize()
+	&mm_ChangeLevel,			// pfnChangeLevel()
+	&mm_GetSpawnParms,			// pfnGetSpawnParms()
+	&mm_SaveSpawnParms,			// pfnSaveSpawnParms()
 
-	mm_VecToYaw,				// pfnVecToYaw()
-	mm_VecToAngles,			// pfnVecToAngles()
-	mm_MoveToOrigin,			// pfnMoveToOrigin()
-	mm_ChangeYaw,				// pfnChangeYaw()
-	mm_ChangePitch,			// pfnChangePitch()
+	&mm_VecToYaw,				// pfnVecToYaw()
+	&mm_VecToAngles,			// pfnVecToAngles()
+	&mm_MoveToOrigin,			// pfnMoveToOrigin()
+	&mm_ChangeYaw,				// pfnChangeYaw()
+	&mm_ChangePitch,			// pfnChangePitch()
 
-	mm_FindEntityByString,		// pfnFindEntityByString()
-	mm_GetEntityIllum,			// pfnGetEntityIllum()
-	mm_FindEntityInSphere,		// pfnFindEntityInSphere()
-	mm_FindClientInPVS,		// pfnFindClientInPVS()
-	mm_EntitiesInPVS,			// pfnEntitiesInPVS()
+	&mm_FindEntityByString,		// pfnFindEntityByString()
+	&mm_GetEntityIllum,			// pfnGetEntityIllum()
+	&mm_FindEntityInSphere,		// pfnFindEntityInSphere()
+	&mm_FindClientInPVS,		// pfnFindClientInPVS()
+	&mm_EntitiesInPVS,			// pfnEntitiesInPVS()
 
-	mm_MakeVectors,			// pfnMakeVectors()
-	mm_AngleVectors,			// pfnAngleVectors()
+	&mm_MakeVectors,			// pfnMakeVectors()
+	&mm_AngleVectors,			// pfnAngleVectors()
 
-	mm_CreateEntity,			// pfnCreateEntity()
-	mm_RemoveEntity,			// pfnRemoveEntity()
-	mm_CreateNamedEntity,		// pfnCreateNamedEntity()
+	&mm_CreateEntity,			// pfnCreateEntity()
+	&mm_RemoveEntity,			// pfnRemoveEntity()
+	&mm_CreateNamedEntity,		// pfnCreateNamedEntity()
 
-	mm_MakeStatic,				// pfnMakeStatic()
-	mm_EntIsOnFloor,			// pfnEntIsOnFloor()
-	mm_DropToFloor,			// pfnDropToFloor()
+	&mm_MakeStatic,				// pfnMakeStatic()
+	&mm_EntIsOnFloor,			// pfnEntIsOnFloor()
+	&mm_DropToFloor,			// pfnDropToFloor()
 
-	mm_WalkMove,				// pfnWalkMove()
-	mm_SetOrigin,				// pfnSetOrigin()
+	&mm_WalkMove,				// pfnWalkMove()
+	&mm_SetOrigin,				// pfnSetOrigin()
 
-	mm_EmitSound,				// pfnEmitSound()
-	mm_EmitAmbientSound,		// pfnEmitAmbientSound()
+	&mm_EmitSound,				// pfnEmitSound()
+	&mm_EmitAmbientSound,		// pfnEmitAmbientSound()
 
-	mm_TraceLine,				// pfnTraceLine()
-	mm_TraceToss,				// pfnTraceToss()
-	mm_TraceMonsterHull,		// pfnTraceMonsterHull()
-	mm_TraceHull,				// pfnTraceHull()
-	mm_TraceModel,				// pfnTraceModel()
-	mm_TraceTexture,			// pfnTraceTexture()
-	mm_TraceSphere,			// pfnTraceSphere()
-	mm_GetAimVector,			// pfnGetAimVector()
+	&mm_TraceLine,				// pfnTraceLine()
+	&mm_TraceToss,				// pfnTraceToss()
+	&mm_TraceMonsterHull,		// pfnTraceMonsterHull()
+	&mm_TraceHull,				// pfnTraceHull()
+	&mm_TraceModel,				// pfnTraceModel()
+	&mm_TraceTexture,			// pfnTraceTexture()
+	&mm_TraceSphere,			// pfnTraceSphere()
+	&mm_GetAimVector,			// pfnGetAimVector()
 
-	mm_ServerCommand,			// pfnServerCommand()
-	mm_ServerExecute,			// pfnServerExecute()
-	mm_engClientCommand,		// pfnClientCommand()	// D'oh, ClientCommand in dllapi too.
+	&mm_ServerCommand,			// pfnServerCommand()
+	&mm_ServerExecute,			// pfnServerExecute()
+	&mm_engClientCommand,		// pfnClientCommand()	// D'oh, ClientCommand in dllapi too.
 
-	mm_ParticleEffect,			// pfnParticleEffect()
-	mm_LightStyle,				// pfnLightStyle()
-	mm_DecalIndex,				// pfnDecalIndex()
-	mm_PointContents,			// pfnPointContents()
+	&mm_ParticleEffect,			// pfnParticleEffect()
+	&mm_LightStyle,				// pfnLightStyle()
+	&mm_DecalIndex,				// pfnDecalIndex()
+	&mm_PointContents,			// pfnPointContents()
 
-	mm_MessageBegin,			// pfnMessageBegin()
-	mm_MessageEnd,				// pfnMessageEnd()
+	&mm_MessageBegin,			// pfnMessageBegin()
+	&mm_MessageEnd,				// pfnMessageEnd()
 
-	mm_WriteByte,				// pfnWriteByte()
-	mm_WriteChar,				// pfnWriteChar()
-	mm_WriteShort,				// pfnWriteShort()
-	mm_WriteLong,				// pfnWriteLong()
-	mm_WriteAngle,				// pfnWriteAngle()
-	mm_WriteCoord,				// pfnWriteCoord()
-	mm_WriteString,			// pfnWriteString()
-	mm_WriteEntity,			// pfnWriteEntity()
+	&mm_WriteByte,				// pfnWriteByte()
+	&mm_WriteChar,				// pfnWriteChar()
+	&mm_WriteShort,				// pfnWriteShort()
+	&mm_WriteLong,				// pfnWriteLong()
+	&mm_WriteAngle,				// pfnWriteAngle()
+	&mm_WriteCoord,				// pfnWriteCoord()
+	&mm_WriteString,			// pfnWriteString()
+	&mm_WriteEntity,			// pfnWriteEntity()
 
-	mm_CVarRegister,			// pfnCVarRegister()
-	mm_CVarGetFloat,			// pfnCVarGetFloat()
-	mm_CVarGetString,			// pfnCVarGetString()
-	mm_CVarSetFloat,			// pfnCVarSetFloat()
-	mm_CVarSetString,			// pfnCVarSetString()
+	&mm_CVarRegister,			// pfnCVarRegister()
+	&mm_CVarGetFloat,			// pfnCVarGetFloat()
+	&mm_CVarGetString,			// pfnCVarGetString()
+	&mm_CVarSetFloat,			// pfnCVarSetFloat()
+	&mm_CVarSetString,			// pfnCVarSetString()
 
-	mm_AlertMessage,			// pfnAlertMessage()
-	mm_EngineFprintf,			// pfnEngineFprintf()
+	&mm_AlertMessage,			// pfnAlertMessage()
+	&mm_EngineFprintf,			// pfnEngineFprintf()
 
-	mm_PvAllocEntPrivateData,	// pfnPvAllocEntPrivateData()
-	mm_PvEntPrivateData,		// pfnPvEntPrivateData()
-	mm_FreeEntPrivateData,		// pfnFreeEntPrivateData()
+	&mm_PvAllocEntPrivateData,	// pfnPvAllocEntPrivateData()
+	&mm_PvEntPrivateData,		// pfnPvEntPrivateData()
+	&mm_FreeEntPrivateData,		// pfnFreeEntPrivateData()
 
-	mm_SzFromIndex,			// pfnSzFromIndex()
-	mm_AllocString,			// pfnAllocString()
+	&mm_SzFromIndex,			// pfnSzFromIndex()
+	&mm_AllocString,			// pfnAllocString()
 
-	mm_GetVarsOfEnt, 			// pfnGetVarsOfEnt()
-	mm_PEntityOfEntOffset,		// pfnPEntityOfEntOffset()
-	mm_EntOffsetOfPEntity,		// pfnEntOffsetOfPEntity()
-	mm_IndexOfEdict,			// pfnIndexOfEdict()
-	mm_PEntityOfEntIndex,		// pfnPEntityOfEntIndex()
-	mm_FindEntityByVars,		// pfnFindEntityByVars()
-	mm_GetModelPtr,			// pfnGetModelPtr()
+	&mm_GetVarsOfEnt, 			// pfnGetVarsOfEnt()
+	&mm_PEntityOfEntOffset,		// pfnPEntityOfEntOffset()
+	&mm_EntOffsetOfPEntity,		// pfnEntOffsetOfPEntity()
+	&mm_IndexOfEdict,			// pfnIndexOfEdict()
+	&mm_PEntityOfEntIndex,		// pfnPEntityOfEntIndex()
+	&mm_FindEntityByVars,		// pfnFindEntityByVars()
+	&mm_GetModelPtr,			// pfnGetModelPtr()
 
-	mm_RegUserMsg,				// pfnRegUserMsg()
+	&mm_RegUserMsg,				// pfnRegUserMsg()
 
-	mm_AnimationAutomove,		// pfnAnimationAutomove()
-	mm_GetBonePosition,		// pfnGetBonePosition()
+	&mm_AnimationAutomove,		// pfnAnimationAutomove()
+	&mm_GetBonePosition,		// pfnGetBonePosition()
 
-	mm_FunctionFromName,		// pfnFunctionFromName()
-	mm_NameForFunction,		// pfnNameForFunction()
+	&mm_FunctionFromName,		// pfnFunctionFromName()
+	&mm_NameForFunction,		// pfnNameForFunction()
 
-	mm_ClientPrintf,			// pfnClientPrintf()			//! JOHN: engine callbacks so game DLL can print messages to individual clients
-	mm_ServerPrint,			// pfnServerPrint()
+	&mm_ClientPrintf,			// pfnClientPrintf()			//! JOHN: engine callbacks so game DLL can print messages to individual clients
+	&mm_ServerPrint,			// pfnServerPrint()
 
-	mm_Cmd_Args,				// pfnCmd_Args()				//! these 3 added 
-	mm_Cmd_Argv,				// pfnCmd_Argv()				//! so game DLL can easily 
-	mm_Cmd_Argc,				// pfnCmd_Argc()				//! access client 'cmd' strings
+	&mm_Cmd_Args,				// pfnCmd_Args()				//! these 3 added 
+	&mm_Cmd_Argv,				// pfnCmd_Argv()				//! so game DLL can easily 
+	&mm_Cmd_Argc,				// pfnCmd_Argc()				//! access client 'cmd' strings
 
-	mm_GetAttachment,			// pfnGetAttachment()
+	&mm_GetAttachment,			// pfnGetAttachment()
 
-	mm_CRC32_Init,				// pfnCRC32_Init()
-	mm_CRC32_ProcessBuffer,	// pfnCRC32_ProcessBuffer()
-	mm_CRC32_ProcessByte,		// pfnCRC32_ProcessByte()
-	mm_CRC32_Final,			// pfnCRC32_Final()
+	&mm_CRC32_Init,				// pfnCRC32_Init()
+	&mm_CRC32_ProcessBuffer,	// pfnCRC32_ProcessBuffer()
+	&mm_CRC32_ProcessByte,		// pfnCRC32_ProcessByte()
+	&mm_CRC32_Final,			// pfnCRC32_Final()
 
-	mm_RandomLong,				// pfnRandomLong()
-	mm_RandomFloat,			// pfnRandomFloat()
+	&mm_RandomLong,				// pfnRandomLong()
+	&mm_RandomFloat,			// pfnRandomFloat()
 
-	mm_SetView,				// pfnSetView()
-	mm_Time,					// pfnTime()
-	mm_CrosshairAngle,			// pfnCrosshairAngle()
+	&mm_SetView,				// pfnSetView()
+	&mm_Time,					// pfnTime()
+	&mm_CrosshairAngle,			// pfnCrosshairAngle()
 
-	mm_LoadFileForMe,			// pfnLoadFileForMe()
-	mm_FreeFile,				// pfnFreeFile()
+	&mm_LoadFileForMe,			// pfnLoadFileForMe()
+	&mm_FreeFile,				// pfnFreeFile()
 
-	mm_EndSection,				// pfnEndSection()				//! trigger_endsection
-	mm_CompareFileTime,		// pfnCompareFileTime()
-	mm_GetGameDir,				// pfnGetGameDir()
-	mm_Cvar_RegisterVariable,	// pfnCvar_RegisterVariable()
-	mm_FadeClientVolume,		// pfnFadeClientVolume()
-	mm_SetClientMaxspeed,		// pfnSetClientMaxspeed()
-	mm_CreateFakeClient,		// pfnCreateFakeClient() 		//! returns NULL if fake client can't be created
-	mm_RunPlayerMove,			// pfnRunPlayerMove()
-	mm_NumberOfEntities,		// pfnNumberOfEntities()
+	&mm_EndSection,				// pfnEndSection()				//! trigger_endsection
+	&mm_CompareFileTime,		// pfnCompareFileTime()
+	&mm_GetGameDir,				// pfnGetGameDir()
+	&mm_Cvar_RegisterVariable,	// pfnCvar_RegisterVariable()
+	&mm_FadeClientVolume,		// pfnFadeClientVolume()
+	&mm_SetClientMaxspeed,		// pfnSetClientMaxspeed()
+	&mm_CreateFakeClient,		// pfnCreateFakeClient() 		//! returns NULL if fake client can't be created
+	&mm_RunPlayerMove,			// pfnRunPlayerMove()
+	&mm_NumberOfEntities,		// pfnNumberOfEntities()
 
-	mm_GetInfoKeyBuffer,		// pfnGetInfoKeyBuffer()		//! passing in NULL gets the serverinfo
-	mm_InfoKeyValue,			// pfnInfoKeyValue()
-	mm_SetKeyValue,			// pfnSetKeyValue()
-	mm_SetClientKeyValue,		// pfnSetClientKeyValue()
+	&mm_GetInfoKeyBuffer,		// pfnGetInfoKeyBuffer()		//! passing in NULL gets the serverinfo
+	&mm_InfoKeyValue,			// pfnInfoKeyValue()
+	&mm_SetKeyValue,			// pfnSetKeyValue()
+	&mm_SetClientKeyValue,		// pfnSetClientKeyValue()
 
-	mm_IsMapValid,				// pfnIsMapValid()
-	mm_StaticDecal,			// pfnStaticDecal()
-	mm_PrecacheGeneric,		// pfnPrecacheGeneric()
-	mm_GetPlayerUserId, 		// pfnGetPlayerUserId()			//! returns the server assigned userid for this player.
-	mm_BuildSoundMsg,			// pfnBuildSoundMsg()
-	mm_IsDedicatedServer,		// pfnIsDedicatedServer()		//! is this a dedicated server?
-	mm_CVarGetPointer,			// pfnCVarGetPointer()
-	mm_GetPlayerWONId,			// pfnGetPlayerWONId()			//! returns the server assigned WONid for this player.
+	&mm_IsMapValid,				// pfnIsMapValid()
+	&mm_StaticDecal,			// pfnStaticDecal()
+	&mm_PrecacheGeneric,		// pfnPrecacheGeneric()
+	&mm_GetPlayerUserId, 		// pfnGetPlayerUserId()			//! returns the server assigned userid for this player.
+	&mm_BuildSoundMsg,			// pfnBuildSoundMsg()
+	&mm_IsDedicatedServer,		// pfnIsDedicatedServer()		//! is this a dedicated server?
+	&mm_CVarGetPointer,			// pfnCVarGetPointer()
+	&mm_GetPlayerWONId,			// pfnGetPlayerWONId()			//! returns the server assigned WONid for this player.
 
 	//! YWB 8/1/99 TFF Physics additions
-	mm_Info_RemoveKey,			// pfnInfo_RemoveKey()
-	mm_GetPhysicsKeyValue,		// pfnGetPhysicsKeyValue()
-	mm_SetPhysicsKeyValue,		// pfnSetPhysicsKeyValue()
-	mm_GetPhysicsInfoString,	// pfnGetPhysicsInfoString()
-	mm_PrecacheEvent,			// pfnPrecacheEvent()
-	mm_PlaybackEvent,			// pfnPlaybackEvent()
+	&mm_Info_RemoveKey,			// pfnInfo_RemoveKey()
+	&mm_GetPhysicsKeyValue,		// pfnGetPhysicsKeyValue()
+	&mm_SetPhysicsKeyValue,		// pfnSetPhysicsKeyValue()
+	&mm_GetPhysicsInfoString,	// pfnGetPhysicsInfoString()
+	&mm_PrecacheEvent,			// pfnPrecacheEvent()
+	&mm_PlaybackEvent,			// pfnPlaybackEvent()
 
-	mm_SetFatPVS,				// pfnSetFatPVS()
-	mm_SetFatPAS,				// pfnSetFatPAS()
+	&mm_SetFatPVS,				// pfnSetFatPVS()
+	&mm_SetFatPAS,				// pfnSetFatPAS()
 
-	mm_CheckVisibility,		// pfnCheckVisibility()
+	&mm_CheckVisibility,		// pfnCheckVisibility()
 
-	mm_DeltaSetField,			// pfnDeltaSetField()
-	mm_DeltaUnsetField,		// pfnDeltaUnsetField()
-	mm_DeltaAddEncoder,		// pfnDeltaAddEncoder()
-	mm_GetCurrentPlayer,		// pfnGetCurrentPlayer()
-	mm_CanSkipPlayer,			// pfnCanSkipPlayer()
-	mm_DeltaFindField,			// pfnDeltaFindField()
-	mm_DeltaSetFieldByIndex,	// pfnDeltaSetFieldByIndex()
-	mm_DeltaUnsetFieldByIndex,	// pfnDeltaUnsetFieldByIndex()
+	&mm_DeltaSetField,			// pfnDeltaSetField()
+	&mm_DeltaUnsetField,		// pfnDeltaUnsetField()
+	&mm_DeltaAddEncoder,		// pfnDeltaAddEncoder()
+	&mm_GetCurrentPlayer,		// pfnGetCurrentPlayer()
+	&mm_CanSkipPlayer,			// pfnCanSkipPlayer()
+	&mm_DeltaFindField,			// pfnDeltaFindField()
+	&mm_DeltaSetFieldByIndex,	// pfnDeltaSetFieldByIndex()
+	&mm_DeltaUnsetFieldByIndex,	// pfnDeltaUnsetFieldByIndex()
 
-	mm_SetGroupMask,			// pfnSetGroupMask()
+	&mm_SetGroupMask,			// pfnSetGroupMask()
 
-	mm_engCreateInstancedBaseline, // pfnCreateInstancedBaseline()		// D'oh, CreateInstancedBaseline in dllapi too.
-	mm_Cvar_DirectSet,			// pfnCvar_DirectSet()
+	&mm_engCreateInstancedBaseline, // pfnCreateInstancedBaseline()		// D'oh, CreateInstancedBaseline in dllapi too.
+	&mm_Cvar_DirectSet,			// pfnCvar_DirectSet()
 
-	mm_ForceUnmodified,		// pfnForceUnmodified()
+	&mm_ForceUnmodified,		// pfnForceUnmodified()
 
-	mm_GetPlayerStats,			// pfnGetPlayerStats()
+	&mm_GetPlayerStats,			// pfnGetPlayerStats()
 
-	mm_AddServerCommand,		// pfnAddServerCommand()
+	&mm_AddServerCommand,		// pfnAddServerCommand()
 
 	// Added in SDK 2l2:
-	mm_Voice_GetClientListening,	// pfnVoice_GetClientListening()
-	mm_Voice_SetClientListening,	// pfnVoice_SetClientListening()
+	&mm_Voice_GetClientListening,	// pfnVoice_GetClientListening()
+	&mm_Voice_SetClientListening,	// pfnVoice_SetClientListening()
 
 	// Added for HL 1109 (no SDK update):
-	mm_GetPlayerAuthId,			// pfnGetPlayerAuthId()
+	&mm_GetPlayerAuthId,			// pfnGetPlayerAuthId()
 
 	// Added 2003/11/10 (no SDK update):
-	mm_SequenceGet,					// pfnSequenceGet()
-	mm_SequencePickSentence,			// pfnSequencePickSentence()
-	mm_GetFileSize,					// pfnGetFileSize()
-	mm_GetApproxWavePlayLen,			// pfnGetApproxWavePlayLen()
-	mm_IsCareerMatch,				// pfnIsCareerMatch()
-	mm_GetLocalizedStringLength,		// pfnGetLocalizedStringLength()
-	mm_RegisterTutorMessageShown,	// pfnRegisterTutorMessageShown()
-	mm_GetTimesTutorMessageShown,	// pfnGetTimesTutorMessageShown()
-	mm_ProcessTutorMessageDecayBuffer,	// pfnProcessTutorMessageDecayBuffer()
-	mm_ConstructTutorMessageDecayBuffer,	// pfnConstructTutorMessageDecayBuffer()
-	mm_ResetTutorMessageDecayData,		// pfnResetTutorMessageDecayData()
+	&mm_SequenceGet,					// pfnSequenceGet()
+	&mm_SequencePickSentence,			// pfnSequencePickSentence()
+	&mm_GetFileSize,					// pfnGetFileSize()
+	&mm_GetApproxWavePlayLen,			// pfnGetApproxWavePlayLen()
+	&mm_IsCareerMatch,				// pfnIsCareerMatch()
+	&mm_GetLocalizedStringLength,		// pfnGetLocalizedStringLength()
+	&mm_RegisterTutorMessageShown,	// pfnRegisterTutorMessageShown()
+	&mm_GetTimesTutorMessageShown,	// pfnGetTimesTutorMessageShown()
+	&mm_ProcessTutorMessageDecayBuffer,	// pfnProcessTutorMessageDecayBuffer()
+	&mm_ConstructTutorMessageDecayBuffer,	// pfnConstructTutorMessageDecayBuffer()
+	&mm_ResetTutorMessageDecayData,		// pfnResetTutorMessageDecayData()
 	
 	// Added 2005/08/11 (no SDK update):
-	mm_QueryClientCvarValue,		// pfnQueryClientCvarValue()
+	&mm_QueryClientCvarValue,		// pfnQueryClientCvarValue()
 	
 	// Added 2005/11/21 (no SDK update):
-	mm_QueryClientCvarValue2,		// pfnQueryClientCvarValue2()
-	
-	{0,}
-};
+	&mm_QueryClientCvarValue2		// pfnQueryClientCvarValue2()
+);

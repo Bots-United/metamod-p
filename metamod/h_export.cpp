@@ -68,7 +68,7 @@ void _fini(void) {
 #endif
 
 //! Holds engine functionality callbacks
-enginefuncs_t g_engfuncs;
+HL_enginefuncs_t g_engfuncs;
 globalvars_t  *gpGlobals;
 engine_t Engine;
 
@@ -83,11 +83,13 @@ C_DLLEXPORT void WINAPI GiveFnptrsToDll(enginefuncs_t *pengfuncsFromEngine,
 #ifdef linux
 	metamod_handle = get_module_handle_of_memptr((void*)&g_engfuncs);
 #endif
-	memcpy(&g_engfuncs, pengfuncsFromEngine, sizeof(g_engfuncs));
 	gpGlobals = pGlobals;
 	Engine.funcs = &g_engfuncs;
 	Engine.globals = pGlobals;
-	// NOTE!  Have to call logging function _after_ copying into g_engfuncs, so
+	Engine.info.initialise(pengfuncsFromEngine);
+
+	g_engfuncs.initialise_interface(pengfuncsFromEngine);
+	// NOTE!  Have to call logging function _after_ initialising g_engfuncs, so
 	// that g_engfuncs.pfnAlertMessage() can be resolved properly, heh. :)
 	META_DEV("called: GiveFnptrsToDll");
 	

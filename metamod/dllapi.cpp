@@ -473,45 +473,42 @@ C_DLLEXPORT int GetEntityAPI2(DLL_FUNCTIONS *pFunctionTable, int *interfaceVersi
 //
 // Interestingly, it appears to be called by the engine _before_ GetAPI.
 
-static NEW_DLL_FUNCTIONS gNewFunctionTable = 
-{
-	mm_OnFreeEntPrivateData,		//! pfnOnFreeEntPrivateData()	Called right before the object's memory is freed.  Calls its destructor.
-	mm_GameShutdown,				//! pfnGameShutdown()
-	mm_ShouldCollide,				//! pfnShouldCollide()
+static meta_new_dll_functions_t sNewFunctionTable(
+	&mm_OnFreeEntPrivateData,		//! pfnOnFreeEntPrivateData()	Called right before the object's memory is freed.  Calls its destructor.
+	&mm_GameShutdown,				//! pfnGameShutdown()
+	&mm_ShouldCollide,				//! pfnShouldCollide()
 	// Added 2005/08/11 (no SDK update):
-	mm_CvarValue,				//! pfnCvarValue()
+	&mm_CvarValue,				//! pfnCvarValue()
 	// Added 2005/11/21 (no SDK update):
-	mm_CvarValue2,				//! pfnCvarValue2()
-};
+	&mm_CvarValue2				//! pfnCvarValue2()
+);
 
-NEW_DLL_FUNCTIONS *g_pHookedNewDllFunctions = &gNewFunctionTable;
+NEW_DLL_FUNCTIONS *g_pHookedNewDllFunctions = &sNewFunctionTable;
 
 C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *interfaceVersion) 
 {
 	META_DEBUG(6, ("called: GetNewDLLFunctions; version=%d", *interfaceVersion));
-	
-	if(!pNewFunctionTable || metamod_not_loaded) {
-		META_WARNING("GetNewDLLFunctions called with null pNewFunctionTable");
+#if 0 // ~dvander - but then you can't use cvar querying on many mods...
+	// Don't provide these functions to engine if gamedll doesn't provide
+	// them.  Otherwise, we're in the position of having to provide answers
+	// we can't necessarily provide (for instance, ShouldCollide())...
+	if(!GameDLL.funcs.newapi_table)
+		return(FALSE);
+#endif
+
+	if(!pNewFunctionTable) {
+		META_ERROR("GetNewDLLFunctions called with null pNewFunctionTable");
 		return(FALSE);
 	}
 	else if(*interfaceVersion != NEW_DLL_FUNCTIONS_VERSION) {
-		META_WARNING("GetNewDLLFunctions version mismatch; requested=%d ours=%d", *interfaceVersion, NEW_DLL_FUNCTIONS_VERSION);
+		META_ERROR("GetNewDLLFunctions version mismatch; requested=%d ours=%d", *interfaceVersion, NEW_DLL_FUNCTIONS_VERSION);
 		//! Tell engine what version we had, so it can figure out who is out of date.
 		*interfaceVersion = NEW_DLL_FUNCTIONS_VERSION;
 		return(FALSE);
 	}
-	
-	// Detect old engine
-	mBOOL valid_query1 = IS_VALID_PTR((void*)g_engfuncs.pfnQueryClientCvarValue);
-	mBOOL valid_query2 = IS_VALID_PTR((void*)g_engfuncs.pfnQueryClientCvarValue2);
-	size_t copysize = sizeof(NEW_DLL_FUNCTIONS);
-	
-	if(!valid_query1 && !valid_query2)
-		copysize -= sizeof(FN_CVARVALUE) + sizeof(FN_CVARVALUE2); // old engine without query client cvar APIs
-	else if(!valid_query2)
-		copysize -= sizeof(FN_CVARVALUE2); // old engine without query client cvar2 API
-	
-	memcpy(pNewFunctionTable, &gNewFunctionTable, copysize);
-	
+
+	sNewFunctionTable.copy_to(pNewFunctionTable);
+
+
 	return(TRUE);
 }

@@ -124,4 +124,6 @@ void DLLINTERNAL META_CLIENT(edict_t *pEntity, const char *fmt, ...);
 	void DLLINTERNAL META_DO_DEBUG(const char *fmt, ...);
 #endif
 
+void DLLINTERNAL flush_ALERT_buffer(void);
+
 #endif /* LOG_META_H */

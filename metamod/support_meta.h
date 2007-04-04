@@ -42,7 +42,7 @@
 #include <sys/stat.h>	// stat
 
 #include "osdep.h"		// strcasecmp, S_ISREG,
-#include <enginecallback.h>		// LOAD_FILE_FOR_ME, etc
+#include "enginecallbacks.h"		// LOAD_FILE_FOR_ME, etc
 
 void DLLINTERNAL do_exit(int exitval);
 

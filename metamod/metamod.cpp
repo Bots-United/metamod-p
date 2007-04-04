@@ -38,11 +38,11 @@
 #include <errno.h>				// errno, etc
 
 #include <extdll.h>				// always
-#include <enginecallback.h>		// GET_GAME_DIR, etc
+#include "enginecallbacks.h"		// GET_GAME_DIR, etc
 
 #include "metamod.h"			// me
 #include "h_export.h"			// GIVE_ENGINE_FUNCTIONS_FN, etc
-#include "mreg.h"				// class MRegCmdList, etc
+#include "mreg.h"				// class mCmdList, etc
 #include "meta_api.h"			// meta_globals_t, etc
 #include "mutil.h"				// mutil_funcs_t, etc
 #include "osdep.h"				// DLOPEN, getcwd, is_absolute_path,
@@ -77,7 +77,7 @@ gamedll_t GameDLL;
 meta_globals_t PublicMetaGlobals;
 meta_globals_t PrivateMetaGlobals;
 
-enginefuncs_t g_plugin_engfuncs;
+meta_enginefuncs_t g_plugin_engfuncs;
 
 MPluginList *Plugins;
 MRegCmdList *RegCmds;
@@ -214,7 +214,7 @@ int DLLINTERNAL metamod_startup(void) {
 	// Copy, and store pointer in Engine struct.  Yes, we could just store
 	// the actual engine_t struct in Engine, but then it wouldn't be a
 	// pointer to match the other g_engfuncs.
-	memcpy(&g_plugin_engfuncs, Engine.funcs, sizeof(g_plugin_engfuncs));
+	g_plugin_engfuncs.set_from(Engine.funcs);
 	Engine.pl_funcs=&g_plugin_engfuncs;
 	// substitute our special versions of various commands
 	Engine.pl_funcs->pfnAddServerCommand = meta_AddServerCommand;
@@ -227,7 +227,7 @@ int DLLINTERNAL metamod_startup(void) {
 		Engine.pl_funcs->pfnQueryClientCvarValue = NULL;
 	if(!IS_VALID_PTR((void*)Engine.pl_funcs->pfnQueryClientCvarValue2))
 		Engine.pl_funcs->pfnQueryClientCvarValue2 = NULL;
-	
+		
 	// Before, we loaded plugins before loading the game DLL, so that if no
 	// plugins caught engine functions, we could pass engine funcs straight
 	// to game dll, rather than acting as intermediary.  (Should perform
@@ -379,9 +379,6 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 	// so that any plugin loaded later can catch what they need to.
 	if((pfn_give_engfuncs = (GIVE_ENGINE_FUNCTIONS_FN) DLSYM(GameDLL.handle, "GiveFnptrsToDll")))
 	{
-			//add extra function bytes to meta_engfuncs
-			memcpy((void*)&meta_engfuncs.extra_functions[0], (void*)&g_engfuncs.extra_functions[0], sizeof(g_engfuncs.extra_functions));
-			
 			pfn_give_engfuncs(&meta_engfuncs, gpGlobals);
 			META_DEBUG(3, ("dll: Game '%s': Called GiveFnptrsToDll", 
 						GameDLL.name));
@@ -439,7 +436,7 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 	// that's what the engine appears to do..
 	iface_vers=NEW_DLL_FUNCTIONS_VERSION;
 	GET_FUNC_TABLE_FROM_GAME(GameDLL, pfn_getapinew, "GetNewDLLFunctions", newapi_table, 
-			GETNEWDLLFUNCTIONS_FN, NEW_DLL_FUNCTIONS,
+			GETNEWDLLFUNCTIONS_FN, meta_new_dll_functions_t,
 			&iface_vers, iface_vers, NEW_DLL_FUNCTIONS_VERSION, found);
 
 	// Look for API2 interface in plugin; preferred over API-1.
