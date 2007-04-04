@@ -886,7 +886,7 @@ void DLLINTERNAL MPluginList::show_client(edict_t *pEntity) {
 	META_CLIENT(pEntity, "Currently running plugins:");
 	for(i=0; i < endlist; i++) {
 		pl=&plist[i];
-		if(pl->status != PL_RUNNING)
+		if(pl->status != PL_RUNNING || !pl->info)
 			continue;
 		n++;
 		META_CLIENT(pEntity, " [%3d] %s, v%s, %s, by %s, see %s",
