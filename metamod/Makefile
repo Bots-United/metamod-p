@@ -192,7 +192,7 @@ else
 		CCOPT_ARCH = -march=i486
 	else
 		#default: pentium or newer
-		CCOPT_ARCH = -march=i586 $(MCPU)=i686
+		CCOPT_ARCH = -march=i586 $(MCPU)=pentium4
 		#CCOPT_ARCH = -march=athlon
 	endif
 endif
