@@ -203,24 +203,28 @@ mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn);
 #ifdef linux
 	#include <unistd.h>	// sleep
 	#ifndef O_BINARY
-    	#define O_BINARY 0
+    		#define O_BINARY 0
 	#endif	
 #elif defined(_WIN32)
-	#define snprintf	_snprintf
-	#define vsnprintf	_vsnprintf
-	#define sleep(x)	Sleep(x*1000)
-	#define unlink		_unlink
-	#define strlwr		_strlwr
-	#define strdup		_strdup
-	#define strcasecmp	_stricmp
-	#define strncasecmp	_strnicmp
-	#define getcwd		_getcwd
-    #include <io.h>
+	#include <io.h>
 	#include <direct.h>
-    #define open _open
-    #define read _read
-    #define write _write
-    #define close _close
+	
+	#define sleep(x) Sleep(x*1000)
+
+	#if defined(__GNUC__) || defined (_MSC_VER) && _MSC_VER >= 1400
+		#define snprintf	_snprintf
+		#define vsnprintf	_vsnprintf
+		#define unlink		_unlink
+		#define strlwr		_strlwr
+		#define strdup		_strdup
+		#define strcasecmp	_stricmp
+		#define strncasecmp	_strnicmp
+		#define getcwd		_getcwd
+		#define open		_open
+		#define read		_read
+		#define write		_write
+		#define close		_close
+	#endif /* GCC or MSVC 8.0+ */
 #endif /* _WIN32 */
 
 #if !defined WIN32 && !defined _MSC_VER

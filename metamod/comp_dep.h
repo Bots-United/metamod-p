@@ -33,7 +33,7 @@
 #define COMP_DEP_H
 
 #define DECLSPEC(kw)
-#if defined WIN32 && defined _MSC_VER
+#if defined (_WIN32) && defined (_MSC_VER)
 	#define ATTRIBUTE(kw) 
 #else
 	#define ATTRIBUTE(kw) __attribute__((kw))
@@ -60,7 +60,7 @@
 	#endif
 #else
 	#define DLLHIDDEN
-	#if defined WIN32 && defined _MSC_VER
+	#if defined (_WIN32) && defined (_MSC_VER)
 		#define DLLINTERNAL_NOVIS
 		#define DLLINTERNAL
 	#else
@@ -74,7 +74,7 @@
 	#endif //defined WIN32
 #endif
 
-#if defined WIN32 && defined _MSC_VER
+#if defined (_WIN32) && defined (_MSC_VER)
 	// On x86 va_list is just a pointer.
 	#define va_copy(dst,src) ((dst)=(src))
 #else

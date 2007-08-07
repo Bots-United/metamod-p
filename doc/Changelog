@@ -1,5 +1,14 @@
 # vim: set tw=75 ft=none :
 
+2007/08/08      1.19p32
+[Patch: Metamod-P v32 by Jussi Kivilinna]
+ - Compiling with MSVC fixed by Nikolay "The Storm" Baklicharov.
+ - [linux] Remake of dynamic linkent code. Parse dlsym function trampoline 
+   instead of parsing ELF structures.
+ - [linux] Dropped AMD64 build since Valve doesn't support their AMD64 build 
+   anymore and I don't have access to AMD64 machine to port new dynamic 
+   linkent code. Sorry!
+
 2007/04/05      1.19p31
 [Patch: Metamod-P v31 by Jussi Kivilinna]
  - Enabled 'regparam' for internal functions. Means that function arguments are

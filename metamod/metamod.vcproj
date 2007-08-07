@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="metamod"
 	ProjectGUID="{02832A39-E902-46B7-8D47-911C37CF41B0}"
 	RootNamespace="metamod"
@@ -97,7 +97,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			CharacterSet="1"
+			CharacterSet="0"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -117,12 +117,14 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="..\hlsdk\common;..\hlsdk\dlls;..\hlsdk\engine;..\hlsdk\pm_shared;."
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;METAMOD_EXPORTS;_CRT_SECURE_NO_DEPRECATE;__METAMOD_BUILD__"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
+				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -136,7 +138,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="1"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="false"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -201,6 +203,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\engineinfo.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\game_autodetect.cpp"
 				>
 			</File>
@@ -222,6 +228,10 @@
 			</File>
 			<File
 				RelativePath=".\log_meta.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\meta_eiface.cpp"
 				>
 			</File>
 			<File
@@ -331,6 +341,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\engineinfo.h"
+				>
+			</File>
+			<File
 				RelativePath=".\game_autodetect.h"
 				>
 			</File>
@@ -360,6 +374,10 @@
 			</File>
 			<File
 				RelativePath=".\meta_api.h"
+				>
+			</File>
+			<File
+				RelativePath=".\meta_eiface.h"
 				>
 			</File>
 			<File
