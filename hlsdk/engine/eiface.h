@@ -442,7 +442,14 @@ typedef struct
 	short			flags;
 } TYPEDESCRIPTION;
 
-#define ARRAYSIZE(p)		(sizeof(p)/sizeof(p[0]))
+// Fixed MSVC compiling, by Nikolay "The Storm" Baklicharov.
+#if defined _MSC_VER && _MSC_VER >= 1400
+	#ifndef ARRAYSIZE
+		#define ARRAYSIZE(p)		(sizeof(p)/sizeof(p[0]))
+	#endif
+#else /* MSVC 8.0 */
+	#define ARRAYSIZE(p)		(sizeof(p)/sizeof(p[0]))
+#endif
 
 typedef struct 
 {
