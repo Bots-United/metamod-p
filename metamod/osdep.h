@@ -211,6 +211,7 @@ mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn);
 	
 	#define sleep(x) Sleep(x*1000)
 
+	// Fixed MSVC compiling, by Nikolay "The Storm" Baklicharov.
 	#if defined(__GNUC__) || defined (_MSC_VER) && _MSC_VER >= 1400
 		#define snprintf	_snprintf
 		#define vsnprintf	_vsnprintf
