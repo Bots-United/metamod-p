@@ -65,7 +65,7 @@
 	API_END_TSC_TRACKING()
 
 // For varargs functions
-#ifdef FIX_VARARG_ENGINE_API_WARPERS
+#ifndef DO_NOT_FIX_VARARG_ENGINE_API_WARPERS
 	#define MAKE_FORMATED_STRING(szFmt) \
 		char strbuf[MAX_STRBUF_LEN]; \
 		char * buf=strbuf; \
@@ -102,23 +102,23 @@
 
 // Engine routines, printf-style functions returning "void".
 #define META_ENGINE_HANDLE_void_varargs(FN_TYPE, pfnName, pack_args_type, pfn_arg, fmt_arg) \
-	API_START_TSC_TRACKING(); \
 	MAKE_FORMATED_STRING(fmt_arg); \
+	API_START_TSC_TRACKING(); \
 	META_DEBUG(engine_info.pfnName.loglevel, ("In %s: fmt=%s", engine_info.pfnName.name, fmt_arg)); \
 	API_PACK_ARGS(pack_args_type, (pfn_arg, "%s", buf)); \
 	main_hook_function_void(offsetof(engine_info_t, pfnName), e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args); \
-	CLEAN_FORMATED_STRING() \
-	API_END_TSC_TRACKING()
+	API_END_TSC_TRACKING() \
+	CLEAN_FORMATED_STRING()
 
 // Engine routines, printf-style functions returning an actual value.
 #define META_ENGINE_HANDLE_varargs(ret_t, ret_init, FN_TYPE, pfnName, pack_args_type, pfn_arg, fmt_arg) \
-	API_START_TSC_TRACKING(); \
 	MAKE_FORMATED_STRING(fmt_arg); \
+	API_START_TSC_TRACKING(); \
 	META_DEBUG(engine_info.pfnName.loglevel, ("In %s: fmt=%s", engine_info.pfnName.name, fmt_arg)); \
 	API_PACK_ARGS(pack_args_type, (pfn_arg, "%s", buf)); \
 	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), offsetof(engine_info_t, pfnName), e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args)); \
-	CLEAN_FORMATED_STRING() \
-	API_END_TSC_TRACKING()
+	API_END_TSC_TRACKING() \
+	CLEAN_FORMATED_STRING()
 
 
 static int mm_PrecacheModel(char *s) {
@@ -373,16 +373,16 @@ static const char *mm_CVarGetString(const char *szVarName) {
 }
 static void mm_CVarSetFloat(const char *szVarName, float flValue) {
 	META_ENGINE_HANDLE_void(FN_CVARSETFLOAT, pfnCVarSetFloat, pf, (szVarName, flValue));
-#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
+
 	meta_debug_value = (int)meta_debug.value;
-#endif
+
 	RETURN_API_void()
 }
 static void mm_CVarSetString(const char *szVarName, const char *szValue) {
 	META_ENGINE_HANDLE_void(FN_CVARSETSTRING, pfnCVarSetString, 2p, (szVarName, szValue));
-#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
+
 	meta_debug_value = (int)meta_debug.value;
-#endif
+
 	RETURN_API_void()
 }
 
@@ -769,9 +769,9 @@ static int mm_engCreateInstancedBaseline( int classname, struct entity_state_s *
 }
 static void mm_Cvar_DirectSet( struct cvar_s *var, char *value ) {
 	META_ENGINE_HANDLE_void(FN_CVAR_DIRECTSET, pfnCvar_DirectSet, 2p, (var, value));
-#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
+
 	meta_debug_value = (int)meta_debug.value;
-#endif
+
 	RETURN_API_void()
 }
 

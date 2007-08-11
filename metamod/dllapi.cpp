@@ -208,9 +208,8 @@ static void mm_PlayerPostThink(edict_t *pEntity) {
 	RETURN_API_void();
 }
 static void mm_StartFrame(void) {
-#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
 	meta_debug_value = (int)meta_debug.value;
-#endif	
+
 	META_DLLAPI_HANDLE_void(FN_STARTFRAME, pfnStartFrame, void, (VOID_ARG));
 	RETURN_API_void();
 }

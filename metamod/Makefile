@@ -42,11 +42,7 @@ endif
 ifeq "$(TARGET)" "amd64"
 	TARGETTYPE = amd64
 else
-	ifeq "$(TARGET)" "compat-i386"
-		TARGETTYPE = compat-i386
-	else
-		TARGETTYPE = i386
-	endif
+	TARGETTYPE = i386
 endif
 
 # set paths for your environment
@@ -120,21 +116,13 @@ ifeq "$(HOST)" "cygwin"
 	ifeq "$(TARGETTYPE)" "amd64"
 		CC=gcc-linux-x86_64
 	else
-		ifeq "$(TARGETTYPE)" "compat-i386"
-			CC=gcc-linux-2.95
-		else
-			CC=gcc-linux
-		endif
+		CC=gcc-linux
 	endif
 else
 	ifeq "$(TARGETTYPE)" "amd64"
 		CC=gcc-x86_64
 	else
-		ifeq "$(TARGETTYPE)" "compat-i386"
-			CC=gcc-2.95
-		else
-			CC=gcc
-		endif
+		CC=gcc
 	endif
 endif
 
@@ -181,20 +169,14 @@ endif
 CCOPT = $(CCO) $(CCOPT_ARCH) -fno-exceptions -fno-rtti
 
 # optimization level; overridden for certain problematic files
-CCO = -O3 -fomit-frame-pointer -funroll-all-loops -ffast-math
+CCO = -O2 -fomit-frame-pointer -ffast-math
 
 # architecture tuning by target type
 ifeq "$(TARGETTYPE)" "amd64"
 	CCOPT_ARCH =
 else
-	ifeq "$(TARGETTYPE)" "compat-i386"
-		#hlds requires 486 or newer
-		CCOPT_ARCH = -march=i486
-	else
-		#default: pentium or newer
-		CCOPT_ARCH = -march=i586 $(MCPU)=pentium4
-		#CCOPT_ARCH = -march=athlon
-	endif
+	#default: pentium or newer
+	CCOPT_ARCH = -march=i586 $(MCPU)=pentium4
 endif
 
 # debugging; halt on warnings
@@ -414,8 +396,6 @@ cleanall_linux:
 	$(MAKE) clean_linux OPT=opt
 	$(MAKE) clean_linux TARGET=amd64
 	$(MAKE) clean_linux TARGET=amd64 OPT=opt
-	$(MAKE) clean_linux TARGET=compat-i386
-	$(MAKE) clean_linux TARGET=compat-i386 OPT=opt
 
 cleanall_win32:
 	$(MAKE) clean_win32

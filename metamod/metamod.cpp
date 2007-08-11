@@ -144,10 +144,7 @@ int DLLINTERNAL metamod_startup(void) {
 	// Set a slight debug level for developer mode, if debug level not
 	// already set.
 	if((int)CVAR_GET_FLOAT("developer") != 0 && (int)meta_debug.value == 0) {
-		CVAR_SET_FLOAT("meta_debug", 3.0);
-#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
-		meta_debug_value = 3;
-#endif
+		CVAR_SET_FLOAT("meta_debug", (float)(meta_debug_value = 3));
 	}
 
 	// Init default values
@@ -198,10 +195,7 @@ int DLLINTERNAL metamod_startup(void) {
 	// Check for an initial debug level, since cfg files don't get exec'd
 	// until later.
 	if(Config->debuglevel != 0) {
-		CVAR_SET_FLOAT("meta_debug", (float)Config->debuglevel);
-#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
-		meta_debug_value = Config->debuglevel;
-#endif
+		CVAR_SET_FLOAT("meta_debug", (float)(meta_debug_value = Config->debuglevel));
 	}
 
 	// Prepare for registered commands from plugins.

@@ -204,10 +204,20 @@ mBOOL DLLINTERNAL meta_load_gamedll(void);
 extern long double total_tsc DLLHIDDEN;
 extern unsigned long long count_tsc DLLHIDDEN;
 extern unsigned long long active_tsc DLLHIDDEN;
+extern unsigned long long min_tsc DLLHIDDEN;
 
 inline unsigned long long DLLINTERNAL GET_TSC(void) {
 	union { struct { unsigned int eax, edx;	} split; unsigned long long full; } tsc;
+#ifdef __GNUC__
 	__asm__ __volatile__("rdtsc":"=a"(tsc.split.eax), "=d"(tsc.split.edx));	
+#else
+	__asm
+	{
+		rdtsc
+		mov tsc.split.eax, eax
+		mov tsc.split.edx, edx
+	}
+#endif
 	return(tsc.full);
 }
 
@@ -220,9 +230,13 @@ inline unsigned long long DLLINTERNAL GET_TSC(void) {
 #define API_UNPAUSE_TSC_TRACKING() \
 	active_tsc = GET_TSC()
 
-#define API_END_TSC_TRACKING() \
-	total_tsc += GET_TSC() - active_tsc; \
-	count_tsc++;
+#define API_END_TSC_TRACKING() { \
+		unsigned long long run_tsc = GET_TSC() - active_tsc; \
+		total_tsc += run_tsc; \
+		count_tsc++; \
+		if(min_tsc == 0 || run_tsc < min_tsc) \
+			min_tsc = run_tsc; \
+	}
 
 // ===== end ==================================================================
 

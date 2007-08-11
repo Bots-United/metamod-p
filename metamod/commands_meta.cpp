@@ -50,19 +50,22 @@
 long double total_tsc=0;
 unsigned long long count_tsc=0;
 unsigned long long active_tsc=0;
+unsigned long long min_tsc=0;
 
 void DLLINTERNAL cmd_meta_tsc(void) {
 	if(!count_tsc)
 		return;
 	
 	META_CONS(" ");
-	META_CONS(" count_tsc: %uL", count_tsc);
-	META_CONS(" mean_tsc: %f", (double)(total_tsc / count_tsc));
+	META_CONS(" count_tsc: %.0f", (double)count_tsc);
+	META_CONS(" mean_tsc: %.1f", (double)(total_tsc / count_tsc));
+	META_CONS(" min_tsc: %.0f", (double)min_tsc);
 }
 
 void DLLINTERNAL cmd_meta_reset_tsc(void) {
 	total_tsc=0;
 	count_tsc=0;
+	min_tsc=0;
 }
 #endif /*META_PERFMON*/
 
@@ -70,9 +73,9 @@ void DLLINTERNAL cmd_meta_reset_tsc(void) {
 void DLLINTERNAL meta_register_cmdcvar() {
 	CVAR_REGISTER(&meta_debug);
 	CVAR_REGISTER(&meta_version);
-#ifdef __META_DEBUG_VALUE__CACHE_AS_INT__
+
 	meta_debug_value = (int)meta_debug.value;
-#endif
+
 	REG_SVR_COMMAND("meta", svr_meta);
 }
 

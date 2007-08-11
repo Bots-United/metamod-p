@@ -2,7 +2,14 @@
 
 2007/08/08      1.19p32
 [Patch: Metamod-P v32 by Jussi Kivilinna]
- - Compiling with MSVC fixed by Nikolay "The Storm" Baklicharov.
+ - Changed GCC optimization flags based on performance monitoring results, 
+   replaced '-O3 -funroll-all-loops' with '-O2'.
+ - Made 'Fix for engine_api varargs log calls with very long log string'
+   default on in sources so that MSVC compile is 1:1 with GCC compile.
+ - Made 'optimizations on META_DEBUG' always on in sources so that MSVC 
+   compile is 1:1 with GCC compile.
+ - Fixed compiling META_PERFMON build with MSVC.
+ - Fixed compiling with MSVC fixed by Nikolay "The Storm" Baklicharov.
  - [linux] Remake of dynamic linkent code. Parse dlsym function trampoline 
    instead of parsing ELF structures.
  - [linux] Dropped AMD64 build since Valve doesn't support their AMD64 build 
