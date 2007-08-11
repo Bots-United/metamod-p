@@ -191,7 +191,7 @@ int DLLINTERNAL init_linkent_replacement(DLHANDLE MetamodHandle, DLHANDLE GameDl
 	
 	// dlsym is already known to be pointing to valid function, we loaded gamedll using it earlier!
 	void * sym_ptr = (void*)&dlsym;
-	while(is_code_trampoline_jmp_opcode(sym_ptr) {
+	while(is_code_trampoline_jmp_opcode(sym_ptr)) {
 		sym_ptr = extract_function_pointer_from_trampoline_jmp(sym_ptr);
 	}
 	
