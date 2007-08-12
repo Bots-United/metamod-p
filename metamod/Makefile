@@ -254,7 +254,7 @@ DO_CC_LINUX=$(CC) $(CFLAGS) -fPIC $(INCLUDEDIRS) -o $@ -c $< $(FILTER)
 LINK_LINUX=$(CC) $(CFLAGS) -shared -ldl -lm -static-libgcc $(EXTRA_LINK) $(OBJ_LINUX) -o $@
 
 # sort by date
-SRCFILES := $(shell ls -t $(SRCFILES))
+#SRCFILES := $(shell ls -t $(SRCFILES))
 
 # linux object files
 OBJ_LINUX := $(SRCFILES:%.cpp=$(OBJDIR_LINUX)/%.o)
