@@ -98,10 +98,6 @@
 #define C_DLLEXPORT		extern "C" DLLEXPORT
 
 // Special version that fixes vsnprintf bugs.
-#ifndef DO_NOT_FIX_VARARG_ENGINE_API_WARPERS
-int DLLINTERNAL safe_vsnprintf(char* s,  size_t n,  const char *format, va_list ap);
-int DLLINTERNAL safe_snprintf(char* s, size_t n, const char* format, ...);
-#endif
 void DLLINTERNAL safevoid_vsnprintf(char* s, size_t n, const char *format, va_list ap);
 void DLLINTERNAL safevoid_snprintf(char* s, size_t n, const char* format, ...);
 
