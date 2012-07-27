@@ -57,7 +57,9 @@
 #include "vdate.h"				// COMPILE_TIME, etc
 #include "linkent.h"
 
-cvar_t meta_version = {"metamod_version", VVERSION, FCVAR_SERVER, 0, NULL};
+static char meta_version_name[16] = "metamod_version";
+static char meta_version_value[16] = VVERSION;
+cvar_t meta_version = {meta_version_name, meta_version_value, FCVAR_SERVER, 0, NULL};
 
 MConfig static_config;
 MConfig *Config=&static_config;
@@ -94,7 +96,7 @@ int metamod_not_loaded = 0;
 // Very first metamod function that's run.
 // Do startup operations...
 int DLLINTERNAL metamod_startup(void) {	
-	char *cp, *mmfile=NULL, *cfile=NULL;
+	const char *cp, *mmfile=NULL, *cfile=NULL;
 
 	META_CONS("   ");
 	META_CONS("   %s version %s Copyright (c) 2001-%s %s", VNAME, VVERSION, COPYRIGHT_YEAR, VAUTHOR);
@@ -348,7 +350,6 @@ mBOOL DLLINTERNAL meta_init_gamedll(void) {
 mBOOL DLLINTERNAL meta_load_gamedll(void) {
 	int iface_vers;
 	int found=0;
-
 	GIVE_ENGINE_FUNCTIONS_FN pfn_give_engfuncs;
 	GETNEWDLLFUNCTIONS_FN pfn_getapinew;
 	GETENTITYAPI2_FN pfn_getapi2;
@@ -364,7 +365,7 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 	if(!(GameDLL.handle=DLOPEN(GameDLL.pathname))) {
 		META_WARNING("dll: Couldn't load game DLL %s: %s", GameDLL.pathname, 
 				DLERROR());
-		RETURN_ERRNO(mFALSE, ME_DLOPEN);
+      RETURN_ERRNO(mFALSE, ME_DLOPEN);
 	}
 
 	// Used to only pass our table of engine funcs if a loaded plugin

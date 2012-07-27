@@ -76,33 +76,33 @@ inline int ENTINDEX(const edict_t *pEdict) {
 // Also, create some nice inlines for engine callback combos.
 
 // Get a setinfo value from a player entity.
-inline char * DLLINTERNAL ENTITY_KEYVALUE(edict_t *entity, char *key) {
-	return(INFOKEY_VALUE(GET_INFOKEYBUFFER(entity), key));
+inline char * DLLINTERNAL ENTITY_KEYVALUE(edict_t *entity, const char *key) {
+	return(INFOKEY_VALUE(GET_INFOKEYBUFFER(entity), (char*)key));
 }
 
 // Set a setinfo value for a player entity.
-inline void DLLINTERNAL ENTITY_SET_KEYVALUE(edict_t *entity, char *key, char *value) {
-	SET_CLIENT_KEYVALUE(ENTINDEX(entity), GET_INFOKEYBUFFER(entity), key, value);
+inline void DLLINTERNAL ENTITY_SET_KEYVALUE(edict_t *entity, const char *key, const char *value) {
+	SET_CLIENT_KEYVALUE(ENTINDEX(entity), GET_INFOKEYBUFFER(entity), (char*)key, (char*)value);
 }
 
 // Get a "serverinfo" value.
-inline char * DLLINTERNAL SERVERINFO(char *key) {
-	return(ENTITY_KEYVALUE(INDEXENT(0), key));
+inline char * DLLINTERNAL SERVERINFO(const char *key) {
+	return(ENTITY_KEYVALUE(INDEXENT(0), (char*)key));
 }
 
 // Set a "serverinfo" value.
-inline void DLLINTERNAL SET_SERVERINFO(char *key, char *value) {
-	SET_SERVER_KEYVALUE(GET_INFOKEYBUFFER(INDEXENT(0)), key, value);
+inline void DLLINTERNAL SET_SERVERINFO(const char *key, const char *value) {
+	SET_SERVER_KEYVALUE(GET_INFOKEYBUFFER(INDEXENT(0)), (char*)key, (char*)value);
 }
 
 // Get a "localinfo" value.
-inline char * DLLINTERNAL LOCALINFO(char *key) {
-	return(ENTITY_KEYVALUE(NULL, key));
+inline char * DLLINTERNAL LOCALINFO(const char *key) {
+	return(ENTITY_KEYVALUE(NULL, (char*)key));
 }
 
 // Set a "localinfo" value.
-inline void DLLINTERNAL SET_LOCALINFO(char *key, char *value) {
-	SET_SERVER_KEYVALUE(GET_INFOKEYBUFFER(NULL), key, value);
+inline void DLLINTERNAL SET_LOCALINFO(const char *key, const char *value) {
+	SET_SERVER_KEYVALUE(GET_INFOKEYBUFFER(NULL), (char*)key, (char*)value);
 }
 
 inline int DLLINTERNAL fast_FNullEnt(const edict_t* pent) {

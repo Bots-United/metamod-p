@@ -40,17 +40,26 @@
 #include "metamod.h"
 #include "osdep.h"			//unlikely
 
+template <class type> const void ** convert_to_ppvoid(type in) {
+	union {
+		type in;
+		void** out;
+	} ptr_convert;
+	ptr_convert.in = in;
+	return(const_cast<const void**>(ptr_convert.out));
+}
+
 // getting pointer with table index is faster than with if-else
 static const void ** api_tables[3] = {
-	(const void**)&Engine.funcs,
-	(const void**)&GameDLL.funcs.dllapi_table,
-	(const void**)&GameDLL.funcs.newapi_table
+	convert_to_ppvoid(&Engine.funcs),
+	convert_to_ppvoid(&GameDLL.funcs.dllapi_table),
+	convert_to_ppvoid(&GameDLL.funcs.newapi_table)
 };
 
 static const void ** api_info_tables[3] = {
-	(const void**)&engine_info,
-	(const void**)&dllapi_info,
-	(const void**)&newapi_info
+	convert_to_ppvoid(&engine_info),
+	convert_to_ppvoid(&dllapi_info),
+	convert_to_ppvoid(&newapi_info)
 };
 
 // Safety check for metamod-bot-plugin bugfix.
@@ -80,7 +89,7 @@ void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_
 	void *pfn_routine;
 	int loglevel;
 	const void *api_table;
-	meta_globals_t backup_meta_globals[1];
+	meta_globals_t backup_meta_globals VAR_UNUSED;
 	
 	//passing offset from api wrapper function makes code faster/smaller
 	api_info = get_api_info(api, api_info_offset);
@@ -88,7 +97,7 @@ void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_
 	//Fix bug with metamod-bot-plugins.
 	if(unlikely(call_count++>0)) {
 		//Backup PublicMetaGlobals.
-		backup_meta_globals[0] = PublicMetaGlobals;
+		backup_meta_globals = PublicMetaGlobals;
 	}
 	
 	//Setup
@@ -126,7 +135,6 @@ void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_
 		// call plugin
 		META_DEBUG(loglevel, ("Calling %s:%s()", iplug->file, api_info->name));
 		api_info->api_caller(pfn_routine, packed_args);
-		API_UNPAUSE_TSC_TRACKING();
 		
 		// plugin's result code
 		mres=PublicMetaGlobals.mres;
@@ -140,6 +148,8 @@ void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_
 			META_WARNING("Plugin didn't set meta_result: %s:%s()", iplug->file, api_info->name);
 	}
 	
+	// PublicMetaGlobals is only used over plugin function calls, restore call_count so that that PublicMetaGlobals
+	// is not unnecessarily stored when not needed.
 	call_count--;
 	
 	//Api call
@@ -152,7 +162,6 @@ void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_
 			if(likely(pfn_routine)) {
 				META_DEBUG(loglevel, ("Calling %s:%s()", (api==e_api_engine)?"engine":GameDLL.file, api_info->name));
 				api_info->api_caller(pfn_routine, packed_args);
-				API_UNPAUSE_TSC_TRACKING();
 			} else {
 				// don't complain for NULL routines in NEW_DLL_FUNCTIONS
 				if(unlikely(api != e_api_newapi))
@@ -198,7 +207,6 @@ void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_
 		// call plugin
 		META_DEBUG(loglevel, ("Calling %s:%s_Post()", iplug->file, api_info->name));
 		api_info->api_caller(pfn_routine, packed_args);
-		API_UNPAUSE_TSC_TRACKING();
 		
 		// plugin's result code
 		mres=PublicMetaGlobals.mres;
@@ -216,7 +224,7 @@ void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_
 
 	if(unlikely(--call_count>0)) {
 		//Restore backup
-		PublicMetaGlobals = backup_meta_globals[0];
+		PublicMetaGlobals = backup_meta_globals;
 	}
 }
 
@@ -229,7 +237,7 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 	void *pfn_routine;
 	int loglevel;
 	const void *api_table;
-	meta_globals_t backup_meta_globals[1];
+	meta_globals_t backup_meta_globals VAR_UNUSED;
 	
 	//passing offset from api wrapper function makes code faster/smaller
 	api_info = get_api_info(api, api_info_offset);
@@ -237,7 +245,7 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 	//Fix bug with metamod-bot-plugins.
 	if(unlikely(call_count++>0)) {
 		//Backup PublicMetaGlobals.
-		backup_meta_globals[0] = PublicMetaGlobals;
+		backup_meta_globals = PublicMetaGlobals;
 	}
 	
 	//Return class setup
@@ -288,7 +296,6 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 		// call plugin
 		META_DEBUG(loglevel, ("Calling %s:%s()", iplug->file, api_info->name));
 		dllret = class_ret_t(api_info->api_caller(pfn_routine, packed_args));
-		API_UNPAUSE_TSC_TRACKING();
 		
 		// plugin's result code
 		mres=PublicMetaGlobals.mres;
@@ -307,6 +314,8 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 		}
 	}
 	
+	// PublicMetaGlobals is only used over plugin function calls, restore call_count so that that PublicMetaGlobals
+	// is not unnecessarily stored when not needed.
 	call_count--;
 	
 	//Api call
@@ -319,7 +328,6 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 			if(likely(pfn_routine)) {
 				META_DEBUG(loglevel, ("Calling %s:%s()", (api==e_api_engine)?"engine":GameDLL.file, api_info->name));
 				dllret = class_ret_t(api_info->api_caller(pfn_routine, packed_args));
-				API_UNPAUSE_TSC_TRACKING();
 				orig_ret = dllret;
 			} else {
 				// don't complain for NULL routines in NEW_DLL_FUNCTIONS
@@ -337,7 +345,6 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 		META_DEBUG(loglevel, ("Skipped (supercede) %s:%s()", (api==e_api_engine)?"engine":GameDLL.file, api_info->name));
 		orig_ret = override_ret;
 		pub_orig_ret = override_ret;
-		PublicMetaGlobals.orig_ret = pub_orig_ret.getptr();
 	}
 	
 	call_count++;
@@ -376,7 +383,6 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 		// call plugin
 		META_DEBUG(loglevel, ("Calling %s:%s_Post()", iplug->file, api_info->name));
 		dllret = class_ret_t(api_info->api_caller(pfn_routine, packed_args));
-		API_UNPAUSE_TSC_TRACKING();
 		
 		// plugin's result code
 		mres=PublicMetaGlobals.mres;
@@ -400,7 +406,7 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 	
 	if(unlikely(--call_count>0)) {
 		//Restore backup
-		PublicMetaGlobals = backup_meta_globals[0];
+		PublicMetaGlobals = backup_meta_globals;
 	}
 	
 	//return value is passed through ret_init!
@@ -420,11 +426,15 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 		_COMBINE2(pack_args_type_, args_type_code) * p ATTRIBUTE(unused)= (_COMBINE2(pack_args_type_, args_type_code) *)packed_args;
 #define END_API_CALLER_FUNC(ret_t, args_t, args) \
 		API_PAUSE_TSC_TRACKING(); \
-		return(*(void **)class_ret_t((*(( ret_t (*) args_t )func)) args).getptr()); \
+		void* ret = *(void **)class_ret_t((*(( ret_t (*) args_t )func)) args).getptr(); \
+		API_UNPAUSE_TSC_TRACKING(); \
+		return ret; \
 	}
 #define END_API_CALLER_FUNC_void(args_t, args) \
 		API_PAUSE_TSC_TRACKING(); \
-		return((*(( void* (*) args_t )func)) args); \
+		void * ret = (*(( void* (*) args_t )func)) args; \
+		API_UNPAUSE_TSC_TRACKING(); \
+		return ret; \
 	}
 
 //

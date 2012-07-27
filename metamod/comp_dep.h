@@ -45,6 +45,7 @@
 #if defined(__GNUC__) && !defined(_WIN32) && __GNUC__ >= 3 && __GNUC_MINOR__ >= 3
 	// Hidden data/function.
 	#define DLLHIDDEN __attribute__((visibility("hidden")))
+	#define VAR_UNUSED __attribute__((unused))
 	// Hidden internal function.
 	#if defined(__x86_64__) || defined(__amd64__)
 		#define DLLINTERNAL __attribute__((visibility("internal")))
@@ -63,13 +64,16 @@
 	#if defined (_WIN32) && defined (_MSC_VER)
 		#define DLLINTERNAL_NOVIS
 		#define DLLINTERNAL
+		#define VAR_UNUSED 
 	#else
 		#ifdef __INTERNALS_USE_REGPARAMS__
 			#define DLLINTERNAL_NOVIS __attribute__((regparm(3)))
 			#define DLLINTERNAL DLLINTERNAL_NOVIS
+			#define VAR_UNUSED __attribute__((unused))
 		#else
 			#define DLLINTERNAL_NOVIS 
 			#define DLLINTERNAL 
+			#define VAR_UNUSED __attribute__((unused))
 		#endif
 	#endif //defined WIN32
 #endif

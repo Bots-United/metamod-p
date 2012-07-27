@@ -201,7 +201,7 @@ mBOOL DLLINTERNAL meta_load_gamedll(void);
 // Api-hook performance monitoring
 // ============================================================================
 
-extern long double total_tsc DLLHIDDEN;
+extern unsigned long long total_tsc DLLHIDDEN;
 extern unsigned long long count_tsc DLLHIDDEN;
 extern unsigned long long active_tsc DLLHIDDEN;
 extern unsigned long long min_tsc DLLHIDDEN;

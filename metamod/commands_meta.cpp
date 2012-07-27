@@ -47,7 +47,7 @@
 
 #ifdef META_PERFMON
 
-long double total_tsc=0;
+unsigned long long total_tsc=0;
 unsigned long long count_tsc=0;
 unsigned long long active_tsc=0;
 unsigned long long min_tsc=0;
@@ -76,7 +76,8 @@ void DLLINTERNAL meta_register_cmdcvar() {
 
 	meta_debug_value = (int)meta_debug.value;
 
-	REG_SVR_COMMAND("meta", svr_meta);
+   static char cmd[8] = "meta";
+	REG_SVR_COMMAND(cmd, svr_meta);
 }
 
 // Parse "meta" console command.

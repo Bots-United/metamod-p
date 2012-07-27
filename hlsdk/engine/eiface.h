@@ -145,7 +145,7 @@ typedef struct enginefuncs_s
 	void		(*pfnGetAimVector)			(edict_t* ent, float speed, float *rgflReturn);
 	void		(*pfnServerCommand)			(char* str);
 	void		(*pfnServerExecute)			(void);
-	void		(*pfnClientCommand)			(edict_t* pEdict, char* szFmt, ...);
+	void		(*pfnClientCommand)			(edict_t* pEdict, const char* szFmt, ...);
 	void		(*pfnParticleEffect)		(const float *org, const float *dir, float color, float count);
 	void		(*pfnLightStyle)			(int style, char* val);
 	int			(*pfnDecalIndex)			(const char *name);
@@ -165,12 +165,12 @@ typedef struct enginefuncs_s
 	const char*	(*pfnCVarGetString)			(const char *szVarName);
 	void		(*pfnCVarSetFloat)			(const char *szVarName, float flValue);
 	void		(*pfnCVarSetString)			(const char *szVarName, const char *szValue);
-	void		(*pfnAlertMessage)			(ALERT_TYPE atype, char *szFmt, ...);
+	void		(*pfnAlertMessage)			(ALERT_TYPE atype, const char *szFmt, ...);
 #ifdef HLSDK_3_2_OLD_EIFACE
-	void		(*pfnEngineFprintf)			(FILE *pfile, char *szFmt, ...);
+	void		(*pfnEngineFprintf)			(FILE *pfile, const char *szFmt, ...);
 	void*		(*pfnPvAllocEntPrivateData)	(edict_t *pEdict, long cb);
 #else
-	void		(*pfnEngineFprintf)			(void *pfile, char *szFmt, ...);
+	void		(*pfnEngineFprintf)			(void *pfile, const char *szFmt, ...);
 	void*		(*pfnPvAllocEntPrivateData)	(edict_t *pEdict, int32 cb);
 #endif
 	void*		(*pfnPvEntPrivateData)		(edict_t *pEdict);

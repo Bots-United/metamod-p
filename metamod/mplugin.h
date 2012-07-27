@@ -124,10 +124,12 @@ class MPlugin : public class_metamod_new {
 		api_tables_t post_tables;
 		
 		inline DLLINTERNAL void * get_api_table(enum_api_t api) {
-			return(((void**)&tables)[api]);
+			api_tables_t *ptables = &tables;
+			return(((void**)ptables)[api]);
 		}
 		inline DLLINTERNAL void * get_api_post_table(enum_api_t api) {
-			return(((void**)&post_tables)[api]);
+			api_tables_t *ppost_tables = &post_tables;
+			return(((void**)ppost_tables)[api]);
 		}
 		
 		int index;					// 1-based

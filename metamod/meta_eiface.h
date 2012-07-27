@@ -119,7 +119,7 @@ struct meta_new_dll_functions_t : public NEW_DLL_FUNCTIONS {
 		// Calculates our idea of the engine's version of the
 		// NEW_DLL_FUNCTIONS interface. Stores this version for future
 		// reference in m_version and returns it.
-		int determine_interface_version( void );
+		int DLLINTERNAL determine_interface_version( void );
 
 		// Comfort function to determine the size of the NEW_DLL_FUNCTIONS
 		// struct for the different versions.
@@ -130,7 +130,7 @@ struct meta_new_dll_functions_t : public NEW_DLL_FUNCTIONS {
 		// engine's interface. Should that version have not yet been
 		// determined (via the enginefuncs_t interface), 0 is returned to
 		// indicated this error state.
-		size_t get_size( int version = 0 );
+		size_t DLLINTERNAL get_size( int version = 0 );
 };
 
 
@@ -230,7 +230,7 @@ struct meta_enginefuncs_t : public enginefuncs_t {
 		void             (*_pfnGetAimVector)                    (edict_t*, float, float*),
 		void             (*_pfnServerCommand)                   (char*),
 		void             (*_pfnServerExecute)                   (void),
-		void             (*_pfnClientCommand)                   (edict_t*, char*, ...),
+		void             (*_pfnClientCommand)                   (edict_t*, const char*, ...),
 		void             (*_pfnParticleEffect)                  (const float*, const float*, float, float),
 		void             (*_pfnLightStyle)                      (int, char*),
 		int	             (*_pfnDecalIndex)                      (const char*),
@@ -250,8 +250,8 @@ struct meta_enginefuncs_t : public enginefuncs_t {
 		const char*      (*_pfnCVarGetString)                   (const char*),
 		void             (*_pfnCVarSetFloat)                    (const char*, float),
 		void             (*_pfnCVarSetString)                   (const char*, const char*),
-		void             (*_pfnAlertMessage)                    (ALERT_TYPE, char*, ...),
-		void             (*_pfnEngineFprintf)                   (void*, char*, ...),
+		void             (*_pfnAlertMessage)                    (ALERT_TYPE, const char*, ...),
+		void             (*_pfnEngineFprintf)                   (void*, const char*, ...),
 		void*            (*_pfnPvAllocEntPrivateData)           (edict_t*, int32),
 		void*            (*_pfnPvEntPrivateData)                (edict_t*),
 		void             (*_pfnFreeEntPrivateData)              (edict_t*),

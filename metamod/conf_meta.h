@@ -62,10 +62,10 @@ typedef enum {
 //typedef mBOOL (*SETOPT_FN) (char *key, char *value);
 
 typedef struct option_s {
-	char *name;		// option name
+	const char *name;		// option name
 	cf_type_t type;	// option type
 	void *dest;		// addr of destination variable, or handler function
-	char *init;		// initial value, as a string, just as config file would
+	const char *init;		// initial value, as a string, just as config file would
 } option_t;
 
 class MConfig : public class_metamod_new {
