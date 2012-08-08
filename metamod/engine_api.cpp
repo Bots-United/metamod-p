@@ -65,12 +65,40 @@
 	API_END_TSC_TRACKING()
 
 // For varargs functions
-#define MAKE_FORMATED_STRING(szFmt) \
-	char buf[MAX_STRBUF_LEN*4]; \
-	va_list ap; \
-	va_start(ap, szFmt); \
-	safevoid_vsnprintf(buf, sizeof(buf), szFmt, ap); \
-	va_end(ap);
+#ifndef DO_NOT_FIX_VARARG_ENGINE_API_WARPERS
+	#define MAKE_FORMATED_STRING(szFmt) \
+		char strbuf[MAX_STRBUF_LEN]; \
+		char * buf=strbuf; \
+		{ \
+			int len; \
+			va_list vargs; \
+			va_start(vargs, szFmt); \
+			len = safe_vsnprintf(strbuf, sizeof(strbuf), szFmt, vargs); \
+			va_end(vargs); \
+			if((unsigned)len >= sizeof(strbuf)) { \
+				buf = (char *)malloc(len + 1); \
+				if(buf) { \
+					va_start(vargs, szFmt); \
+					safevoid_vsnprintf(buf, len + 1, szFmt, vargs); \
+					va_end(vargs); \
+				} else { \
+					buf=strbuf; \
+				} \
+			} \
+		}
+	#define CLEAN_FORMATED_STRING() \
+		if(buf != strbuf) \
+			free(buf);
+#else
+	#define MAKE_FORMATED_STRING(szFmt) \
+		char buf[MAX_STRBUF_LEN]; \
+		va_list ap; \
+		va_start(ap, szFmt); \
+		safevoid_vsnprintf(buf, sizeof(buf), szFmt, ap); \
+		va_end(ap);
+	
+	#define CLEAN_FORMATED_STRING()
+#endif
 
 // Engine routines, printf-style functions returning "void".
 #define META_ENGINE_HANDLE_void_varargs(FN_TYPE, pfnName, pack_args_type, pfn_arg, fmt_arg) \
@@ -79,7 +107,8 @@
 	META_DEBUG(engine_info.pfnName.loglevel, ("In %s: fmt=%s", engine_info.pfnName.name, fmt_arg)); \
 	API_PACK_ARGS(pack_args_type, (pfn_arg, "%s", buf)); \
 	main_hook_function_void(offsetof(engine_info_t, pfnName), e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args); \
-	API_END_TSC_TRACKING()
+	API_END_TSC_TRACKING() \
+	CLEAN_FORMATED_STRING()
 
 // Engine routines, printf-style functions returning an actual value.
 #define META_ENGINE_HANDLE_varargs(ret_t, ret_init, FN_TYPE, pfnName, pack_args_type, pfn_arg, fmt_arg) \
@@ -88,7 +117,8 @@
 	META_DEBUG(engine_info.pfnName.loglevel, ("In %s: fmt=%s", engine_info.pfnName.name, fmt_arg)); \
 	API_PACK_ARGS(pack_args_type, (pfn_arg, "%s", buf)); \
 	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), offsetof(engine_info_t, pfnName), e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args)); \
-	API_END_TSC_TRACKING()
+	API_END_TSC_TRACKING() \
+	CLEAN_FORMATED_STRING()
 
 
 static int mm_PrecacheModel(char *s) {

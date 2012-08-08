@@ -94,6 +94,108 @@ char * DLLINTERNAL my_strlwr(char *s) {
 }
 #endif
 
+
+#ifndef DO_NOT_FIX_VARARG_ENGINE_API_WARPERS
+// Microsoft's msvcrt.dll:vsnprintf is buggy and so is vsnprintf on some glibc versions.
+// We use wrapper function to fix bugs.
+//  from: http://sourceforge.net/tracker/index.php?func=detail&aid=1083721&group_id=2435&atid=102435
+int DLLINTERNAL safe_vsnprintf(char* s, size_t n, const char *format, va_list src_ap) { 
+	va_list ap;
+	int res;
+	char *tmpbuf;
+	size_t bufsize = n;
+	
+	if(s && n>0)
+		s[0]=0;
+	
+	// If the format string is empty, nothing to do.
+	if(!format || !*format)
+		return(0);
+	
+	// The supplied count may be big enough. Try to use the library
+     	// vsnprintf, fixing up the case where the library function
+	// neglects to terminate with '/0'.
+	if(n > 0)
+	{
+		// A NULL destination will cause a segfault with vsnprintf.
+		// if n > 0.  Nor do we want to copy our tmpbuf to NULL later.
+		if(!s)
+			return(-1);
+		
+		va_copy(ap, src_ap);
+		res = vsnprintf(s, n, format, ap);
+		va_end(ap);
+		
+		if(res > 0) {
+			if((unsigned)res == n)
+				s[res - 1] = 0;
+	  		return(res);
+		}
+		
+		// If n is already larger than INT_MAX, increasing it won't
+		// help.
+		if(n > INT_MAX)
+			return(-1);
+		
+		// Try a larger buffer.
+		bufsize *= 2;
+	}
+	
+	if(bufsize < 1024)
+		bufsize = 1024;
+	
+	tmpbuf = (char *)malloc(bufsize * sizeof(char));
+	if(!tmpbuf)
+		return(-1);
+	
+	va_copy(ap, src_ap);
+  	res = vsnprintf(tmpbuf, bufsize, format, ap);
+  	va_end(ap);
+	
+	// The test for bufsize limit is probably not necesary
+	// with 2GB address space limit, since, in practice, malloc will
+	// fail well before INT_MAX.
+	while(res < 0 && bufsize <= INT_MAX) {
+		char * newbuf;
+		
+		bufsize *= 2;
+		newbuf = (char*)realloc(tmpbuf, bufsize * sizeof(char));
+		
+		if(!newbuf)
+			break;
+		
+		tmpbuf = newbuf;
+		
+		va_copy(ap, src_ap);
+		res = vsnprintf(tmpbuf, bufsize, format, ap);
+		va_end(ap);
+	}
+	
+	if(res > 0 && n > 0) {
+		if(n > (unsigned)res)
+			memcpy(s, tmpbuf, (res + 1) * sizeof (char));
+		else {
+			memcpy(s, tmpbuf, (n - 1) * sizeof (char));
+			s[n - 1] = 0;
+		}
+	}
+	
+	free(tmpbuf);
+	return(res);
+}
+
+int DLLINTERNAL safe_snprintf(char* s, size_t n, const char* format, ...) {
+	int res;
+	va_list ap;
+	
+	va_start(ap, format);
+	res = safe_vsnprintf(s, n, format, ap);
+	va_end(ap);
+	
+	return(res);
+}
+#endif
+
 void DLLINTERNAL safevoid_vsnprintf(char* s, size_t n, const char *format, va_list ap) { 
 	int res;
 	
@@ -294,3 +396,4 @@ mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn) {
 	pfn();
 	return(mTRUE);
 }
+
