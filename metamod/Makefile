@@ -38,12 +38,12 @@ endif
 # CONFIGURATION
 #############################################################################
 
-# 
-ifeq "$(TARGET)" "amd64"
-	TARGETTYPE = amd64
-else
+# TARGET amd64 disabled since Valve has dropped support for x86-64 server
+#ifeq "$(TARGET)" "amd64"
+#	TARGETTYPE = amd64
+#else
 	TARGETTYPE = i386
-endif
+#endif
 
 # set paths for your environment
 ifeq "$(OS)" "linux"
@@ -105,10 +105,10 @@ OBJDIR_WIN_DBG=debug.win32
 #############################################################################
 
 ifeq "$(OS)" "linux"
-	GCCMAJ = $(shell $(CC) -dumpversion | sed -e 's/\.[0-9][0-9]*\.[0-9]//')
+	GCCMAJ = $(shell $(CC) -dumpversion | sed -e 's/\.[0-9][0-9]*//')
 	GCCMIN = $(shell $(CC) -dumpversion | sed -e 's/[0-9]\.//;s/\.[0-9]//')
 else
-	GCCMAJ = $(shell $(CC_WIN) -dumpversion | sed -e 's/\.[0-9][0-9]*\.[0-9]//')
+	GCCMAJ = $(shell $(CC_WIN) -dumpversion | sed -e 's/\.[0-9][0-9]*//')
 	GCCMIN = $(shell $(CC_WIN) -dumpversion | sed -e 's/[0-9]\.//;s/\.[0-9]//')
 endif
 
@@ -120,9 +120,9 @@ ifeq "$(HOST)" "cygwin"
 	endif
 else
 	ifeq "$(TARGETTYPE)" "amd64"
-		CC=gcc-x86_64
+		CC=gcc -m64
 	else
-		CC=gcc
+		CC=gcc -m32
 	endif
 endif
 
@@ -175,8 +175,7 @@ CCO = -O2 -fomit-frame-pointer -ffast-math
 ifeq "$(TARGETTYPE)" "amd64"
 	CCOPT_ARCH =
 else
-	#default: pentium or newer
-	CCOPT_ARCH = -march=i586 $(MCPU)=pentium4
+	CCOPT_ARCH = -march=i686 $(MCPU)=generic
 endif
 
 # debugging; halt on warnings
