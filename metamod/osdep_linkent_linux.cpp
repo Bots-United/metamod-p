@@ -37,8 +37,7 @@
 
 #include <dlfcn.h>
 #include <sys/mman.h>
-#define PAGE_SIZE 4096UL
-#define PAGE_MASK (~(PAGE_SIZE-1))
+#include <asm/page.h>
 #define PAGE_ALIGN(addr) (((addr)+PAGE_SIZE-1)&PAGE_MASK)
 #include <pthread.h>
 #include <link.h>
@@ -166,8 +165,6 @@ static void * __replacement_dlsym(void * module, const char * funcname)
 	{
 		//function not in metamod module, try gamedll
 		func = dlsym_original(gamedll_module_handle, funcname);
-		
-		META_DEBUG(6, ("dlsym hook: engine asked for function '%s' -> gamedll:0x%08x", funcname, func));
 	}
 	
 	if(!was_original_restored)

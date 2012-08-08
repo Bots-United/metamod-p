@@ -439,17 +439,15 @@ C_DLLEXPORT int GetEntityAPI(DLL_FUNCTIONS *pFunctionTable, int interfaceVersion
 		META_WARNING("GetEntityAPI version mismatch; requested=%d ours=%d", interfaceVersion, INTERFACE_VERSION);
 		return(FALSE);
 	}
-	*pFunctionTable = gFunctionTable;
+	memcpy(pFunctionTable, &gFunctionTable, sizeof(DLL_FUNCTIONS));
 	return(TRUE);
 }
 
 C_DLLEXPORT int GetEntityAPI2(DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion)
 {
-   META_DEBUG(3, ("called: GetEntityAPI2; version=%d", *interfaceVersion));
+	META_DEBUG(3, ("called: GetEntityAPI2; version=%d", *interfaceVersion));
 	if(!pFunctionTable || metamod_not_loaded) {
 		META_WARNING("GetEntityAPI2 called with null pFunctionTable");
-      META_CONS("NOTE! Following version mismatch message is because Metamod couldn't load GameDLL (%s). Check your settings.\n", GameDLL.pathname);
-      *interfaceVersion = 0;
 		return(FALSE);
 	}
 	else if(*interfaceVersion != INTERFACE_VERSION) {
@@ -458,7 +456,7 @@ C_DLLEXPORT int GetEntityAPI2(DLL_FUNCTIONS *pFunctionTable, int *interfaceVersi
 		*interfaceVersion = INTERFACE_VERSION;
 		return(FALSE);
 	}
-	*pFunctionTable = gFunctionTable;
+	memcpy(pFunctionTable, &gFunctionTable, sizeof(DLL_FUNCTIONS));
 	return(TRUE);
 }
 

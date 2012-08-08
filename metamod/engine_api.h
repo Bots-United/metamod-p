@@ -99,7 +99,7 @@ typedef void (*FN_TRACESPHERE) (const float *v1, const float *v2, int fNoMonster
 typedef void (*FN_GETAIMVECTOR) (edict_t *ent, float speed, float *rgflReturn);
 typedef void (*FN_SERVERCOMMAND) (char *str);
 typedef void (*FN_SERVEREXECUTE) (void);
-typedef void (*FN_CLIENTCOMMAND_ENG) (edict_t *pEdict, const char *szFmt, ...);
+typedef void (*FN_CLIENTCOMMAND_ENG) (edict_t *pEdict, char *szFmt, ...);
 typedef void (*FN_PARTICLEEFFECT) (const float *org, const float *dir, float color, float count);
 typedef void (*FN_LIGHTSTYLE) (int style, char *val);
 typedef int (*FN_DECALINDEX) (const char *name);
@@ -119,12 +119,12 @@ typedef float (*FN_CVARGETFLOAT) (const char *szVarName);
 typedef const char * (*FN_CVARGETSTRING) (const char *szVarName);
 typedef void (*FN_CVARSETFLOAT) (const char *szVarName, float flValue);
 typedef void (*FN_CVARSETSTRING) (const char *szVarName, const char *szValue);
-typedef void (*FN_ALERTMESSAGE) (ALERT_TYPE atype, const char *szFmt, ...);
+typedef void (*FN_ALERTMESSAGE) (ALERT_TYPE atype, char *szFmt, ...);
 #ifdef HLSDK_3_2_OLD_EIFACE
-typedef void (*FN_ENGINEFPRINTF) (FILE *pfile, const char *szFmt, ...);
+typedef void (*FN_ENGINEFPRINTF) (FILE *pfile, char *szFmt, ...);
 typedef void * (*FN_PVALLOCENTPRIVATEDATA) (edict_t *pEdict, long cb);
 #else
-typedef void (*FN_ENGINEFPRINTF) (void *pfile, const char *szFmt, ...);
+typedef void (*FN_ENGINEFPRINTF) (void *pfile, char *szFmt, ...);
 typedef void * (*FN_PVALLOCENTPRIVATEDATA) (edict_t *pEdict, int32 cb);
 #endif
 typedef void * (*FN_PVENTPRIVATEDATA) (edict_t *pEdict);

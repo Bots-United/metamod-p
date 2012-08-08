@@ -86,14 +86,12 @@ else	## windows
 	TARGET_FILE=$(TARGET_WIN)
 endif
 
+CC_WIN=gcc
+RES_WIN=windres
+
 ifeq "$(HOST)" "cygwin"
-	CC_WIN = gcc -mno-cygwin
-	RES_WIN = windres
-	EXTRA_LINK = -L/lib/w32api
-else
-	CC_WIN = /usr/bin/i586-mingw32msvc-gcc
-	RES_WIN = /usr/bin/i586-mingw32msvc-windres
-	EXTRA_LINK =
+	CC_WIN += -mno-cygwin
+	EXTRA_LINK += -L/lib/w32api
 endif
 
 OBJDIR_LINUX_OPT=opt.linux_$(TARGETTYPE)
@@ -122,13 +120,13 @@ ifeq "$(HOST)" "cygwin"
 	endif
 else
 	ifeq "$(TARGETTYPE)" "amd64"
-		CC=gcc -m64
+		CC=gcc-x86_64
 	else
-		CC=gcc -m32
+		CC=gcc
 	endif
 endif
 
-MCPU=-mtune
+MCPU=-mcpu
 
 ifeq "$(GCCMAJ)" "3"
 	ifeq "$(GCCMIN)" "4"
@@ -171,14 +169,14 @@ endif
 CCOPT = $(CCO) $(CCOPT_ARCH) -fno-exceptions -fno-rtti
 
 # optimization level; overridden for certain problematic files
-CCO = -O2 -fomit-frame-pointer
+CCO = -O2 -fomit-frame-pointer -ffast-math
 
 # architecture tuning by target type
 ifeq "$(TARGETTYPE)" "amd64"
 	CCOPT_ARCH =
 else
 	#default: pentium or newer
-	CCOPT_ARCH = -march=i586 $(MCPU)=generic
+	CCOPT_ARCH = -march=i586 $(MCPU)=pentium4
 endif
 
 # debugging; halt on warnings

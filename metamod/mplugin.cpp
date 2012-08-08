@@ -708,10 +708,9 @@ mBOOL DLLINTERNAL MPlugin::query(void) {
 	info=NULL;
 	// Make a copy of the meta_util function table for each plugin, for the
 	// same reason.
-	mutil_funcs = MetaUtilFunctions;
+	memcpy(&mutil_funcs, &MetaUtilFunctions, sizeof(mutil_funcs));
 
-    char meta_interface_version[sizeof META_INTERFACE_VERSION + 1] = META_INTERFACE_VERSION;
-	if(pfn_query(meta_interface_version, &info, &mutil_funcs) != TRUE) {
+	if(pfn_query(META_INTERFACE_VERSION, &info, &mutil_funcs) != TRUE) {
 		META_WARNING("dll: Failed query plugin '%s'; Meta_Query returned error", 
 				desc);
 		meta_errno=ME_DLERROR;
@@ -832,7 +831,7 @@ mBOOL DLLINTERNAL MPlugin::attach(PLUG_LOADTIME now) {
 			RETURN_ERRNO(mFALSE, ME_NOMEM);
 		}
 		if(GameDLL.funcs.dllapi_table)
-			*gamedll_funcs.dllapi_table = *GameDLL.funcs.dllapi_table;
+			memcpy(gamedll_funcs.dllapi_table, GameDLL.funcs.dllapi_table, sizeof(DLL_FUNCTIONS));
 		else
 			memset(gamedll_funcs.dllapi_table, 0, sizeof(DLL_FUNCTIONS));
 	}
@@ -843,7 +842,7 @@ mBOOL DLLINTERNAL MPlugin::attach(PLUG_LOADTIME now) {
 			RETURN_ERRNO(mFALSE, ME_NOMEM);
 		}
 		if(GameDLL.funcs.newapi_table)
-			*gamedll_funcs.newapi_table = *GameDLL.funcs.newapi_table;
+			memcpy(gamedll_funcs.newapi_table, GameDLL.funcs.newapi_table, sizeof(NEW_DLL_FUNCTIONS));
 		else
 			memset(gamedll_funcs.newapi_table, 0, sizeof(NEW_DLL_FUNCTIONS));
 	}

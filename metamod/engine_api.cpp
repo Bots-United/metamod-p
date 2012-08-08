@@ -265,7 +265,7 @@ static void mm_ServerExecute(void) {
 	META_ENGINE_HANDLE_void(FN_SERVEREXECUTE, pfnServerExecute, void, (VOID_ARG));
 	RETURN_API_void()
 }
-static void mm_engClientCommand(edict_t *pEdict, const char *szFmt, ...) {
+static void mm_engClientCommand(edict_t *pEdict, char *szFmt, ...) {
 	META_ENGINE_HANDLE_void_varargs(FN_CLIENTCOMMAND_ENG, pfnClientCommand, 2pV, pEdict, szFmt);
 	RETURN_API_void()
 }
@@ -356,14 +356,14 @@ static void mm_CVarSetString(const char *szVarName, const char *szValue) {
 	RETURN_API_void()
 }
 
-static void mm_AlertMessage(ALERT_TYPE atype, const char *szFmt, ...) {
+static void mm_AlertMessage(ALERT_TYPE atype, char *szFmt, ...) {
 	META_ENGINE_HANDLE_void_varargs(FN_ALERTMESSAGE, pfnAlertMessage, ipV, atype, szFmt);
 	RETURN_API_void()
 }
 #ifdef HLSDK_3_2_OLD_EIFACE
-static void mm_EngineFprintf(FILE *pfile, const char *szFmt, ...) {
+static void mm_EngineFprintf(FILE *pfile, char *szFmt, ...) {
 #else
-static void mm_EngineFprintf(void *pfile, const char *szFmt, ...) {
+static void mm_EngineFprintf(void *pfile, char *szFmt, ...) {
 #endif
 	META_ENGINE_HANDLE_void_varargs(FN_ENGINEFPRINTF, pfnEngineFprintf, 2pV, pfile, szFmt);
 	RETURN_API_void()

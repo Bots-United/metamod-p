@@ -43,13 +43,13 @@
 #endif /* not OPT_TYPE */
 
 
-#define VDATE 			"2012/07/27"
-#define VPATCH_COPYRIGHT_YEAR   "2012"
+#define VDATE 			"2007/08/12"
+#define VPATCH_COPYRIGHT_YEAR   "2007"
 #define VMETA_VERSION		"1.19"
 
 #define VPATCH_NAME		"Metamod-P (mm-p)"
-#define VPATCH_IVERSION		33
-#define VPATCH_VERSION		"33"
+#define VPATCH_IVERSION		32
+#define VPATCH_VERSION		"32"
 #define VPATCH_AUTHOR		"Jussi Kivilinna"
 #define VPATCH_WEBSITE		"http://metamod-p.sourceforge.net/"
 
