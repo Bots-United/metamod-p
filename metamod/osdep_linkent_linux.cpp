@@ -37,7 +37,8 @@
 
 #include <dlfcn.h>
 #include <sys/mman.h>
-#include <asm/page.h>
+#define PAGE_SIZE 4096UL
+#define PAGE_MASK (~(PAGE_SIZE-1))
 #define PAGE_ALIGN(addr) (((addr)+PAGE_SIZE-1)&PAGE_MASK)
 #include <pthread.h>
 #include <link.h>

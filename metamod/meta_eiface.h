@@ -119,7 +119,7 @@ struct meta_new_dll_functions_t : public NEW_DLL_FUNCTIONS {
 		// Calculates our idea of the engine's version of the
 		// NEW_DLL_FUNCTIONS interface. Stores this version for future
 		// reference in m_version and returns it.
-		int determine_interface_version( void );
+		int DLLINTERNAL determine_interface_version( void );
 
 		// Comfort function to determine the size of the NEW_DLL_FUNCTIONS
 		// struct for the different versions.
@@ -130,7 +130,7 @@ struct meta_new_dll_functions_t : public NEW_DLL_FUNCTIONS {
 		// engine's interface. Should that version have not yet been
 		// determined (via the enginefuncs_t interface), 0 is returned to
 		// indicated this error state.
-		size_t get_size( int version = 0 );
+		size_t DLLINTERNAL get_size( int version = 0 );
 };
 
 
