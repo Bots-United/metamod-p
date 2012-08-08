@@ -1,5 +1,16 @@
 # vim: set tw=75 ft=none :
 
+2012/08/08	1.19p34
+ - Revert changes in 1.19p33 and start over with 1.19p32 code base
+ - Fix compiling with latest userspace headers and gcc-4.6
+ - Disabled building x86-64 binaries as Valve has dropped x86-64
+   linux server support.
+
+2012/07/27	1.19p33
+ - Accumulated fixes and changes over time
+   - Fixes compiling with latest userspace headers and gcc-4.6
+ - (introduced bugs, crashes, do not use)
+
 2007/08/12      1.19p32
 [Patch: Metamod-P v32 by Jussi Kivilinna]
  - Changed GCC optimization flags based on performance monitoring results, 
