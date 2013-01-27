@@ -1385,7 +1385,7 @@ mBOOL DLLINTERNAL MPlugin::newer_file(void) {
 
 	if(stat(pathname, &st) != 0)
 		RETURN_ERRNO(mFALSE, ME_NOFILE);
-	file_time=max(st.st_ctime, st.st_mtime);
+	file_time=st.st_ctime > st.st_mtime ? st.st_ctime : st.st_mtime;
 	META_DEBUG(5, ("newer_file? file=%s; load=%d, file=%d; ctime=%d, mtime=%d",
 				file, time_loaded, file_time, st.st_ctime, st.st_mtime));
 	if(file_time > time_loaded)

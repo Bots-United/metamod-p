@@ -448,7 +448,9 @@ typedef struct
 		#define ARRAYSIZE(p)		(sizeof(p)/sizeof(p[0]))
 	#endif
 #else /* MSVC 8.0 */
-	#define ARRAYSIZE(p)		(sizeof(p)/sizeof(p[0]))
+	#ifndef ARRAYSIZE
+		#define ARRAYSIZE(p)		(sizeof(p)/sizeof(p[0]))
+	#endif
 #endif
 
 typedef struct 

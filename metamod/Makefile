@@ -47,12 +47,10 @@ endif
 
 # set paths for your environment
 ifeq "$(OS)" "linux"
-	PATH_WIN=/usr/local/cross-tools/i586-mingw32msvc/bin
 	INST_DIR=$(HOME)/half-life/cstrike/dlls
 	TEST_DIR=$(HOME)/test/tfc/dlls
 	TST_DIR=$(HOME)/tmp
 else	## windows
-	PATH_WIN=/mingw/bin
 	INST_DIR=/hlserver/tfc/dlls
 	TEST_DIR=/hlserver/tfc/dlls
 endif
@@ -74,20 +72,20 @@ endif
 
 ifeq "$(OS)" "linux"
 	INSTALL=install -m 644
-	LD_WINDLL= PATH=$(PATH_WIN) $(PATH_WIN)/dllwrap
+	LD_WINDLL= i686-w64-mingw32-dllwrap
 	OSTARGET=linux
 	LIBFILE=$(LIBFILE_LINUX)
 	TARGET_FILE=$(TARGET_LINUX)
 else	## windows
 	INSTALL=cp
-	LD_WINDLL= dllwrap
+	LD_WINDLL= i686-w64-mingw32-dllwrap
 	OSTARGET=win32
 	LIBFILE=$(LIBFILE_WIN)
 	TARGET_FILE=$(TARGET_WIN)
 endif
 
-CC_WIN=gcc
-RES_WIN=windres
+CC_WIN=i686-w64-mingw32-gcc
+RES_WIN=i686-w64-mingw32-windres
 
 ifeq "$(HOST)" "cygwin"
 	CC_WIN += -mno-cygwin
@@ -277,7 +275,7 @@ DO_RES_WIN=$(RES_WIN) '$(ODEF)' --include-dir . --include-dir ../metamod -i $< -
 #LINK_WIN=$(LD_WINDLL) -k -mwindows --add-stdcall-alias --def metamod.def -o $@ $(OBJ_WIN)
 #LINK_WIN=$(LD_WINDLL) -A -k -mwindows --export-all-symbols -o $@ $(OBJ_WIN)
 #LINK_WIN=$(LD_WINDLL) -mwindows --add-stdcall-alias $(OBJ_WIN) $(RES_OBJ_WIN) -lstdc++ -s -o $@
-LINK_WIN=$(CC_WIN) -mdll -Xlinker --add-stdcall-alias $(EXTRA_LINK) $(OBJ_WIN) $(RES_OBJ_WIN) -s -o $@
+LINK_WIN=$(CC_WIN) $(CFLAGS) -mdll -Xlinker --add-stdcall-alias $(EXTRA_LINK) $(OBJ_WIN) $(RES_OBJ_WIN) -s -o $@
 
 # windows object files
 OBJ_WIN := $(SRCFILES:%.cpp=$(OBJDIR_WIN)/%.o)

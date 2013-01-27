@@ -196,7 +196,9 @@ mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn);
 #elif defined(_WIN32)
 	#include <stdlib.h>
 	#define NAME_MAX	_MAX_FNAME
-	#define PATH_MAX	_MAX_PATH
+	#ifndef PATH_MAX
+		#define PATH_MAX	_MAX_PATH
+	#endif
 #endif /* _WIN32 */
 
 // Various other windows routine differences.
