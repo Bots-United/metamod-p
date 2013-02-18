@@ -4,7 +4,7 @@
 // games.h - list of supported game mods and their data
  
 /*
- * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2013 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -74,6 +74,7 @@
 	{"gearbox",           "opfor"MODARCH".so",        "opfor.dll",         "Opposing Force"},
 	{"globalwarfare",     "gw"MODARCH".so",           "mp.dll",            "Global Warfare"},
 	{"goldeneye",         "golden"MODARCH".so",       "mp.dll",            "Goldeneye"},
+	{"hl15we",            "hl"MODARCH".so",           "hl.dll",            "Half-Life 1.5: Weapon Edition"},
 	{"hlrally",           "hlr"MODARCH".so",          "hlrally.dll",       "HL-Rally"},
 	{"holywars",          "hl"MODARCH".so",           "holywars.dll",      "Holy Wars"},
 	{"hostileintent",     "hl"MODARCH".so",           "hl.dll",            "Hostile Intent"},
