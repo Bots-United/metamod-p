@@ -4,7 +4,7 @@
 // info_name.h - name, desc, author, etc
 
 /*
- * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2013 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -43,7 +43,7 @@
 #define VAUTHOR		"Will Day"
 #define VURL		"http://www.metamod.org/"
 
-#define COPYRIGHT_YEAR "2006"
+#define COPYRIGHT_YEAR "2013"
 
 // Various strings for the Windows DLL Resources in res_meta.rc
 #define RC_COMMENTS		"Metamod-P is enhanced version of Metamod. Metamod allows running multiple mod-like plugin DLLs, to add functionality or change the behavior of the running HLDS game mod.  See " VURL

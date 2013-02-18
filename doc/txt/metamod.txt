@@ -10,13 +10,13 @@ to Metamod, of the following form:
   - meta version - displays version information about the Metamod instance
     currently running on the server, ie:
    
-    Metamod v1.17.4p17  2005/02/19
+    Metamod v1.20p35  2013/02/18
     by Will Day
        http://www.metamod.org/
-     Patch: Metamod-P (mm-p) v17
+     Patch: Metamod-P (mm-p) v35
      by Jussi Kivilinna
         http://koti.mbnet.fi/axh/
-    compiled: Feb 19 2005, 23:17:48 EET (optimized)
+    compiled: Feb 18 2013, xx:xx:xx EET (optimized)
     
   - meta list - displays information about the list of currently running
     plugins, ie:
@@ -34,7 +34,7 @@ Client Cvars
 Also available to client browser applications is a cvar metamod_version
 that should report the version of Metamod running on the server, ie:
 
-"metamod_version" is "1.17.1p9"
+"metamod_version" is "1.20p35"
 
 Installation
 ============
@@ -55,12 +55,12 @@ If you want to install Metamod by hand, here's what you have to do:
     Counter-Strike, you would change:
    
         gamedll "dlls/mp.dll"
-        gamedll_linux "dlls/cs_i386.so"
+        gamedll_linux "dlls/cs.so"
    
     to:
    
         gamedll "addons/metamod/dlls/metamod.dll"
-        gamedll_linux "addons/metamod/dlls/metamod_i386.so"
+        gamedll_linux "addons/metamod/dlls/metamod.so"
    
     Note that it's only really necessary to change the line corresponding
     to your OS (win32 or linux); you can leave the other line unchanged,
