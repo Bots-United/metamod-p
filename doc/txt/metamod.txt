@@ -10,13 +10,13 @@ to Metamod, of the following form:
   - meta version - displays version information about the Metamod instance
     currently running on the server, ie:
    
-    Metamod v1.20p35  2013/02/18
+    Metamod v1.20p35  2013/02/18 (5:13)
     by Will Day
        http://www.metamod.org/
      Patch: Metamod-P (mm-p) v35
      by Jussi Kivilinna
         http://koti.mbnet.fi/axh/
-    compiled: Feb 18 2013, xx:xx:xx EET (optimized)
+    compiled: Feb 18 2013, 11:53:27 EET (optimized)
     
   - meta list - displays information about the list of currently running
     plugins, ie:
