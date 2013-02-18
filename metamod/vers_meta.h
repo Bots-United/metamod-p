@@ -48,8 +48,8 @@
 #define VMETA_VERSION		"1.20"
 
 #define VPATCH_NAME		"Metamod-P (mm-p)"
-#define VPATCH_IVERSION		35
-#define VPATCH_VERSION		"35"
+#define VPATCH_IVERSION		36
+#define VPATCH_VERSION		"36"
 #define VPATCH_AUTHOR		"Jussi Kivilinna"
 #define VPATCH_WEBSITE		"http://metamod-p.sourceforge.net/"
 
