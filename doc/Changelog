@@ -1,5 +1,10 @@
 # vim: set tw=75 ft=none :
 
+For newer changes, see Metamod-P git repository commit log at:
+ http://metamod-p.git.sourceforge.net/git/gitweb.cgi?p=metamod-p/metamod-p;a=summary
+
+---
+
 2012/08/08	1.19p34
  - Revert changes in 1.19p33 and start over with 1.19p32 code base
  - Fix compiling with latest userspace headers and gcc-4.6
