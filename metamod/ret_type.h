@@ -37,7 +37,7 @@ class class_ret_t : public class_metamod_new {
 public:
 	// Construction
 	inline class_ret_t(void) { };
-	inline class_ret_t(float f) { data.ui = *(unsigned int*)&f; };
+	inline class_ret_t(float f) { data.f = f; };
 	inline class_ret_t(void * p) { data.p = p; };
 	inline class_ret_t(const char * pc) { data.pc = pc; };
 	inline class_ret_t(int i) { data.i = i; };
