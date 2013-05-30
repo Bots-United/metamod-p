@@ -900,6 +900,21 @@ static void mm_QueryClientCvarValue2(const edict_t *player, const char *cvarName
 	RETURN_API_void()
 }
 
+// Added 2009/06/19 (no SDK update):
+static int mm_EngCheckParm(const char *pchCmdLineToken, char **pchNextVal) {
+	static mBOOL s_check = mFALSE;
+
+	//Engine version didn't change when this API was added.  Check if the pointer is valid.
+	if (!s_check && g_engfuncs.pfnEngCheckParm &&
+	     !IS_VALID_PTR((void * )g_engfuncs.pfnEngCheckParm)) {
+		g_engfuncs.pfnEngCheckParm = NULL;
+		s_check = mTRUE;
+	}
+
+	META_ENGINE_HANDLE(int, 0, FN_ENGCHECKPARM, pfnEngCheckParm, 2p, (pchCmdLineToken, pchNextVal));
+	RETURN_API(int)
+}
+
 meta_enginefuncs_t meta_engfuncs (
 	&mm_PrecacheModel,			// pfnPrecacheModel()
 	&mm_PrecacheSound,			// pfnPrecacheSound()
@@ -1108,5 +1123,8 @@ meta_enginefuncs_t meta_engfuncs (
 	&mm_QueryClientCvarValue,		// pfnQueryClientCvarValue()
 	
 	// Added 2005/11/21 (no SDK update):
-	&mm_QueryClientCvarValue2		// pfnQueryClientCvarValue2()
+	&mm_QueryClientCvarValue2,		// pfnQueryClientCvarValue2()
+
+	// Added 2009/06/17 (no SDK update):
+	&mm_EngCheckParm			// pfnEngCheckParm()
 );

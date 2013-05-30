@@ -37,7 +37,6 @@
 
 #include "api_info.h"		// me
 #include "api_hook.h"
-
 // trace flag, loglevel, name
 const dllapi_info_t dllapi_info = {
 	{ mFALSE,  3,	api_caller_void_args_void, 	"GameDLLInit" },		// pfnGameInit
@@ -55,7 +54,7 @@ const dllapi_info_t dllapi_info = {
 	{ mFALSE,  9,	api_caller_void_args_p,		"SaveGlobalState" },		// pfnSaveGlobalState
 	{ mFALSE,  9,	api_caller_void_args_p,		"RestoreGlobalState" },		// pfnRestoreGlobalState
 	{ mFALSE,  9,	api_caller_void_args_void, 	"ResetGlobalState" },	// pfnResetGlobalState
-	{ mFALSE,  3,	api_caller_int_args_4pi, 	"ClientConnect" },		// pfnClientConnect
+	{ mFALSE,  3,	api_caller_int_args_4p, 	"ClientConnect" },		// pfnClientConnect
 	{ mFALSE,  3,	api_caller_void_args_p,		"ClientDisconnect" },	// pfnClientDisconnect
 	{ mFALSE,  3,	api_caller_void_args_p,		"ClientKill" },			// pfnClientKill
 	{ mFALSE,  3,	api_caller_void_args_p,		"ClientPutInServer" },	// pfnClientPutInServer
@@ -97,6 +96,10 @@ const newapi_info_t newapi_info = {
 	{ mFALSE,  16,	api_caller_void_args_p,		"OnFreeEntPrivateData" },	// pfnOnFreeEntPrivateData
 	{ mFALSE,  3,	api_caller_void_args_void,	"GameShutdown" },			// pfnGameShutdown
 	{ mFALSE,  14,	api_caller_int_args_2p,		"ShouldCollide" },			// pfnShouldCollide
+	// Added 2005/08/11 (no SDK update):
+	{ mFALSE,  3,	api_caller_void_args_2p,	"CvarValue" },			// pfnCvarValue
+	// Added 2005/11/21 (no SDK update):
+	{ mFALSE,  3,	api_caller_void_args_pi2p,	"CvarValue2" },			// pfnCvarValue2
 	{ mFALSE,  0,	NULL, 	NULL },
 };
 
@@ -142,7 +145,7 @@ const engine_info_t engine_info = {
 	{ mFALSE,  9,	api_caller_void_args_pfp,	"GetAimVector" },		// pfnGetAimVector
 	{ mFALSE,  9,	api_caller_void_args_p,		"ServerCommand" },		// pfnServerCommand
 	{ mFALSE,  9,	api_caller_void_args_void,	"ServerExecute" },		// pfnServerExecute
-	{ mFALSE,  11,	api_caller_void_args_3p,	"engClientCommand" },		// pfnClientCommand		// d'oh, ClientCommand in dllapi too
+	{ mFALSE,  11,	api_caller_void_args_2pV,	"engClientCommand" },		// pfnClientCommand		// d'oh, ClientCommand in dllapi too
 	{ mFALSE,  9,	api_caller_void_args_2p2f,	"ParticleEffect" },		// pfnParticleEffect
 	{ mFALSE,  9,	api_caller_void_args_ip,	"LightStyle" },			// pfnLightStyle
 	{ mFALSE,  9,	api_caller_int_args_p,		"DecalIndex" },			// pfnDecalIndex
@@ -162,8 +165,8 @@ const engine_info_t engine_info = {
 	{ mFALSE,  9,	api_caller_ptr_args_p,		"CVarGetString" },		// pfnCVarGetString
 	{ mFALSE,  10,	api_caller_void_args_pf,	"CVarSetFloat" },		// pfnCVarSetFloat
 	{ mFALSE,  9,	api_caller_void_args_2p,	"CVarSetString" },		// pfnCVarSetString
-	{ mFALSE,  15,	api_caller_void_args_i2p,	"AlertMessage" },		// pfnAlertMessage
-	{ mFALSE,  17,	api_caller_void_args_3p,	"EngineFprintf" },		// pfnEngineFprintf
+	{ mFALSE,  15,	api_caller_void_args_ipV,	"AlertMessage" },		// pfnAlertMessage
+	{ mFALSE,  17,	api_caller_void_args_2pV,	"EngineFprintf" },		// pfnEngineFprintf
 	{ mFALSE,  14,	api_caller_ptr_args_pi,		"PvAllocEntPrivateData" },	// pfnPvAllocEntPrivateData
 	{ mFALSE,  9,	api_caller_ptr_args_p,		"PvEntPrivateData" },		// pfnPvEntPrivateData
 	{ mFALSE,  9,	api_caller_void_args_p,		"FreeEntPrivateData" },		// pfnFreeEntPrivateData
@@ -190,7 +193,7 @@ const engine_info_t engine_info = {
 	{ mFALSE,  9,	api_caller_void_args_p,		"CRC32_Init" },			// pfnCRC32_Init
 	{ mFALSE,  9,	api_caller_void_args_2pi,	"CRC32_ProcessBuffer" },	// pfnCRC32_ProcessBuffer
 	{ mFALSE,  9,	api_caller_void_args_puc,	"CRC32_ProcessByte" },		// pfnCRC32_ProcessByte
-	{ mFALSE,  9,	api_caller_uint_args_ui,	"CRC32_Final" },		// pfnCRC32_Final
+	{ mFALSE,  9,	api_caller_ulong_args_ul,	"CRC32_Final" },		// pfnCRC32_Final
 	{ mFALSE,  16,	api_caller_int_args_2i,		"RandomLong" },			// pfnRandomLong
 	{ mFALSE,  14,	api_caller_float_args_2f,	"RandomFloat" },		// pfnRandomFloat		// CS: when firing
 	{ mFALSE,  14,	api_caller_void_args_2p,	"SetView" },			// pfnSetView
@@ -259,6 +262,12 @@ const engine_info_t engine_info = {
 	{ mFALSE,  30,	api_caller_void_args_pi,	"ProcessTutorMessageDecayBuffer" },	// pfnProcessTutorMessageDecayBuffer
 	{ mFALSE,  30,	api_caller_void_args_pi,	"ConstructTutorMessageDecayBuffer" },	// pfnConstructTutorMessageDecayBuffer
 	{ mFALSE,  9,	api_caller_void_args_void,	"ResetTutorMessageDecayData" },	// pfnResetTutorMessageDecayData
+	// Added 2005/08/11 (no SDK update):
+	{ mFALSE,  3,	api_caller_void_args_2p,	"QueryClientCvarValue" },	// pfnQueryClientCvarValue
+	// Added 2005/11/21 (no SDK update):
+	{ mFALSE,  3,	api_caller_void_args_2pi,	"QueryClientCvarValue2" },	// pfnQueryClientCvarValue2
+	// Added 2009-06-17 (no SDK update):
+	{ mFALSE,  8,	api_caller_int_args_2p,		"EngCheckParm" },		// pfnEngCheckParm
 	// end
 	{ mFALSE,  0,   NULL,	NULL },
 };

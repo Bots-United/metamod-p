@@ -137,6 +137,7 @@ class EngineInfo : public class_metamod_new
         bool DLLINTERNAL is_valid_code_pointer(             void (*fp) (void) );
         bool DLLINTERNAL is_valid_code_pointer(             void (*fp) (const edict_t*, const char*) );
         bool DLLINTERNAL is_valid_code_pointer(             void (*fp) (const edict_t*, const char*, int) );
+        bool DLLINTERNAL is_valid_code_pointer(              int (*fp) (const char *, char**) );
 };
 
 
@@ -249,6 +250,11 @@ inline bool EngineInfo::is_valid_code_pointer( void (*_fp) (const edict_t*, cons
 }
 
 inline bool EngineInfo::is_valid_code_pointer( void (*_fp) (const edict_t*, const char*, int) )
+{
+    	return is_valid_code_pointer( (void*)_fp );
+}
+
+inline bool EngineInfo::is_valid_code_pointer( int (*_fp) (const char*, char**) )
 {
     	return is_valid_code_pointer( (void*)_fp );
 }

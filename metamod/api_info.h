@@ -298,6 +298,8 @@ typedef struct engine_info_s {
 	api_info_t pfnQueryClientCvarValue;
 	// Added 2005/11/21 (no SDK update):
 	api_info_t pfnQueryClientCvarValue2;
+	// Added 2009/06/17 (no SDK update):
+	api_info_t pfnEngCheckParm;
 	// end
 	api_info_t END;
 } engine_info_t;

@@ -103,4 +103,11 @@ extern void OnFreeEntPrivateData_Post(edict_t pEnt);
 extern void GameShutdown_Post(void);
 extern int ShouldCollide_Post(edict_t *pentTouched, edict_t *pentOther);
 
+// Added 2005-08-11 (no SDK update)
+void CvarValue_Post(const edict_t *pEdict, const char *szValue);
+
+// Added 2005-11-22 (no SDK update)
+void CvarValue2_Post(const edict_t *pEdict, int requestID, const char *cvarName, const char *value);
+
+
 #endif /* DLLAPI_H */

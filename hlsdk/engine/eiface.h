@@ -311,6 +311,9 @@ typedef struct enginefuncs_s
 	// Added 2005/11/21 (no SDK update):
 	void		(*pfnQueryClientCvarValue2)		(const edict_t *player, const char *cvarName, int requestID);
 
+	// Added 2009/06/19 (no SDK update):
+	int 		(*pfnEngCheckParm)			(const char *pchCmdLineToken, char **pchNextVal);
+
 #ifdef __METAMOD_BUILD__
 	//extra (future updates)
 	void * extra_functions[16];

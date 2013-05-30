@@ -281,6 +281,19 @@ int ShouldCollide(edict_t *pentTouched, edict_t *pentOther) {
 	RETURN_META_VALUE(MRES_IGNORED, 1);
 }
 
+// Added 2005-08-11 (no SDK update)
+void CvarValue(const edict_t *pEdict, const char *szValue) {
+	NEWDLL_TRACE(pfnCvarValue, P_PRE, ("player=%s, value=%s", STRING(pEdict->v.netname), szValue?szValue:"nil"));
+	RETURN_META(MRES_IGNORED);
+}
+
+// Added 2005-11-22 (no SDK update)
+void CvarValue2(const edict_t *pEdict, int requestID, const char *cvarName, const char *value) {
+	NEWDLL_TRACE(pfnCvarValue2, P_PRE, ("player=%s, requestID=%d, cvar=%s, value=%s", 
+										STRING(pEdict->v.netname), requestID, cvarName?cvarName:"nil", value?value:"nil"));
+	RETURN_META(MRES_IGNORED);
+}
+
 
 // from SDK dlls/cbase.cpp:
 // (wd) indicates my comments on the functions
@@ -402,6 +415,10 @@ static NEW_DLL_FUNCTIONS gNewFunctionTable =
 	OnFreeEntPrivateData,		//! pfnOnFreeEntPrivateData()	Called right before the object's memory is freed.  Calls its destructor.
 	GameShutdown,				//! pfnGameShutdown()
 	ShouldCollide,				//! pfnShouldCollide()
+	// Added 2005-08-11 (no SDK update)
+	CvarValue,					//! pfnCvarValue()
+	// Added 2005-11-22 (no SDK update)
+	CvarValue2,					//! pfnCvarValue2()
 };
 
 C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, 

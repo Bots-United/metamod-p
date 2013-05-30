@@ -268,6 +268,8 @@ const engine_info_t engine_info = {
 	{ mFALSE,  3,	api_caller_void_args_2p,	"QueryClientCvarValue" },	// pfnQueryClientCvarValue
 	// Added 2005/11/21 (no SDK update):
 	{ mFALSE,  3,	api_caller_void_args_2pi,	"QueryClientCvarValue2" },	// pfnQueryClientCvarValue2
+	// Added 2009-06-17 (no SDK update):
+	{ mFALSE,  8,	api_caller_int_args_2p,		"EngCheckParm" },		// pfnEngCheckParm
 	// end
 	{ mFALSE,  0,   NULL,	NULL },
 };

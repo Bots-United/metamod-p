@@ -345,7 +345,8 @@ struct meta_enginefuncs_t : public enginefuncs_t {
 		void             (*_pfnConstructTutorMessageDecayBuffer)(int*, int),
 		void             (*_pfnResetTutorMessageDecayData)      (void),
 		void             (*_pfnQueryClientCvarValue)            (const edict_t*, const char*),
-		void             (*_pfnQueryClientCvarValue2)           (const edict_t*, const char*, int)
+		void             (*_pfnQueryClientCvarValue2)           (const edict_t*, const char*, int),
+		int              (*_pfnEngCheckParm)                    (const char *, char**)
         ) DLLINTERNAL;
 
         meta_enginefuncs_t( const meta_enginefuncs_t& ) DLLINTERNAL;
@@ -381,6 +382,7 @@ struct meta_enginefuncs_t : public enginefuncs_t {
 	//      including pfnQueryClientCvarValue()
 	// 156: includes pfnQueryClientCvarValue()
 	// 157: includes pfnQueryClientCvarValue2()
+	// 158: includes pfnEngCheckParm()
 	static int sm_version DLLHIDDEN;	
 
 };
