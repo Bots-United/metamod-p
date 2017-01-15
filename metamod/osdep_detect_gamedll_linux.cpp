@@ -45,15 +45,6 @@
 #include "osdep_p.h"			// me
 #include "support_meta.h"		// STRNCPY
 
-/*
- * GLIBC 2.11+ intercept longjmp with __longjmp_chk. However we want
- * binary compability with older versions of GLIBC.
- */
-#ifdef __amd64__
-	__asm__(".symver __longjmp_chk,longjmp@GLIBC_2.2.5");
-#else
-	__asm__(".symver __longjmp_chk,longjmp@GLIBC_2.0");
-#endif /*__amd64__*/
 
 // On linux manually search for exports from dynamic library file.
 //  --Jussi Kivilinna
@@ -61,6 +52,21 @@ static jmp_buf signal_jmp_buf;
 
 // Signal handler for is_gamedll()
 static void signal_handler_sigsegv(int) {
+	/*
+	 * GLIBC 2.11+ intercept longjmp with __longjmp_chk. However we want
+	 * binary compability with older versions of GLIBC.
+	 */
+#ifdef __amd64__
+	__asm__ volatile(".symver __longjmp_chk,longjmp@GLIBC_2.2.5"
+			 :
+			 :"r"(&signal_jmp_buf)
+			 :"memory");
+#else
+	__asm__ volatile(".symver __longjmp_chk,longjmp@GLIBC_2.0"
+			 :
+			 :"r"(&signal_jmp_buf)
+			 :"memory");
+#endif /*__amd64__*/
 	longjmp(signal_jmp_buf, 1);
 }
 
