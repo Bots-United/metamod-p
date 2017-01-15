@@ -103,12 +103,14 @@ OBJDIR_WIN_DBG=debug.win32
 #############################################################################
 
 ifeq "$(OS)" "linux"
-	GCCMAJ = $(shell $(CC) -dumpversion | sed -e 's/\.[0-9][0-9]*//')
-	GCCMIN = $(shell $(CC) -dumpversion | sed -e 's/[0-9]\.//;s/\.[0-9]//')
+	GCCMAJ = $(shell $(CC) -dumpversion | sed -e 's/\.[0-9][0-9]*//' -e 's/\.[0-9][0-9]*//')
+	GCCMIN = $(shell $(CC) -dumpversion | sed -e 's/[0-9]\.//;s/\.[0-9]//' -e 's/\.[0-9][0-9]*//')
 else
-	GCCMAJ = $(shell $(CC_WIN) -dumpversion | sed -e 's/\.[0-9][0-9]*//')
-	GCCMIN = $(shell $(CC_WIN) -dumpversion | sed -e 's/[0-9]\.//;s/\.[0-9]//')
+	GCCMAJ = $(shell $(CC_WIN) -dumpversion | sed -e 's/\.[0-9][0-9]*//' -e 's/\.[0-9][0-9]*//')
+	GCCMIN = $(shell $(CC_WIN) -dumpversion | sed -e 's/[0-9]\.//;s/\.[0-9]//' -e 's/\.[0-9][0-9]*//')
 endif
+
+GCCMAJ_GT_4 = $(shell if [ $(GCCMAJ) -gt 4 ]; then echo 1; else echo 0; fi)
 
 ifeq "$(HOST)" "cygwin"
 	ifeq "$(TARGETTYPE)" "amd64"
@@ -132,6 +134,9 @@ ifeq "$(GCCMAJ)" "3"
 	endif
 endif
 ifeq "$(GCCMAJ)" "4"
+	MCPU=-mtune
+endif
+ifeq "$(GCCMAJ_GT_4)" "1"
 	MCPU=-mtune
 endif
 
@@ -167,7 +172,7 @@ endif
 CCOPT = $(CCO) $(CCOPT_ARCH) -fno-exceptions -fno-rtti
 
 # optimization level; overridden for certain problematic files
-CCO = -O2 -fomit-frame-pointer -ffast-math
+CCO = -O2 -fomit-frame-pointer -funsafe-math-optimizations
 
 # architecture tuning by target type
 ifeq "$(TARGETTYPE)" "amd64"
@@ -188,9 +193,9 @@ SRCDIR=.
 INCLUDEDIRS+=-I$(SRCDIR) -I$(METADIR) -I$(SDKSRC)/engine -I$(SDKSRC)/common -I$(SDKSRC)/pm_shared -I$(SDKSRC)/dlls -I$(SDKSRC)
 FILES_ALL = *.cpp *.h [A-Z]* *.rc
 
-CFLAGS=-Wall -Wno-unknown-pragmas -Wno-attributes
+CFLAGS=-Wall -Wno-unknown-pragmas -Wno-attributes -Wno-write-strings
 
-CFLAGS+=
+CFLAGS+=-std=gnu++98 -Wno-c++11-compat
 
 #CFLAGS += -DTEST
 
