@@ -132,7 +132,7 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 	static char autodetect_desc_buf[NAME_MAX]; // pointer is given outside function
 	char install_path[NAME_MAX];
 	const game_modinfo_t *known;
-	char *cp, *strippedfn;
+	char *cp;
 	const char *autofn = 0, *knownfn=0, *usedfn = 0;
 	int override=0;
 
@@ -169,6 +169,8 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 		// Do this before autodetecting gamedll from "dlls/*.dll"
 		if(!Config->gamedll) {
 #ifdef linux
+			char *strippedfn;
+
 			// The engine changed game dll lookup behaviour in that it strips
 			// anything after the last '_' from the name and tries to load the
 			// resulting name. The DSO names were changed and do not have the
