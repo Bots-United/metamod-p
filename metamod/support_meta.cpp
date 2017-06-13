@@ -36,7 +36,7 @@
 
 #include <extdll.h>			// always
 
-#include <metamod.h>		// GameDLL
+#include "metamod.h"		// GameDLL
 #include "support_meta.h"	// me
 #include "osdep.h"			// sleep, etc
 
