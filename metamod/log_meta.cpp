@@ -37,6 +37,10 @@
 #include <stdio.h>		// vsnprintf, etc
 #include <stdarg.h>		// va_start, etc
 
+// We need to write error messages.
+#include <fstream>
+using namespace std;
+
 #include <extdll.h>				// always
 #include "enginecallbacks.h"		// ALERT, etc
 
@@ -110,7 +114,7 @@ void DLLINTERNAL META_WARNING(const char *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);
-	buffered_ALERT(mlsIWEL, at_logged, prefixWARNING, fmt, ap);
+	buffered_ALERT(mlsIWEL, at_error, prefixWARNING, fmt, ap);
 	va_end(ap);
 }
 
@@ -120,7 +124,7 @@ void DLLINTERNAL META_ERROR(const char *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);
-	buffered_ALERT(mlsIWEL, at_logged, prefixERROR, fmt, ap);
+	buffered_ALERT(mlsIWEL, at_warning, prefixERROR, fmt, ap);
 	va_end(ap);
 }
 
@@ -194,6 +198,12 @@ static void buffered_ALERT(MLOG_SERVICE service, ALERT_TYPE atype, const char *p
 	if (NULL != g_engfuncs.pfnAlertMessage) {
 		vsnprintf(buf, sizeof(buf), fmt, ap);
 		ALERT(atype, "%s %s\n", prefix, buf);
+		// Lets make sure this gets logged, useful if the game/mod keeps crashing.
+		if (atype == at_warning || atype == at_error)
+		{
+			std::ofstream log("meta_error.log", std::ios_base::app | std::ios_base::out);
+			log << buf << endl;
+		}
 		return;
 	}
 
@@ -214,7 +224,7 @@ static void buffered_ALERT(MLOG_SERVICE service, ALERT_TYPE atype, const char *p
 	} else {
 		messageQueueEnd->next = msg;
 		messageQueueEnd = msg;
-	}	
+	}
 } 
 
 
