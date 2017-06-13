@@ -68,6 +68,8 @@ option_t global_options[] = {
 	{ "exec_cfg",		CF_STR,			&Config->exec_cfg,		EXEC_CFG },
 	{ "autodetect",		CF_BOOL,		&Config->autodetect,	"yes" },
 	{ "clientmeta",		CF_BOOL,		&Config->clientmeta,	"yes" },
+	{ "logfile",		CF_PATH,		&Config->logfile,		"meta_error.log" },
+	{ "logfile_level",	CF_INT,			&Config->logfile_level,	"2" },
 	// list terminator
 	{ NULL, CF_NONE, NULL, NULL }
 };

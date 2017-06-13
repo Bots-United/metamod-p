@@ -89,7 +89,9 @@ class MConfig : public class_metamod_new {
 		char *plugins_file;	// ie metamod.ini, plugins.ini
 		char *exec_cfg;		// ie metaexec.cfg, exec.cfg
 		int autodetect;		// autodetection of gamedll (Metamod-All-Support patch)
-		int clientmeta;         // control 'meta' client-command
+		int clientmeta;     // control 'meta' client-command
+		char *logfile;		// metamod log output file
+		int logfile_level;	// logging level for log file (0: none, 1: errors, 2: and warnings, 3: and info, 4: and debug)
 		// functions
 		void DLLINTERNAL init(option_t *global_options);
 		mBOOL DLLINTERNAL load(const char *filename);

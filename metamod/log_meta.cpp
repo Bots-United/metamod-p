@@ -44,6 +44,7 @@
 #include "log_meta.h"			// me
 #include "osdep.h"				// win32 vsnprintf, etc
 #include "support_meta.h"		// MAX
+#include "metamod.h"			// Config
 
 cvar_t meta_debug = {"meta_debug", "0", FCVAR_EXTDLL, 0, NULL};
 
@@ -56,7 +57,7 @@ enum MLOG_SERVICE {
 	mlsCLIENT
 };
 
-static void buffered_ALERT(MLOG_SERVICE service, ALERT_TYPE atype, const char *prefix, const char *fmt, va_list ap);
+static void DLLINTERNAL buffered_ALERT(int level, MLOG_SERVICE service, ALERT_TYPE atype, const char *prefix, const char *fmt, va_list ap);
 
 // Print to console.
 void DLLINTERNAL META_CONS(const char *fmt, ...) {
@@ -90,7 +91,7 @@ void DLLINTERNAL META_DEV(const char *fmt, ...) {
 	}
 
 	va_start(ap, fmt);
-	buffered_ALERT(mlsDEV, at_logged, prefixDEV, fmt, ap);
+	buffered_ALERT(4, mlsDEV, at_logged, prefixDEV, fmt, ap);
 	va_end(ap);
 }
 
@@ -100,7 +101,7 @@ void DLLINTERNAL META_INFO(const char *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);
-	buffered_ALERT(mlsIWEL, at_logged, prefixINFO, fmt, ap);
+	buffered_ALERT(3, mlsIWEL, at_logged, prefixINFO, fmt, ap);
 	va_end(ap);
 }
 
@@ -110,7 +111,7 @@ void DLLINTERNAL META_WARNING(const char *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);
-	buffered_ALERT(mlsIWEL, at_logged, prefixWARNING, fmt, ap);
+	buffered_ALERT(2, mlsIWEL, at_logged, prefixWARNING, fmt, ap);
 	va_end(ap);
 }
 
@@ -120,7 +121,7 @@ void DLLINTERNAL META_ERROR(const char *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);
-	buffered_ALERT(mlsIWEL, at_logged, prefixERROR, fmt, ap);
+	buffered_ALERT(1, mlsIWEL, at_logged, prefixERROR, fmt, ap);
 	va_end(ap);
 }
 
@@ -130,7 +131,7 @@ void DLLINTERNAL META_LOG(const char *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);
-	buffered_ALERT(mlsIWEL, at_logged, prefixLOG, fmt, ap);
+	buffered_ALERT(3, mlsIWEL, at_logged, prefixLOG, fmt, ap);
 	va_end(ap);
 }
 
@@ -163,14 +164,17 @@ void DLLINTERNAL META_DEBUG_SET_LEVEL(int level) {
 }
 
 void DLLINTERNAL META_DO_DEBUG(const char *fmt, ...) {
-	char meta_debug_str[1024];
+	char meta_debug_str[MAX_LOGMSG_LEN];
+	char prefix[64];
 	va_list ap;
 	
 	va_start(ap, fmt);
 	safevoid_vsnprintf(meta_debug_str, sizeof(meta_debug_str), fmt, ap);
 	va_end(ap);
+
+	safevoid_snprintf(prefix, sizeof(prefix), "[META] (debug:%d):", debug_level);
 	
-	ALERT(at_logged, "[META] (debug:%d) %s\n", debug_level, meta_debug_str);
+	buffered_ALERT(4, mlsIWEL, at_logged, prefix, "%s", meta_debug_str);
 }
 
 #endif /*!__BUILD_FAST_METAMOD__*/
@@ -179,7 +183,7 @@ class BufferedMessage : public class_metamod_new {
 public:
 	MLOG_SERVICE service;
 	ALERT_TYPE atype;
-	const char *prefix;
+	char prefix[64];
 	char buf[MAX_LOGMSG_LEN];
 	BufferedMessage *next;
 };
@@ -187,12 +191,23 @@ public:
 static BufferedMessage *messageQueueStart = NULL;
 static BufferedMessage *messageQueueEnd   = NULL;
 
-static void buffered_ALERT(MLOG_SERVICE service, ALERT_TYPE atype, const char *prefix, const char *fmt, va_list ap) {
+static void DLLINTERNAL buffered_ALERT(int level, MLOG_SERVICE service, ALERT_TYPE atype, const char *prefix, const char *fmt, va_list ap) {
 	char buf[MAX_LOGMSG_LEN];
 	BufferedMessage *msg;
 
+	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
+
+	if (Config->logfile_level >= level && Config->logfile != NULL) {
+		FILE *file;
+
+		file = fopen(Config->logfile, "at+");
+		if (file) {
+			fprintf(file, "%s %s\n", prefix, buf);
+			fclose(file);
+		}
+	}
+
 	if (NULL != g_engfuncs.pfnAlertMessage) {
-		vsnprintf(buf, sizeof(buf), fmt, ap);
 		ALERT(atype, "%s %s\n", prefix, buf);
 		return;
 	}
@@ -205,8 +220,8 @@ static void buffered_ALERT(MLOG_SERVICE service, ALERT_TYPE atype, const char *p
 	}
 	msg->service = service;
 	msg->atype = atype;
-	msg->prefix = prefix;
-	vsnprintf(msg->buf, sizeof(buf), fmt, ap);
+	safevoid_snprintf(msg->prefix, sizeof(msg->prefix), "%s", prefix);
+	safevoid_snprintf(msg->buf, sizeof(msg->buf), "%s", buf);
 	msg->next = NULL;
 
 	if (NULL == messageQueueEnd) {
