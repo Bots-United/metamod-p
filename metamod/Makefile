@@ -179,7 +179,7 @@ CCO += -flto -fvisibility=hidden
 ifeq "$(TARGETTYPE)" "amd64"
 	CCOPT_ARCH =
 else
-	CCOPT_ARCH = -march=i686 $(MCPU)=generic -msse -msse2 -msse3
+	CCOPT_ARCH = -march=i686 $(MCPU)=generic -msse2 -msse3
 endif
 
 # debugging; halt on warnings
