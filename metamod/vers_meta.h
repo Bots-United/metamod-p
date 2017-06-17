@@ -5,7 +5,7 @@
 // with metamod.
 
 /*
- * Copyright (c) 2001-2013 Will Day <willday@hpgx.net>
+ * Copyright (c) 2001-2017 Will Day <willday@hpgx.net>
  *
  *    This file is part of Metamod.
  *
@@ -43,13 +43,13 @@
 #endif /* not OPT_TYPE */
 
 
-#define VDATE 			"2013/05/30"
-#define VPATCH_COPYRIGHT_YEAR   "2013"
+#define VDATE 			"2017/06/17"
+#define VPATCH_COPYRIGHT_YEAR   "2017"
 #define VMETA_VERSION		"1.21"
 
 #define VPATCH_NAME		"Metamod-P (mm-p)"
-#define VPATCH_IVERSION		37
-#define VPATCH_VERSION		"37"
+#define VPATCH_IVERSION		38
+#define VPATCH_VERSION		"38"
 #define VPATCH_AUTHOR		"Jussi Kivilinna"
 #define VPATCH_WEBSITE		"http://metamod-p.sourceforge.net/"
 
