@@ -79,6 +79,7 @@
 	{"globalwarfare",     "gw"MODARCH".so",           "mp.dll",            "Global Warfare"},
 	{"goldeneye",         "golden"MODARCH".so",       "mp.dll",            "Goldeneye"},
 	{"hl15we",            "hl"MODARCH".so",           "hl.dll",            "Half-Life 1.5: Weapon Edition"},
+	{"HLAinGOLDSrc",      "none",                     "hl.dll",            "Half-Life Alpha in GOLDSrc"},
 	{"hlrally",           "hlr"MODARCH".so",          "hlrally.dll",       "HL-Rally"},
 	{"holywars",          "hl"MODARCH".so",           "holywars.dll",      "Holy Wars"},
 	{"hostileintent",     "hl"MODARCH".so",           "hl.dll",            "Hostile Intent"},
