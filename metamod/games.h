@@ -51,7 +51,7 @@
 	{"asheep",            "hl"MODARCH".so",           "hl.dll",            "Azure Sheep"},
 	{"hcfrenzy",          "hcfrenzy.so",              "hcfrenzy.dll",      "Headcrab Frenzy" },
 	{"bdef",              "../cl_dlls/server.so",     "../cl_dlls/server.dll", "Base Defense [Modification]" },
-	{"bdef",              "none",                     "server.dll",        "Base Defense [Steam Version]" },
+	{"bdef",              "server.so",                     "server.dll",        "Base Defense [Steam Version]" },
 	{"bg",                "bg"MODARCH".so",           "bg.dll",            "The Battle Grounds"},
 	{"bhl",               "none",                     "bhl.dll",           "Brutal Half-Life" },
 	{"bot",               "bot"MODARCH".so",          "bot.dll",           "Bot"},
