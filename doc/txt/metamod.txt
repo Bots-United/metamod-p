@@ -10,13 +10,13 @@ to Metamod, of the following form:
   - meta version - displays version information about the Metamod instance
     currently running on the server, ie:
    
-    Metamod v1.21p37  2013/05/30 (5:13)
+    Metamod v1.21p38  2018/02/11 (5:13)
     by Will Day
        http://www.metamod.org/
-     Patch: Metamod-P (mm-p) v37
+     Patch: Metamod-P (mm-p) v38
      by Jussi Kivilinna
         http://koti.mbnet.fi/axh/
-    compiled: Feb 18 2013, 11:53:27 EET (optimized)
+    compiled: Feb 11 2017, xx:xx:xx EET (optimized)
     
   - meta list - displays information about the list of currently running
     plugins, ie:
@@ -34,7 +34,7 @@ Client Cvars
 Also available to client browser applications is a cvar metamod_version
 that should report the version of Metamod running on the server, ie:
 
-"metamod_version" is "1.21p37"
+"metamod_version" is "1.21p38"
 
 Installation
 ============
