@@ -34,16 +34,15 @@
  *
  */
 
-#include <extdll.h>			// always
-
-#include <api_info.h>		// api_info_t, etc
+#include <extdll.h>		// always
 #include <sdk_util.h>		// REG_SVR_COMMAND, etc
 #include <meta_api.h>		// Plugin_info, etc
 
+#include "api_info.h"		// api_info_t, etc
 #include "trace_api.h"		// me
 #include "log_plugin.h"		// LOG_MSG, etc
 #include "vers_meta.h"		// OPT_TYPE
-#include "vdate.h"			// COMPILE_TIME
+#include "vdate.h"		// COMPILE_TIME
 
 cvar_t init_dllapi_trace = {"trace_dllapi", "0", FCVAR_EXTDLL, 0, NULL};
 cvar_t init_newapi_trace = {"trace_newapi", "0", FCVAR_EXTDLL, 0, NULL};
@@ -180,19 +179,19 @@ void cmd_trace_show(void) {
 	api_info_t *routine;
 	int n=0;
 	LOG_CONSOLE(PLID, "Tracing routines:");
-	for(routine=(api_info_t *) &dllapi_info; routine->name; routine++) {
+	for(api_info_t *routine=&dllapi_info.pfnGameInit; routine->name; routine++) {
 		if(routine->trace==mTRUE) {
 			LOG_CONSOLE(PLID, "   %s (dllapi)", routine->name);
 			n++;
 		}
 	}
-	for(routine=(api_info_t *) &newapi_info; routine->name; routine++) {
+	for(api_info_t *routine=&newapi_info.pfnOnFreeEntPrivateData; routine->name; routine++) {
 		if(routine->trace==mTRUE) {
 			LOG_CONSOLE(PLID, "   %s (newapi)", routine->name);
 			n++;
 		}
 	}
-	for(routine=(api_info_t *) &engine_info; routine->name; routine++) {
+	for(api_info_t *routine=&engine_info.pfnPrecacheModel; routine->name; routine++) {
 		if(routine->trace==mTRUE) {
 			LOG_CONSOLE(PLID, "   %s (engine)", routine->name);
 			n++;
@@ -203,7 +202,6 @@ void cmd_trace_show(void) {
 
 // "trace list" console command.
 void cmd_trace_list(void) {
-	api_info_t *routine;
 	mBOOL valid=mFALSE;
 	int n, t;
 	const char *arg;
@@ -212,7 +210,7 @@ void cmd_trace_list(void) {
 		valid=mTRUE;
 		n=0; t=0;
 		LOG_CONSOLE(PLID, "DLLAPI routines:");
-		for(routine=(api_info_t *) &dllapi_info; routine->name; routine++) {
+		for(api_info_t *routine=&dllapi_info.pfnGameInit; routine->name; routine++) {
 			LOG_CONSOLE(PLID, "  %c %s", 
 					routine->trace ? '+' : ' ',
 					routine->name);
@@ -225,7 +223,7 @@ void cmd_trace_list(void) {
 		valid=mTRUE;
 		n=0; t=0;
 		LOG_CONSOLE(PLID, "NEWAPI routines:");
-		for(routine=(api_info_t *) &newapi_info; routine->name; routine++) {
+		for(api_info_t *routine=&newapi_info.pfnOnFreeEntPrivateData; routine->name; routine++) {
 			LOG_CONSOLE(PLID, "  %c %s", 
 					routine->trace ? '+' : ' ',
 					routine->name);
@@ -238,7 +236,7 @@ void cmd_trace_list(void) {
 		valid=mTRUE;
 		n=0; t=0;
 		LOG_CONSOLE(PLID, "Engine routines:");
-		for(routine=(api_info_t *) &engine_info; routine->name; routine++) {
+		for(api_info_t *routine=&engine_info.pfnPrecacheModel; routine->name; routine++) {
 			LOG_CONSOLE(PLID, "  %c %s", 
 					routine->trace ? '+' : ' ',
 					routine->name);
@@ -265,8 +263,7 @@ void cmd_trace_list(void) {
 // Returns API list in which the routine was found, as well as the
 // "canonicalized" routine name/string.
 TRACE_RESULT trace_setflag(const char **pfn_string, mBOOL flagval, const char **api) {
-	api_info_t *routine;
-	for(routine=(api_info_t *) &dllapi_info; routine->name; routine++) {
+	for(api_info_t *routine=&dllapi_info.pfnGameInit; routine->name; routine++) {
 		if(!strcasecmp(routine->name, *pfn_string)) {
 			*pfn_string=routine->name;
 			*api="DLLAPI";
@@ -276,7 +273,7 @@ TRACE_RESULT trace_setflag(const char **pfn_string, mBOOL flagval, const char **
 			return(TR_SUCCESS);
 		}
 	}
-	for(routine=(api_info_t *) &newapi_info; routine->name; routine++) {
+	for(api_info_t *routine=&newapi_info.pfnOnFreeEntPrivateData; routine->name; routine++) {
 		if(!strcasecmp(routine->name, *pfn_string)) {
 			*pfn_string=routine->name;
 			*api="NEWAPI";
@@ -286,7 +283,7 @@ TRACE_RESULT trace_setflag(const char **pfn_string, mBOOL flagval, const char **
 			return(TR_SUCCESS);
 		}
 	}
-	for(routine=(api_info_t *) &engine_info; routine->name; routine++) {
+	for(api_info_t *routine=&engine_info.pfnPrecacheModel; routine->name; routine++) {
 		if(!strcasecmp(routine->name, *pfn_string)) {
 			*pfn_string=routine->name;
 			*api="Engine";
