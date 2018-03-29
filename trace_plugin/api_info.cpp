@@ -38,7 +38,7 @@
 #include "api_info.h"		// me
 #include "api_hook.h"
 // trace flag, loglevel, name
-const dllapi_info_t dllapi_info = {
+dllapi_info_t dllapi_info = {
 	{ mFALSE,  3,	api_caller_void_args_void, 	"GameDLLInit" },		// pfnGameInit
 	{ mFALSE,  10,	api_caller_int_args_p, 		"DispatchSpawn" },		// pfnSpawn
 	{ mFALSE,  16,	api_caller_void_args_p,		"DispatchThink" },		// pfnThink
@@ -92,7 +92,7 @@ const dllapi_info_t dllapi_info = {
 	{ mFALSE,  0,	NULL, 	NULL },
 };
 
-const newapi_info_t newapi_info = {
+newapi_info_t newapi_info = {
 	{ mFALSE,  16,	api_caller_void_args_p,		"OnFreeEntPrivateData" },	// pfnOnFreeEntPrivateData
 	{ mFALSE,  3,	api_caller_void_args_void,	"GameShutdown" },			// pfnGameShutdown
 	{ mFALSE,  14,	api_caller_int_args_2p,		"ShouldCollide" },			// pfnShouldCollide
@@ -103,7 +103,7 @@ const newapi_info_t newapi_info = {
 	{ mFALSE,  0,	NULL, 	NULL },
 };
 
-const engine_info_t engine_info = {
+engine_info_t engine_info = {
 	{ mFALSE,  13,	api_caller_int_args_p,		"PrecacheModel" },		// pfnPrecacheModel
 	{ mFALSE,  13,	api_caller_int_args_p,		"PrecacheSound" },		// pfnPrecacheSound
 	{ mFALSE,  18,	api_caller_void_args_2p,	"SetModel" },			// pfnSetModel
