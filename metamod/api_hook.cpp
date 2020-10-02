@@ -342,7 +342,7 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 	
 	call_count++;
 	
-	//Pre plugin functions
+	//Post plugin functions
 	prev_mres=MRES_UNSET;
 	for(i=0; likely(i < Plugins->endlist); i++) {
 		iplug=&Plugins->plist[i];
