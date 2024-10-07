@@ -413,7 +413,7 @@ char * DLLINTERNAL MPlugin::resolve_suffix(const char *path) {
 
 #ifdef _WIN32
 	safevoid_snprintf(buf, sizeof(buf), "%s.dll", path);
-#elif defined(linux)
+#elif defined(__linux__)
 	safevoid_snprintf(buf, sizeof(buf), "%s.so", path);
 #else
 #error "OS unrecognized"
@@ -421,7 +421,7 @@ char * DLLINTERNAL MPlugin::resolve_suffix(const char *path) {
 	if(stat(buf, &st) == 0 && S_ISREG(st.st_mode))
 		return(buf);
 
-#ifdef linux
+#ifdef __linux__
 #ifdef __x86_64__
 	safevoid_snprintf(buf, sizeof(buf), "%s_amd64.so", path);
 	if(stat(buf, &st) == 0 && S_ISREG(st.st_mode))
@@ -446,7 +446,7 @@ char * DLLINTERNAL MPlugin::resolve_suffix(const char *path) {
 	if(stat(buf, &st) == 0 && S_ISREG(st.st_mode))
 		return(buf);
 #endif /* !__x86_64__ */
-#endif /* linux */
+#endif /* __linux__ */
 
 	return(NULL);
 }

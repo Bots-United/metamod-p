@@ -34,13 +34,13 @@
  *
  */
 
-#ifdef linux
+#ifdef __linux__
 // enable extra routines in system header files, like dladdr
 #  ifndef _GNU_SOURCE
 #    define _GNU_SOURCE
 #  endif
 #include <dlfcn.h>			// dlopen, dladdr, etc
-#endif /* linux */
+#endif /* __linux__ */
 
 #include <string.h>			// strpbrk, etc
 
@@ -83,7 +83,7 @@ char * DLLINTERNAL my_strtok_r(char *s, const char *delim, char **ptrptr) {
 #endif /* _WIN32 */
 
 
-#ifdef linux
+#ifdef __linux__
 char * DLLINTERNAL my_strlwr(char *s) {
 	char *c;
 	if(!s)
@@ -92,7 +92,7 @@ char * DLLINTERNAL my_strlwr(char *s) {
 		*c = tolower(*c);
 	return(s);
 }
-#endif
+#endif /* __linux__ */
 
 
 #ifndef DO_NOT_FIX_VARARG_ENGINE_API_WARPERS
@@ -244,7 +244,7 @@ char * DLLINTERNAL str_GetLastError(void) {
 
 // Find the filename of the DLL/shared-lib where the given memory location
 // exists.
-#ifdef linux
+#ifdef __linux__
 // Errno values:
 //  - ME_NOTFOUND	couldn't find a sharedlib that contains memory location
 const char * DLLINTERNAL DLFNAME(void *memptr) {
@@ -356,7 +356,7 @@ char * DLLINTERNAL realpath(const char *file_name, char *resolved_name) {
 // Determine whether the given memory location is valid (ie whether we
 // should expect to be able to reference strings or functions at this
 // location without segfaulting).
-#ifdef linux
+#ifdef __linux__
 // Simulate this with dladdr.  I'm not convinced this will be as generally
 // applicable as the native windows routine below, but it should do what
 // we need it for in this particular situation.

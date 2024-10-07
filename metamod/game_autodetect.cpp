@@ -100,12 +100,12 @@ const char * DLLINTERNAL autodetect_gamedll(const gamedll_t *gamedll, const char
 		if(strstr(buf, "bot.")) {
 			continue;
 		}
-#ifdef linux
+#ifdef __linux__
 		//bot_iX86.so, bot_amd64.so, bot_x86_64.so
 		if(strstr(buf, "bot_i") || strstr(buf, "bot_amd64.so") || strstr(buf, "bot_x86")) {
 			continue;
 		}
-#endif
+#endif /* __linux__ */
 		
 		// Generate full path
 		safevoid_snprintf(fnpath, sizeof(fnpath), "%s/%s", dllpath, ent->d_name);

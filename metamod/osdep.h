@@ -49,7 +49,7 @@
 #include "log_meta.h"		// LOG_ERROR, etc
 
 // String describing platform/DLL-type, for matching lines in plugins.ini.
-#ifdef linux
+#ifdef __linux__
 	#define PLATFORM	"linux"
 #  if defined(__x86_64__) || defined(__amd64__)
 	#define PLATFORM_SPC	"lin64"
@@ -87,10 +87,10 @@
 	#endif
 	// WINAPI should be provided in the windows compiler headers.
 	// It's usually defined to something like "__stdcall".
-#elif defined(linux)
+#elif defined(__linux__)
 	#define DLLEXPORT	__attribute__ ((visibility ("default"), externally_visible))
 	#define WINAPI		/* */
-#endif /* linux */
+#endif /* __linux__ */
 
 // Simplified macro for declaring/defining exported DLL functions.  They
 // need to be 'extern "C"' so that the C++ compiler enforces parameter
@@ -111,7 +111,7 @@ void DLLINTERNAL safevoid_snprintf(char* s, size_t n, const char* format, ...);
 
 // Functions & types for DLL open/close/etc operations.
 extern mBOOL dlclose_handle_invalid DLLHIDDEN;
-#ifdef linux
+#ifdef __linux__
 	#include <dlfcn.h>
 	typedef void* DLHANDLE;
 	typedef void* DLFUNC;
@@ -182,10 +182,10 @@ mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn);
 
 
 // Linux doesn't have an strlwr() routine, so we write our own.
-#ifdef linux
+#ifdef __linux__
 	#define strlwr(s) my_strlwr(s)
 	char * DLLINTERNAL my_strlwr(char *s);
-#endif /* _WIN32 */
+#endif /* __linux__ */
 
 
 // Set filename and pathname maximum lengths.  Note some windows compilers
@@ -195,7 +195,7 @@ mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn);
 // Note that both OS's include room for null-termination:
 //   linux:    "# chars in a path name including nul"
 //   win32:    "note that the sizes include space for 0-terminator"
-#ifdef linux
+#ifdef __linux__
 	#include <limits.h>
 #elif defined(_WIN32)
 	#include <stdlib.h>
@@ -206,7 +206,7 @@ mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn);
 #endif /* _WIN32 */
 
 // Various other windows routine differences.
-#ifdef linux
+#ifdef __linux__
 	#include <unistd.h>	// sleep
 	#ifndef O_BINARY
     		#define O_BINARY 0
@@ -270,7 +270,7 @@ mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn);
 //      non-case-sensitive.
 //  - For linux, this requires no work, as paths uses slashes (/) natively,
 //    and pathnames are case-sensitive.
-#ifdef linux
+#ifdef __linux__
 #define normalize_pathname(a)
 #elif defined(_WIN32)
 void DLLINTERNAL normalize_pathname(char *path);
@@ -300,7 +300,7 @@ char * DLLINTERNAL realpath(const char *file_name, char *resolved_name);
 // Generic "error string" from a recent OS call.  For linux, this is based
 // on errno.  For win32, it's based on GetLastError.
 inline const char * DLLINTERNAL str_os_error(void) {
-#ifdef linux
+#ifdef __linux__
 	return(strerror(errno));
 #elif defined(_WIN32)
 	return(str_GetLastError());

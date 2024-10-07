@@ -35,12 +35,12 @@
  *
  */
 
-#ifdef linux
+#ifdef __linux__
 // enable extra routines in system header files, like strsignal
 #  ifndef _GNU_SOURCE
 #    define _GNU_SOURCE
 #  endif
-#endif /* linux */
+#endif /* __linux__ */
 
 #include <string.h>			// strsignal, etc
 
