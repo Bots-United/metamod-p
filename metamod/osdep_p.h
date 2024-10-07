@@ -69,8 +69,8 @@ mBOOL DLLINTERNAL is_gamedll(const char *filename);
 
 DLHANDLE DLLINTERNAL get_module_handle_of_memptr(void * memptr);
 
-#ifdef linux
+#ifdef __linux__
 	void * DLLINTERNAL get_dlsym_pointer(void);
-#endif
+#endif /* __linux__ */
 
 #endif /* OSDEP_P_H */

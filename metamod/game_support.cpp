@@ -72,7 +72,7 @@ const game_modinfo_t * DLLINTERNAL lookup_game(const char *name) {
 			safevoid_snprintf(check_path, sizeof(check_path), "dlls/%s",
 #ifdef _WIN32
 					 imod->win_dll);
-#elif defined(linux)
+#elif defined(__linux__)
 					 imod->linux_so);
 #endif
 
@@ -157,7 +157,7 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 	if((known=lookup_game(gamedll->name))) {
 #ifdef _WIN32
 		knownfn=known->win_dll;
-#elif defined(linux)
+#elif defined(__linux__)
 		knownfn=known->linux_so;
 	#ifdef __x86_64__
 		//AMD64: convert _i386.so to _amd64.so
@@ -182,7 +182,7 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 		
 		// Do this before autodetecting gamedll from "dlls/*.dll"
 		if(!Config->gamedll) {
-#ifdef linux
+#ifdef __linux__
 			// The engine changed game dll lookup behaviour in that it strips
 			// anything after the last '_' from the name and tries to load the
 			// resulting name. The DSO names were changed and do not have the
@@ -232,7 +232,7 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 				META_DEBUG(4, ("Known game DLL name does not qualify for checking for a stripped version, skipping: '%s'.\n",
 								strippedfn) );
 			}
-#endif /* linux */
+#endif /* __linux__ */
 			// If no file to be used was found, try the old known DLL file
 			// name.
 			if (0 == usedfn) {

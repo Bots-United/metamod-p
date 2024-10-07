@@ -54,7 +54,7 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvRe
 	}
 	return(TRUE);
 }
-#elif defined(linux)
+#elif defined(__linux__)
 // Linux routines to correspond to ATTACH and DETACH cases above.  These
 // aren't required by linux, but are included here for completeness, and
 // just in case we come across a need to do something at dll load or
@@ -86,9 +86,9 @@ engine_t Engine;
 C_DLLEXPORT void WINAPI GiveFnptrsToDll(enginefuncs_t *pengfuncsFromEngine, 
 		globalvars_t *pGlobals)
 {
-#ifdef linux
+#ifdef __linux__
 	metamod_handle = get_module_handle_of_memptr((void*)&g_engfuncs);
-#endif
+#endif /* __linux__ */
 	gpGlobals = pGlobals;
 	Engine.funcs = &g_engfuncs;
 	Engine.globals = pGlobals;

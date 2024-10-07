@@ -29,13 +29,13 @@
  *
  */
 
-#ifdef linux
+#ifdef __linux__
 // enable extra routines in system header files, like dladdr
 #  ifndef _GNU_SOURCE
 #    define _GNU_SOURCE
 #  endif
 #include <dlfcn.h>			// dlopen, dladdr, etc
-#endif /* linux */
+#endif /* __linux__ */
 
 #include <extdll.h>			// always
 
@@ -96,7 +96,7 @@ void DLLINTERNAL my_closedir(DIR *dir)
 #endif /* _WIN32 */
 
 //get module handle of memptr
-#ifdef linux
+#ifdef __linux__
 DLHANDLE DLLINTERNAL get_module_handle_of_memptr(void * memptr)
 {
 	Dl_info dli;
@@ -121,4 +121,4 @@ DLHANDLE DLLINTERNAL get_module_handle_of_memptr(void * memptr)
 	
 	return((DLHANDLE)MBI.AllocationBase);	
 }
-#endif /* linux */
+#endif /* __linux__ */

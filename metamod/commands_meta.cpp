@@ -351,7 +351,7 @@ void DLLINTERNAL cmd_meta_load(void) {
 		META_CONS("   where <name> is an identifier used to locate the plugin file.");
 		META_CONS("   The system will look for a number of files based on this name, including:");
 		META_CONS("      name");
-#ifdef linux
+#ifdef __linux__
 		META_CONS("      name.so");
 		META_CONS("      name_mm.so");
 		META_CONS("      name_MM.so");
@@ -367,7 +367,7 @@ void DLLINTERNAL cmd_meta_load(void) {
 		META_CONS("      name.dll");
 		META_CONS("      name_mm.dll");
 		META_CONS("      mm_name.dll");
-#endif /* linux */
+#endif /* __linux__ */
 		META_CONS("   in a number of directories, including:");
 		META_CONS("      <gamedir>");
 		META_CONS("      <gamedir>/dlls");
