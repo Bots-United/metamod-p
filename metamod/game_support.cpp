@@ -208,7 +208,7 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 			}
 
 			if(0 != loc && size > 3 && 0 == strcasecmp(ext, ".so")) {
-				strcpy(loc, ".so");
+				strcpy( const_cast<char *>( loc ), ".so");
 				META_DEBUG(4, ("Checking for new version game DLL name '%s'.\n", strippedfn) );
 
 				// Again, as above, I abuse the real_pathname member to store the full pathname
