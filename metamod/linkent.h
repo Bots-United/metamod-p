@@ -78,7 +78,7 @@ typedef void (*ENTITY_FN) (entvars_t *);
 	void entityName(entvars_t *pev) { \
 		static ENTITY_FN pfnEntity = NULL; \
 		static int missing=0; \
-		char *entStr; \
+		const char *entStr; \
 		MPlugin *findp; \
 		entStr = STRINGIZE(entityName, 0); \
 		if(missing) \
