@@ -36,19 +36,26 @@
 #define NOIME
 #include "windows.h"
 #else // _WIN32
+#ifndef FALSE
 #define FALSE 0
+#endif
+#ifndef TRUE
 #define TRUE (!FALSE)
+#endif
 typedef unsigned int ULONG;
 typedef unsigned char BYTE;
 typedef int BOOL;
 #define MAX_PATH PATH_MAX
 #include <limits.h>
 #include <stdarg.h>
+#include <string.h> // memset 
 #ifndef min
 #define min(a,b)  (((a) < (b)) ? (a) : (b))
 #endif
 #ifndef max
 #define max(a,b)  (((a) > (b)) ? (a) : (b))
+#endif
+#ifndef _vsnprintf
 #define _vsnprintf(a,b,c,d) vsnprintf(a,b,c,d)
 #endif
 #endif //_WIN32
