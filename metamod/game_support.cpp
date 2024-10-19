@@ -146,7 +146,11 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 	static char autodetect_desc_buf[NAME_MAX]; // pointer is given outside function
 	char install_path[NAME_MAX];
 	const game_modinfo_t *known;
-	char *cp, *strippedfn;
+#ifdef _WIN32
+	const char* cp;
+#elif defined(__linux__)
+	const char* cp, * strippedfn;
+#endif
 	const char *autofn = 0, *knownfn=0, *usedfn = 0;
 	int override=0;
 
