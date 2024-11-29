@@ -33,6 +33,8 @@
  *    version.
  *
  */
+#include <cstring>
+
 #include <fcntl.h>          // open, write
 
 #include <extdll.h>			// always
@@ -146,12 +148,10 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 	static char autodetect_desc_buf[NAME_MAX]; // pointer is given outside function
 	char install_path[NAME_MAX];
 	const game_modinfo_t *known;
-#ifdef _WIN32
-	const char* cp;
-#elif defined(__linux__)
-	const char* cp, * strippedfn;
+#ifdef __linux__
+        char *strippedfn;
 #endif
-	const char *autofn = 0, *knownfn=0, *usedfn = 0;
+	const char *cp, *autofn = 0, *knownfn = 0, *usedfn = 0;
 	int override=0;
 
 	// Check for old-style "metagame.ini" file and complain.
