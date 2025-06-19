@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectGuid>{02832A39-E902-46B7-8D47-911C37CF41B0}</ProjectGuid>
+    <RootNamespace>metamod</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>17.0.35723.115</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\hlsdk\common;..\hlsdk\dlls;..\hlsdk\engine;..\hlsdk\pm_shared;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;METAMOD_EXPORTS;_CRT_SECURE_NO_DEPRECATE;__METAMOD_BUILD__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <ModuleDefinitionFile>metamod.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\hlsdk\common;..\hlsdk\dlls;..\hlsdk\engine;..\hlsdk\pm_shared;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;METAMOD_EXPORTS;_CRT_SECURE_NO_DEPRECATE;__METAMOD_BUILD__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat />
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="api_hook.cpp" />
+    <ClCompile Include="api_info.cpp" />
+    <ClCompile Include="commands_meta.cpp" />
+    <ClCompile Include="conf_meta.cpp" />
+    <ClCompile Include="dllapi.cpp" />
+    <ClCompile Include="engineinfo.cpp" />
+    <ClCompile Include="engine_api.cpp" />
+    <ClCompile Include="game_autodetect.cpp" />
+    <ClCompile Include="game_support.cpp" />
+    <ClCompile Include="h_export.cpp" />
+    <ClCompile Include="linkgame.cpp" />
+    <ClCompile Include="linkplug.cpp" />
+    <ClCompile Include="log_meta.cpp" />
+    <ClCompile Include="metamod.cpp" />
+    <ClCompile Include="meta_eiface.cpp" />
+    <ClCompile Include="mhook.cpp" />
+    <ClCompile Include="mlist.cpp" />
+    <ClCompile Include="mplayer.cpp" />
+    <ClCompile Include="mplugin.cpp" />
+    <ClCompile Include="mqueue.cpp" />
+    <ClCompile Include="mreg.cpp" />
+    <ClCompile Include="mutil.cpp" />
+    <ClCompile Include="osdep.cpp" />
+    <ClCompile Include="osdep_detect_gamedll_win32.cpp" />
+    <ClCompile Include="osdep_linkent_win32.cpp" />
+    <ClCompile Include="osdep_p.cpp" />
+    <ClCompile Include="reg_support.cpp" />
+    <ClCompile Include="sdk_util.cpp" />
+    <ClCompile Include="studioapi.cpp" />
+    <ClCompile Include="support_meta.cpp" />
+    <ClCompile Include="thread_logparse.cpp" />
+    <ClCompile Include="vdate.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="api_hook.h" />
+    <ClInclude Include="api_info.h" />
+    <ClInclude Include="commands_meta.h" />
+    <ClInclude Include="comp_dep.h" />
+    <ClInclude Include="conf_meta.h" />
+    <ClInclude Include="dllapi.h" />
+    <ClInclude Include="engineinfo.h" />
+    <ClInclude Include="engine_api.h" />
+    <ClInclude Include="games.h" />
+    <ClInclude Include="game_autodetect.h" />
+    <ClInclude Include="game_support.h" />
+    <ClInclude Include="h_export.h" />
+    <ClInclude Include="info_name.h" />
+    <ClInclude Include="linkent.h" />
+    <ClInclude Include="log_meta.h" />
+    <ClInclude Include="metamod.h" />
+    <ClInclude Include="meta_api.h" />
+    <ClInclude Include="meta_eiface.h" />
+    <ClInclude Include="mhook.h" />
+    <ClInclude Include="mlist.h" />
+    <ClInclude Include="mm_pextensions.h" />
+    <ClInclude Include="mplayer.h" />
+    <ClInclude Include="mplugin.h" />
+    <ClInclude Include="mqueue.h" />
+    <ClInclude Include="mreg.h" />
+    <ClInclude Include="mutil.h" />
+    <ClInclude Include="new_baseclass.h" />
+    <ClInclude Include="osdep.h" />
+    <ClInclude Include="osdep_p.h" />
+    <ClInclude Include="plinfo.h" />
+    <ClInclude Include="reg_support.h" />
+    <ClInclude Include="ret_type.h" />
+    <ClInclude Include="sdk_util.h" />
+    <ClInclude Include="studioapi.h" />
+    <ClInclude Include="support_meta.h" />
+    <ClInclude Include="thread_logparse.h" />
+    <ClInclude Include="tqueue.h" />
+    <ClInclude Include="types_meta.h" />
+    <ClInclude Include="vdate.h" />
+    <ClInclude Include="vers_meta.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="res_meta.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

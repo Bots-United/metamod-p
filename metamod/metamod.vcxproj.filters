@@ -2,231 +2,240 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{a2511622-7e99-4c67-845f-0751105c3bde}</UniqueIdentifier>
-      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{67ce21c9-2e01-4e63-aa49-c60e4f26252c}</UniqueIdentifier>
-      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
     <Filter Include="Resource Files">
-      <UniqueIdentifier>{dfc6c7bb-cea4-43c5-bb1b-b8145cf93dd5}</UniqueIdentifier>
-      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\api_info.cpp">
+    <ClCompile Include="api_hook.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\commands_meta.cpp">
+    <ClCompile Include="api_info.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\conf_meta.cpp">
+    <ClCompile Include="commands_meta.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\dllapi.cpp">
+    <ClCompile Include="conf_meta.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\engine_api.cpp">
+    <ClCompile Include="dllapi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\engineinfo.cpp">
+    <ClCompile Include="engine_api.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\game_support.cpp">
+    <ClCompile Include="engineinfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\h_export.cpp">
+    <ClCompile Include="game_autodetect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\linkgame.cpp">
+    <ClCompile Include="game_support.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\linkplug.cpp">
+    <ClCompile Include="h_export.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\log_meta.cpp">
+    <ClCompile Include="linkgame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\meta_eiface.cpp">
+    <ClCompile Include="linkplug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\metamod.cpp">
+    <ClCompile Include="log_meta.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\mhook.cpp">
+    <ClCompile Include="meta_eiface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\mlist.cpp">
+    <ClCompile Include="metamod.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\mplayer.cpp">
+    <ClCompile Include="mhook.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\mplugin.cpp">
+    <ClCompile Include="mlist.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\mqueue.cpp">
+    <ClCompile Include="mplayer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\mreg.cpp">
+    <ClCompile Include="mplugin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\mutil.cpp">
+    <ClCompile Include="mqueue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\osdep.cpp">
+    <ClCompile Include="mreg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\reg_support.cpp">
+    <ClCompile Include="mutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\sdk_util.cpp">
+    <ClCompile Include="osdep.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\studioapi.cpp">
+    <ClCompile Include="osdep_detect_gamedll_win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\support_meta.cpp">
+    <ClCompile Include="osdep_linkent_win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\thread_logparse.cpp">
+    <ClCompile Include="osdep_p.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\vdate.cpp">
+    <ClCompile Include="reg_support.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\api_hook.cpp">
+    <ClCompile Include="sdk_util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\game_autodetect.cpp">
+    <ClCompile Include="studioapi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\osdep_detect_gamedll_win32.cpp">
+    <ClCompile Include="support_meta.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\osdep_linkent_win32.cpp">
+    <ClCompile Include="thread_logparse.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\osdep_p.cpp">
+    <ClCompile Include="vdate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\api_info.h">
+    <ClInclude Include="api_hook.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\commands_meta.h">
+    <ClInclude Include="api_info.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\conf_meta.h">
+    <ClInclude Include="commands_meta.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\dllapi.h">
+    <ClInclude Include="comp_dep.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\engine_api.h">
+    <ClInclude Include="conf_meta.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\engine_t.h">
+    <ClInclude Include="dllapi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\enginecallbacks.h">
+    <ClInclude Include="engine_api.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\engineinfo.h">
+    <ClInclude Include="engineinfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\game_support.h">
+    <ClInclude Include="game_autodetect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\games.h">
+    <ClInclude Include="game_support.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\h_export.h">
+    <ClInclude Include="games.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\linkent.h">
+    <ClInclude Include="h_export.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\log_meta.h">
+    <ClInclude Include="info_name.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\meta_api.h">
+    <ClInclude Include="linkent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\meta_eiface.h">
+    <ClInclude Include="log_meta.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\metamod.h">
+    <ClInclude Include="meta_api.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\mhook.h">
+    <ClInclude Include="meta_eiface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\mlist.h">
+    <ClInclude Include="metamod.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\mplayer.h">
+    <ClInclude Include="mhook.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\mplugin.h">
+    <ClInclude Include="mlist.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\mqueue.h">
+    <ClInclude Include="mm_pextensions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\mreg.h">
+    <ClInclude Include="mplayer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\mutil.h">
+    <ClInclude Include="mplugin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\osdep.h">
+    <ClInclude Include="mqueue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\plinfo.h">
+    <ClInclude Include="mreg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\reg_support.h">
+    <ClInclude Include="mutil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\sdk_util.h">
+    <ClInclude Include="new_baseclass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\studioapi.h">
+    <ClInclude Include="osdep.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\support_meta.h">
+    <ClInclude Include="osdep_p.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\thread_logparse.h">
+    <ClInclude Include="plinfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\tqueue.h">
+    <ClInclude Include="reg_support.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\types_meta.h">
+    <ClInclude Include="ret_type.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\vdate.h">
+    <ClInclude Include="sdk_util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\vers_meta.h">
+    <ClInclude Include="studioapi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\api_hook.h">
+    <ClInclude Include="support_meta.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\game_autodetect.h">
+    <ClInclude Include="thread_logparse.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\osdep_p.h">
+    <ClInclude Include="tqueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types_meta.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vdate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vers_meta.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\res_meta.rc">
+    <ResourceCompile Include="res_meta.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
