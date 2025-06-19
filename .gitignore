@@ -1,2 +1,9 @@
 #temporary files
 *~
+
+metamod/.vs
+metamod/Debug
+metamod/Release
+metamod/metamod
+
+metamod/metamod.vcxproj.user
