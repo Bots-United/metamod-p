@@ -198,7 +198,7 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 			STRNCPY(temp_str, knownfn, sizeof(temp_str));
 			strippedfn = temp_str;
 
-			char *loc = strrchr(strippedfn, '_');
+			const char *loc = strrchr(strippedfn, '_');
 
 			// A small safety net here: make sure that we are dealing with
 			// a file name at least four characters long and ending in
