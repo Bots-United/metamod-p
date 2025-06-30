@@ -60,9 +60,6 @@
     <ClCompile Include="metamod.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mhook.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="mlist.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -70,9 +67,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mplugin.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="mqueue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mreg.cpp">
@@ -103,9 +97,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="support_meta.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="thread_logparse.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vdate.cpp">
@@ -167,9 +158,6 @@
     <ClInclude Include="metamod.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mhook.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="mlist.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -180,9 +168,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mplugin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="mqueue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mreg.h">
@@ -216,12 +201,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="support_meta.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="thread_logparse.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="tqueue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="types_meta.h">

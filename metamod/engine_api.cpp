@@ -43,7 +43,6 @@
 
 #include "engine_api.h"		// me
 #include "metamod.h"		// SETUP_API_CALLS, etc
-#include "thread_logparse.h"	// LogQueue, etc
 #include "api_info.h"		// dllapi_info, etc
 #include "log_meta.h"		// META_ERROR, etc
 #include "osdep.h"		// win32 vsnprintf, etc
