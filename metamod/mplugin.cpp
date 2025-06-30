@@ -44,7 +44,6 @@
 #include "mplugin.h"			// me
 #include "metamod.h"			// GameDLL, etc
 #include "mreg.h"				// MRegCmdList::show(int), etc
-#include "mhook.h"				// class MHook
 #include "h_export.h"			// GIVE_ENGINE_FUNCTIONS_FN, etc
 #include "dllapi.h"				// FN_GAMEINIT, etc
 #include "support_meta.h"		// full_gamedir_path,

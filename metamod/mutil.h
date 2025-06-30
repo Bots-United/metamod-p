@@ -39,7 +39,6 @@
 
 #include "comp_dep.h"
 #include "plinfo.h"		// plugin_info_t, etc
-#include "mhook.h"		// game_event_t, etc
 #include "sdk_util.h"	// hudtextparms_t, etc
 
 // max buffer size for printed messages

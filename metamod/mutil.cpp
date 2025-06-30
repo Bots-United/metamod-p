@@ -42,7 +42,6 @@
 
 #include "meta_api.h"		// 
 #include "mutil.h"			// me
-#include "mhook.h"			// class MHookList, etc
 #include "linkent.h"		// ENTITY_FN, etc
 #include "metamod.h"		// Hooks, etc
 #include "types_meta.h"		// mBOOL
