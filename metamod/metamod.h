@@ -47,6 +47,7 @@
 #include "mplayer.h"                    // MPlayerList
 #include "meta_eiface.h"        // HL_enginefuncs_t, meta_enginefuncs_t
 #include "engine_t.h"           // engine_t, Engine
+#include "h_export.h"           // GIVE_ENGINE_FUNCTIONS_FN
 
 // file that lists plugins to load at startup
 #define PLUGINS_INI			"addons/metamod/plugins.ini"
@@ -125,6 +126,8 @@ int DLLINTERNAL metamod_startup(void);
 
 mBOOL DLLINTERNAL meta_init_gamedll(void);
 mBOOL DLLINTERNAL meta_load_gamedll(void);
+
+GIVE_ENGINE_FUNCTIONS_FN DLLINTERNAL meta_get_pfn_give_engfuncs(DLHANDLE handle);
 
 // ===== lotsa macros... ======================================================
 

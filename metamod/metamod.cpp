@@ -370,7 +370,7 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 	// wanted to catch one of the functions, but now that plugins are
 	// dynamically loadable at any time, we have to always pass our table,
 	// so that any plugin loaded later can catch what they need to.
-	if((pfn_give_engfuncs = (GIVE_ENGINE_FUNCTIONS_FN) DLSYM(GameDLL.handle, "GiveFnptrsToDll")))
+	if((pfn_give_engfuncs = meta_get_pfn_give_engfuncs(GameDLL.handle)))
 	{
 			pfn_give_engfuncs(&meta_engfuncs, gpGlobals);
 			META_DEBUG(3, ("dll: Game '%s': Called GiveFnptrsToDll", 
@@ -455,4 +455,16 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 
 	META_LOG("Game DLL for '%s' loaded successfully", GameDLL.desc);
 	return(mTRUE);
+}
+
+GIVE_ENGINE_FUNCTIONS_FN DLLINTERNAL meta_get_pfn_give_engfuncs(DLHANDLE handle) {
+	GIVE_ENGINE_FUNCTIONS_FN pfn_give_engfuncs = (GIVE_ENGINE_FUNCTIONS_FN) DLSYM(GameDLL.handle, "GiveFnptrsToDll");
+
+	if (!pfn_give_engfuncs) {
+		META_WARNING("dll: Couldn't find GiveFnptrsToDll() in game DLL; trying decorated name instead");
+
+		pfn_give_engfuncs = (GIVE_ENGINE_FUNCTIONS_FN) DLSYM(handle, "_GiveFnptrsToDll@8");
+	}
+
+	return pfn_give_engfuncs;
 }

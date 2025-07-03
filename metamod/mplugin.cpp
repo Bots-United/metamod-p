@@ -692,8 +692,7 @@ mBOOL DLLINTERNAL MPlugin::query(void) {
 	}
 	
 	// pass on engine function table and globals to plugin
-	if(!(pfn_give_engfuncs = (GIVE_ENGINE_FUNCTIONS_FN) DLSYM(handle, "GiveFnptrsToDll"))) {
-		// META_WARNING("dll: Couldn't find GiveFnptrsToDll() in plugin '%s': %s", desc, DLERROR());
+	if(!(pfn_give_engfuncs = meta_get_pfn_give_engfuncs(handle))) {
 		META_WARNING("dll: Failed query plugin '%s'; Couldn't find GiveFnptrsToDll(): %s", desc, DLERROR());
 		// caller will dlclose()
 		RETURN_ERRNO(mFALSE, ME_DLMISSING);
