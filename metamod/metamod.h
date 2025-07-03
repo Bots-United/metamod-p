@@ -44,7 +44,7 @@
 #include "conf_meta.h"			// MConfig
 #include "osdep.h"				// NAME_MAX, etc
 #include "types_meta.h"			// mBOOL
-#include "mplayer.h"                    // MPlayerList
+#include "mplayer.h"            // MPlayerList
 #include "meta_eiface.h"        // HL_enginefuncs_t, meta_enginefuncs_t
 #include "engine_t.h"           // engine_t, Engine
 #include "h_export.h"           // GIVE_ENGINE_FUNCTIONS_FN
