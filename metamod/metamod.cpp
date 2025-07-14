@@ -457,8 +457,11 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 	return(mTRUE);
 }
 
+// Get a pointer to GiveFnptrsToDll from the game .dll
+// For some reason on Windows the decorated name needs to be looked up (see https://github.com/Bots-United/metamod-p/issues/24 and the linked
+// https://github.com/wootguy/metamod-p/commit/753cfb1b4070a000ee223293d1b14c7b5d29d86b#diff-b9dd6caa3bdfd7941089b07c93b001bc49625aadadc843a46d786cb9c5498057)
 GIVE_ENGINE_FUNCTIONS_FN DLLINTERNAL meta_get_pfn_give_engfuncs(DLHANDLE handle) {
-	GIVE_ENGINE_FUNCTIONS_FN pfn_give_engfuncs = (GIVE_ENGINE_FUNCTIONS_FN) DLSYM(GameDLL.handle, "GiveFnptrsToDll");
+	GIVE_ENGINE_FUNCTIONS_FN pfn_give_engfuncs = (GIVE_ENGINE_FUNCTIONS_FN) DLSYM(handle, "GiveFnptrsToDll");
 
 	if (!pfn_give_engfuncs) {
 		META_WARNING("dll: Couldn't find GiveFnptrsToDll() in game DLL; trying decorated name instead");
