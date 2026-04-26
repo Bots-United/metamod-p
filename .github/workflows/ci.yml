@@ -1,0 +1,16 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  package:
+    needs: [build]
+    uses: ./.github/workflows/package.yml
+    with:
+      version: snapshot
