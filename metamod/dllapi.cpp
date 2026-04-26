@@ -116,7 +116,7 @@ static int mm_DispatchRestore(edict_t *pent, SAVERESTOREDATA *pSaveData, int glo
 	META_DLLAPI_HANDLE(int, 0, FN_DISPATCHRESTORE, pfnRestore, 2pi, (pent, pSaveData, globalEntity));
 	RETURN_API(int);
 }
-static void mm_DispatchObjectCollsionBox(edict_t *pent) {
+static void mm_DispatchObjectCollisionBox(edict_t *pent) {
 	META_DLLAPI_HANDLE_void(FN_DISPATCHOBJECTCOLLISIONBOX, pfnSetAbsBox, p, (pent));
 	RETURN_API_void();
 }
@@ -357,7 +357,7 @@ static DLL_FUNCTIONS gFunctionTable =
 	mm_DispatchKeyValue,			//! pfnKeyValue()
 	mm_DispatchSave,				//! pfnSave()
 	mm_DispatchRestore,			//! pfnRestore()
-	mm_DispatchObjectCollsionBox,	//! pfnSetAbsBox()
+	mm_DispatchObjectCollisionBox,	//! pfnSetAbsBox()
 
 	mm_SaveWriteFields,			//! pfnSaveWriteFields()
 	mm_SaveReadFields,				//! pfnSaveReadFields()
