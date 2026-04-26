@@ -468,6 +468,11 @@ static int mm_RegUserMsg(const char *pszName, int iSize) {
 		if(FStrEq(pszName, nmsg->name))
 			// This name/msgid pair was already registered.
 			META_DEBUG(3, ("user message registered again: name=%s, msgid=%d", pszName, imsgid));
+		else if(!nmsg->name || !nmsg->name[0]) {
+			// Previously registered with empty name, update with actual name.
+			nmsg->name = strdup(pszName);
+			META_DEBUG(3, ("user message name updated: msgid=%d, name=%s", imsgid, pszName));
+		}
 		else
 			// This msgid was previously used by a different message name.
 			META_WARNING("user message id reused: msgid=%d, oldname=%s, newname=%s", imsgid, nmsg->name, pszName);

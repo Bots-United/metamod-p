@@ -493,7 +493,7 @@ MRegMsg * DLLINTERNAL MRegMsgList::add(const char *addname, int addmsgid, int ad
 MRegMsg * DLLINTERNAL MRegMsgList::find(const char *findname) {
 	int i;
 	for(i=0; i < endlist; i++) {
-		if(!mm_strcmp(mlist[i].name, findname))
+		if(mlist[i].name && !mm_strcmp(mlist[i].name, findname))
 			return(&mlist[i]);
 	}
 	RETURN_ERRNO(NULL, ME_NOTFOUND);
@@ -521,7 +521,7 @@ void DLLINTERNAL MRegMsgList::show(void) {
 			sizeof(bname)-1, "Game registered user msgs:", "msgid", "size");
 	for(i=0; i < endlist; i++) {
 		imsg = &mlist[i];
-		STRNCPY(bname, imsg->name, sizeof(bname));
+		STRNCPY(bname, imsg->name ? imsg->name : "(null)", sizeof(bname));
 		META_CONS("   %-*s   %3d    %3d", 
 				sizeof(bname)-1, bname,
 				imsg->msgid,
