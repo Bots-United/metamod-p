@@ -103,14 +103,18 @@ OBJDIR_WIN_DBG=debug.win32
 #############################################################################
 
 ifeq "$(OS)" "linux"
-	GCCMAJ = $(shell $(CC) -dumpversion | sed -e 's/\.[0-9][0-9]*//' -e 's/\.[0-9][0-9]*//')
-	GCCMIN = $(shell $(CC) -dumpversion | sed -e 's/[0-9]\.//;s/\.[0-9]//' -e 's/\.[0-9][0-9]*//')
+	GCCVER = $(shell $(CC) -dumpversion)
 else
-	GCCMAJ = $(shell $(CC_WIN) -dumpversion | sed -e 's/\.[0-9][0-9]*//' -e 's/\.[0-9][0-9]*//')
-	GCCMIN = $(shell $(CC_WIN) -dumpversion | sed -e 's/[0-9]\.//;s/\.[0-9]//' -e 's/\.[0-9][0-9]*//')
+	GCCVER = $(shell $(CC_WIN) -dumpversion)
 endif
 
-GCCMAJ_GT_4 = $(shell if [ $(GCCMAJ) -gt 4 ]; then echo 1; else echo 0; fi)
+GCCMAJ = $(shell echo $(GCCVER) | sed 's/[^0-9].*//')
+GCCMIN = $(shell echo $(GCCVER) | sed -n 's/^[0-9]*\.\([0-9]*\).*/\1/p')
+ifeq "$(GCCMIN)" ""
+	GCCMIN = 0
+endif
+
+GCCMAJ_GT_4 = $(shell [ $(GCCMAJ) -gt 4 ] && echo 1 || echo 0)
 
 ifeq "$(HOST)" "cygwin"
 	ifeq "$(TARGETTYPE)" "amd64"
@@ -146,40 +150,18 @@ else
 	CC_DEP=$(CC_WIN)
 endif
 
-# Note! About gcc optimization levels.
-#  There is four optimization levels:
-#	-O0	No optimizations.
-#	-O1	Optimize for smaller size.
-#	-O2	Optimize for speed without increasing size (alot).
-#	-O3	Optimize for speed, can result much greater filesize.
-#  Levels higher -O3 (-O6 for example) is threaded as -O3.
-#  See differences at "http://gcc.gnu.org/" (look for link to 'gcc manual').
-
-# original safe optimization, from valve Makefile
-#CCOPT = -O2 -ffast-math -funroll-loops \
-#	-fomit-frame-pointer -fexpensive-optimizations -malign-loops=2 \
-#	-malign-jumps=2 -malign-functions=2
-
-# safe optimization, adapted from adminmod Makefile
-#CCOPT = -m486 -O6 -ffast-math -funroll-loops \
-# -fexpensive-optimizations -malign-loops=2  -malign-jumps=2 \
-# -malign-functions=2 -Wall
-
-# full optimization, adapted from adminmod Makefile
-# "WONT WORK WITH omit-frame-pointer"?
-# - disable (unneeded) C++ exceptions and rtti code to save some space ?
-
+# Compiler (incl. optimization) flags for C++ plugin code
 CCOPT = $(CCO) $(CCOPT_ARCH) -fno-exceptions -fno-rtti
 
-# optimization level; overridden for certain problematic files
-CCO = -O2 -fomit-frame-pointer -funsafe-math-optimizations
+CCO = -O2 -fomit-frame-pointer
 CCO += -flto -fvisibility=hidden
+CCO += -fno-strict-aliasing -fno-strict-overflow
 
 # architecture tuning by target type
 ifeq "$(TARGETTYPE)" "amd64"
 	CCOPT_ARCH =
 else
-	CCOPT_ARCH = -march=i686 $(MCPU)=generic -msse -msse2
+	CCOPT_ARCH = -march=i686 $(MCPU)=generic -msse2 -mincoming-stack-boundary=2
 endif
 
 # debugging; halt on warnings
@@ -194,7 +176,7 @@ SRCDIR=.
 INCLUDEDIRS+=-I$(SRCDIR) -I$(METADIR) -I$(SDKSRC)/engine -I$(SDKSRC)/common -I$(SDKSRC)/pm_shared -I$(SDKSRC)/dlls -I$(SDKSRC)
 FILES_ALL = *.cpp *.h [A-Z]* *.rc
 
-CFLAGS=-Wall -Wno-unknown-pragmas -Wno-attributes -Wno-write-strings
+CFLAGS=-Wall -Wno-unknown-pragmas -Wno-attributes -Wno-write-strings -Wno-class-memaccess
 
 CFLAGS+=-std=gnu++98 -Wno-c++11-compat
 

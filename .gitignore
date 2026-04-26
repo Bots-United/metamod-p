@@ -7,3 +7,5 @@ metamod/Release
 metamod/metamod
 
 metamod/metamod.vcxproj.user
+
+dlls/
