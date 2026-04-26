@@ -453,6 +453,11 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 		RETURN_ERRNO(mFALSE, ME_DLMISSING);
 	}
 
+	if(!GameDLL.funcs.dllapi_table) {
+		META_WARNING("dll: GetEntityAPI function pointer is null in game DLL '%s'", GameDLL.name);
+		RETURN_ERRNO(mFALSE, ME_DLMISSING);
+	}
+
 	META_LOG("Game DLL for '%s' loaded successfully", GameDLL.desc);
 	return(mTRUE);
 }
