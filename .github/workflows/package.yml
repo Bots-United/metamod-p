@@ -1,0 +1,110 @@
+name: Package
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      create_release:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  package-linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download Linux binaries
+        uses: actions/download-artifact@v8
+        with:
+          name: linux-binaries
+          path: staging
+      - name: Prepare release directory
+        run: |
+          mkdir -p addons/metamod/dlls
+          cp staging/metamod/opt.linux_i386/metamod.so addons/metamod/dlls/
+          cp staging/trace_plugin/opt.linux_i386/trace_mm.so addons/metamod/dlls/
+      - name: Create release archive
+        run: tar c addons | xz > metamod-p-${{ inputs.version }}-linux_ubuntu2404.tar.xz
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: metamod-p-${{ inputs.version }}-linux_ubuntu2404
+          path: metamod-p-${{ inputs.version }}-linux_ubuntu2404.tar.xz
+
+  package-linux-bionic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download Linux Bionic binaries
+        uses: actions/download-artifact@v8
+        with:
+          name: linux-bionic-binaries
+          path: staging
+      - name: Prepare release directory
+        run: |
+          mkdir -p addons/metamod/dlls
+          cp staging/metamod/opt.linux_i386/metamod.so addons/metamod/dlls/
+          cp staging/trace_plugin/opt.linux_i386/trace_mm.so addons/metamod/dlls/
+      - name: Create release archive
+        run: tar c addons | xz > metamod-p-${{ inputs.version }}-linux_ubuntu1804.tar.xz
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: metamod-p-${{ inputs.version }}-linux_ubuntu1804
+          path: metamod-p-${{ inputs.version }}-linux_ubuntu1804.tar.xz
+
+  package-windows:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download Windows binaries
+        uses: actions/download-artifact@v8
+        with:
+          name: windows-binaries
+          path: staging
+      - name: Prepare release directory
+        run: |
+          mkdir -p addons/metamod/dlls
+          cp staging/metamod/opt.win32/metamod.dll addons/metamod/dlls/
+          cp staging/trace_plugin/opt.win32/trace_mm.dll addons/metamod/dlls/
+      - name: Create release archive
+        run: tar c addons | xz > metamod-p-${{ inputs.version }}-win32.tar.xz
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: metamod-p-${{ inputs.version }}-win32
+          path: metamod-p-${{ inputs.version }}-win32.tar.xz
+
+  create-release:
+    if: ${{ inputs.create_release }}
+    needs: [package-linux, package-linux-bionic, package-windows]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Download Linux archive
+        uses: actions/download-artifact@v8
+        with:
+          name: metamod-p-${{ inputs.version }}-linux_ubuntu2404
+      - name: Download Linux Bionic archive
+        uses: actions/download-artifact@v8
+        with:
+          name: metamod-p-${{ inputs.version }}-linux_ubuntu1804
+      - name: Download Windows archive
+        uses: actions/download-artifact@v8
+        with:
+          name: metamod-p-${{ inputs.version }}-win32
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            metamod-p-${{ inputs.version }}-linux_ubuntu2404.tar.xz
+            metamod-p-${{ inputs.version }}-linux_ubuntu1804.tar.xz
+            metamod-p-${{ inputs.version }}-win32.tar.xz
