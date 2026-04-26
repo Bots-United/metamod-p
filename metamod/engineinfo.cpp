@@ -380,11 +380,11 @@ int DLLINTERNAL EngineInfo::initialise( enginefuncs_t* _pFuncs )
 		META_DEV( "Unable to determine engine code address range!" );
 	}
 	else {
-		META_DEV( "Set engine code range: start address = %p, end address = %p", 
+		META_DEV( "Set engine code range: start address = %p, end address = %p",
 			 m_codeStart, m_codeEnd );
 	}
 
-	return 0;
+	return ret;
 }
 
 
