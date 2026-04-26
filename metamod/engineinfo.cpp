@@ -293,7 +293,7 @@ int DLLINTERNAL EngineInfo::phdr_dladdr( void* _pMem )
 int DLLINTERNAL EngineInfo::phdr_r_debug( void )
 {
 	ElfW(Dyn)* pDyn; 
-	struct r_debug* pr_debug;
+	struct r_debug* pr_debug = NULL;
 	struct link_map* pMap;
 
 
@@ -370,7 +370,7 @@ int DLLINTERNAL EngineInfo::initialise( enginefuncs_t* _pFuncs )
 	}
 
 	// If we have a refererence pointer we try to use it first.
-	if ( 0 != phdr_dladdr(_pFuncs) ) {
+	else if ( 0 != phdr_dladdr(_pFuncs) ) {
 		ret = phdr_r_debug();
 	}
 
