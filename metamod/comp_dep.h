@@ -88,6 +88,14 @@
 	#endif
 #endif
 
+// On 32-bit x86, the HL engine may call functions with only 4-byte stack
+// alignment. Apply this to entry points called by engine/gamedll/plugins.
+#if defined(__GNUC__) && defined(__i386__)
+	#define FORCE_STACK_ALIGN __attribute__((force_align_arg_pointer))
+#else
+	#define FORCE_STACK_ALIGN
+#endif
+
 // Manual branch optimization for GCC 3.0.0 and newer
 #if !defined(__GNUC__) || __GNUC__ < 3
 	#define likely(x) (x)

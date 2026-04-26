@@ -92,7 +92,7 @@
 // Generic command handler, passed to the engine for any AddServerCommand
 // calls made by the plugin.  It finds the appropriate plugin function
 // pointer to call based on CMD_ARGV(0).
-void DLLHIDDEN meta_command_handler(void) {
+FORCE_STACK_ALIGN void DLLHIDDEN meta_command_handler(void) {
 	MRegCmd *icmd;
 	const char *cmd;
 
@@ -122,7 +122,7 @@ void DLLHIDDEN meta_command_handler(void) {
 // The string handed to the engine is just a strdup() of the plugin's
 // string.  The function pointer handed to the engine is actually a pointer
 // to a generic command-handler function (see above).
-void DLLHIDDEN meta_AddServerCommand(char *cmd_name, void (*function) (void)) {
+FORCE_STACK_ALIGN void DLLHIDDEN meta_AddServerCommand(char *cmd_name, void (*function) (void)) {
 	MPlugin *iplug=NULL; 
 	MRegCmd *icmd=NULL;
 
@@ -171,7 +171,7 @@ void DLLHIDDEN meta_AddServerCommand(char *cmd_name, void (*function) (void)) {
 // values via the engine functions, this will work fine.  If the plugin
 // code tries to _directly_ read/set the fields of its own cvar structures,
 // it will fail to work properly.
-void DLLHIDDEN meta_CVarRegister(cvar_t *pCvar) {
+FORCE_STACK_ALIGN void DLLHIDDEN meta_CVarRegister(cvar_t *pCvar) {
 	MPlugin *iplug=NULL;
 	MRegCvar *icvar=NULL;
 
@@ -221,7 +221,7 @@ int DLLHIDDEN meta_RegUserMsg(const char *pszName, int iSize) {
 
 
 // Intercept and record queries
-void DLLHIDDEN meta_QueryClientCvarValue(const edict_t *player, const char *cvarName) {
+FORCE_STACK_ALIGN void DLLHIDDEN meta_QueryClientCvarValue(const edict_t *player, const char *cvarName) {
 	g_Players.set_player_cvar_query(player, cvarName);
 
 	if(g_engfuncs.pfnQueryClientCvarValue)

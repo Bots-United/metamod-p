@@ -161,7 +161,7 @@ CCO += -fno-strict-aliasing -fno-strict-overflow
 ifeq "$(TARGETTYPE)" "amd64"
 	CCOPT_ARCH =
 else
-	CCOPT_ARCH = -march=i686 $(MCPU)=generic -msse2 -mincoming-stack-boundary=2
+	CCOPT_ARCH = -march=i686 $(MCPU)=generic -msse2
 endif
 
 # debugging; halt on warnings

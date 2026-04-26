@@ -76,108 +76,108 @@
 
 
 // From SDK dlls/game.cpp:
-static void mm_GameDLLInit(void) {
+static FORCE_STACK_ALIGN void mm_GameDLLInit(void) {
 	META_DLLAPI_HANDLE_void(FN_GAMEINIT, pfnGameInit, void, (VOID_ARG));
 	RETURN_API_void();
 }
 
 // From SDK dlls/cbase.cpp:
-static int mm_DispatchSpawn(edict_t *pent) {
+static FORCE_STACK_ALIGN int mm_DispatchSpawn(edict_t *pent) {
 	// 0==Success, -1==Failure ?
 	META_DLLAPI_HANDLE(int, 0, FN_DISPATCHSPAWN, pfnSpawn, p, (pent));
 	RETURN_API(int);
 }
-static void mm_DispatchThink(edict_t *pent) {
+static FORCE_STACK_ALIGN void mm_DispatchThink(edict_t *pent) {
 	META_DLLAPI_HANDLE_void(FN_DISPATCHTHINK, pfnThink, p, (pent));
 	RETURN_API_void();
 }
-static void mm_DispatchUse(edict_t *pentUsed, edict_t *pentOther) {
+static FORCE_STACK_ALIGN void mm_DispatchUse(edict_t *pentUsed, edict_t *pentOther) {
 	META_DLLAPI_HANDLE_void(FN_DISPATCHUSE, pfnUse, 2p, (pentUsed, pentOther));
 	RETURN_API_void();
 }
-static void mm_DispatchTouch(edict_t *pentTouched, edict_t *pentOther) {
+static FORCE_STACK_ALIGN void mm_DispatchTouch(edict_t *pentTouched, edict_t *pentOther) {
 	META_DLLAPI_HANDLE_void(FN_DISPATCHTOUCH, pfnTouch, 2p, (pentTouched, pentOther));
 	RETURN_API_void();
 }
-static void mm_DispatchBlocked(edict_t *pentBlocked, edict_t *pentOther) {
+static FORCE_STACK_ALIGN void mm_DispatchBlocked(edict_t *pentBlocked, edict_t *pentOther) {
 	META_DLLAPI_HANDLE_void(FN_DISPATCHBLOCKED, pfnBlocked, 2p, (pentBlocked, pentOther));
 	RETURN_API_void();
 }
-static void mm_DispatchKeyValue(edict_t *pentKeyvalue, KeyValueData *pkvd) {
+static FORCE_STACK_ALIGN void mm_DispatchKeyValue(edict_t *pentKeyvalue, KeyValueData *pkvd) {
 	META_DLLAPI_HANDLE_void(FN_DISPATCHKEYVALUE, pfnKeyValue, 2p, (pentKeyvalue, pkvd));
 	RETURN_API_void();
 }
-static void mm_DispatchSave(edict_t *pent, SAVERESTOREDATA *pSaveData) {
+static FORCE_STACK_ALIGN void mm_DispatchSave(edict_t *pent, SAVERESTOREDATA *pSaveData) {
 	META_DLLAPI_HANDLE_void(FN_DISPATCHSAVE, pfnSave, 2p, (pent, pSaveData));
 	RETURN_API_void();
 }
-static int mm_DispatchRestore(edict_t *pent, SAVERESTOREDATA *pSaveData, int globalEntity) {
+static FORCE_STACK_ALIGN int mm_DispatchRestore(edict_t *pent, SAVERESTOREDATA *pSaveData, int globalEntity) {
 	// 0==Success, -1==Failure ?
 	META_DLLAPI_HANDLE(int, 0, FN_DISPATCHRESTORE, pfnRestore, 2pi, (pent, pSaveData, globalEntity));
 	RETURN_API(int);
 }
-static void mm_DispatchObjectCollisionBox(edict_t *pent) {
+static FORCE_STACK_ALIGN void mm_DispatchObjectCollisionBox(edict_t *pent) {
 	META_DLLAPI_HANDLE_void(FN_DISPATCHOBJECTCOLLISIONBOX, pfnSetAbsBox, p, (pent));
 	RETURN_API_void();
 }
-static void mm_SaveWriteFields(SAVERESTOREDATA *pSaveData, const char *pname, void *pBaseData, TYPEDESCRIPTION *pFields, int fieldCount) {
+static FORCE_STACK_ALIGN void mm_SaveWriteFields(SAVERESTOREDATA *pSaveData, const char *pname, void *pBaseData, TYPEDESCRIPTION *pFields, int fieldCount) {
 	META_DLLAPI_HANDLE_void(FN_SAVEWRITEFIELDS, pfnSaveWriteFields, 4pi, (pSaveData, pname, pBaseData, pFields, fieldCount));
 	RETURN_API_void();
 }
-static void mm_SaveReadFields(SAVERESTOREDATA *pSaveData, const char *pname, void *pBaseData, TYPEDESCRIPTION *pFields, int fieldCount) {
+static FORCE_STACK_ALIGN void mm_SaveReadFields(SAVERESTOREDATA *pSaveData, const char *pname, void *pBaseData, TYPEDESCRIPTION *pFields, int fieldCount) {
 	META_DLLAPI_HANDLE_void(FN_SAVEREADFIELDS, pfnSaveReadFields, 4pi, (pSaveData, pname, pBaseData, pFields, fieldCount));
 	RETURN_API_void();
 }
 
 // From SDK dlls/world.cpp:
-static void mm_SaveGlobalState(SAVERESTOREDATA *pSaveData) {
+static FORCE_STACK_ALIGN void mm_SaveGlobalState(SAVERESTOREDATA *pSaveData) {
 	META_DLLAPI_HANDLE_void(FN_SAVEGLOBALSTATE, pfnSaveGlobalState, p, (pSaveData));
 	RETURN_API_void();
 }
-static void mm_RestoreGlobalState(SAVERESTOREDATA *pSaveData) {
+static FORCE_STACK_ALIGN void mm_RestoreGlobalState(SAVERESTOREDATA *pSaveData) {
 	META_DLLAPI_HANDLE_void(FN_RESTOREGLOBALSTATE, pfnRestoreGlobalState, p, (pSaveData));
 	RETURN_API_void();
 }
-static void mm_ResetGlobalState(void) {
+static FORCE_STACK_ALIGN void mm_ResetGlobalState(void) {
 	META_DLLAPI_HANDLE_void(FN_RESETGLOBALSTATE, pfnResetGlobalState, void, (VOID_ARG));
 	RETURN_API_void();
 }
 
 // From SDK dlls/client.cpp:
-static qboolean mm_ClientConnect(edict_t *pEntity, const char *pszName, const char *pszAddress, char szRejectReason[128]) {
+static FORCE_STACK_ALIGN qboolean mm_ClientConnect(edict_t *pEntity, const char *pszName, const char *pszAddress, char szRejectReason[128]) {
 	g_Players.clear_player_cvar_query(pEntity);
 	META_DLLAPI_HANDLE(qboolean, TRUE, FN_CLIENTCONNECT, pfnClientConnect, 4p, (pEntity, pszName, pszAddress, szRejectReason));
 	RETURN_API(qboolean);
 }
-static void mm_ClientDisconnect(edict_t *pEntity) {
+static FORCE_STACK_ALIGN void mm_ClientDisconnect(edict_t *pEntity) {
 	g_Players.clear_player_cvar_query(pEntity);
 	META_DLLAPI_HANDLE_void(FN_CLIENTDISCONNECT, pfnClientDisconnect, p, (pEntity));
 	RETURN_API_void();
 }
-static void mm_ClientKill(edict_t *pEntity) {
+static FORCE_STACK_ALIGN void mm_ClientKill(edict_t *pEntity) {
 	META_DLLAPI_HANDLE_void(FN_CLIENTKILL, pfnClientKill, p, (pEntity));
 	RETURN_API_void();
 }
-static void mm_ClientPutInServer(edict_t *pEntity) {
+static FORCE_STACK_ALIGN void mm_ClientPutInServer(edict_t *pEntity) {
 	META_DLLAPI_HANDLE_void(FN_CLIENTPUTINSERVER, pfnClientPutInServer, p, (pEntity));
 	RETURN_API_void();
 }
-static void mm_ClientCommand(edict_t *pEntity) {
+static FORCE_STACK_ALIGN void mm_ClientCommand(edict_t *pEntity) {
 	if(Config->clientmeta && strmatch(CMD_ARGV(0), "meta")) {
 		client_meta(pEntity);
 	}
 	META_DLLAPI_HANDLE_void(FN_CLIENTCOMMAND, pfnClientCommand, p, (pEntity));
 	RETURN_API_void();
 }
-static void mm_ClientUserInfoChanged(edict_t *pEntity, char *infobuffer) {
+static FORCE_STACK_ALIGN void mm_ClientUserInfoChanged(edict_t *pEntity, char *infobuffer) {
 	META_DLLAPI_HANDLE_void(FN_CLIENTUSERINFOCHANGED, pfnClientUserInfoChanged, 2p, (pEntity, infobuffer));
 	RETURN_API_void();
 }
-static void mm_ServerActivate(edict_t *pEdictList, int edictCount, int clientMax) {
+static FORCE_STACK_ALIGN void mm_ServerActivate(edict_t *pEdictList, int edictCount, int clientMax) {
 	META_DLLAPI_HANDLE_void(FN_SERVERACTIVATE, pfnServerActivate, p2i, (pEdictList, edictCount, clientMax));
 	RETURN_API_void();
 }
-static void mm_ServerDeactivate(void) {
+static FORCE_STACK_ALIGN void mm_ServerDeactivate(void) {
 	META_DLLAPI_HANDLE_void(FN_SERVERDEACTIVATE, pfnServerDeactivate, void, (VOID_ARG));
 	// Update loaded plugins.  Look for new plugins in inifile, as well as
 	// any plugins waiting for a changelevel to load.  
@@ -199,117 +199,117 @@ static void mm_ServerDeactivate(void) {
 	requestid_counter = 0;
 	RETURN_API_void();
 }
-static void mm_PlayerPreThink(edict_t *pEntity) {
+static FORCE_STACK_ALIGN void mm_PlayerPreThink(edict_t *pEntity) {
 	META_DLLAPI_HANDLE_void(FN_PLAYERPRETHINK, pfnPlayerPreThink, p, (pEntity));
 	RETURN_API_void();
 }
-static void mm_PlayerPostThink(edict_t *pEntity) {
+static FORCE_STACK_ALIGN void mm_PlayerPostThink(edict_t *pEntity) {
 	META_DLLAPI_HANDLE_void(FN_PLAYERPOSTTHINK, pfnPlayerPostThink, p, (pEntity));
 	RETURN_API_void();
 }
-static void mm_StartFrame(void) {
+static FORCE_STACK_ALIGN void mm_StartFrame(void) {
 	meta_debug_value = (int)meta_debug.value;
 
 	META_DLLAPI_HANDLE_void(FN_STARTFRAME, pfnStartFrame, void, (VOID_ARG));
 	RETURN_API_void();
 }
-static void mm_ParmsNewLevel(void) {
+static FORCE_STACK_ALIGN void mm_ParmsNewLevel(void) {
 	META_DLLAPI_HANDLE_void(FN_PARMSNEWLEVEL, pfnParmsNewLevel, void, (VOID_ARG));
 	RETURN_API_void();
 }
-static void mm_ParmsChangeLevel(void) {
+static FORCE_STACK_ALIGN void mm_ParmsChangeLevel(void) {
 	META_DLLAPI_HANDLE_void(FN_PARMSCHANGELEVEL, pfnParmsChangeLevel, void, (VOID_ARG));
 	RETURN_API_void();
 }
-static const char *mm_GetGameDescription(void) {
+static FORCE_STACK_ALIGN const char *mm_GetGameDescription(void) {
 	META_DLLAPI_HANDLE(const char *, NULL, FN_GETGAMEDESCRIPTION, pfnGetGameDescription, void, (VOID_ARG));
 	RETURN_API(const char *);
 }
-static void mm_PlayerCustomization(edict_t *pEntity, customization_t *pCust) {
+static FORCE_STACK_ALIGN void mm_PlayerCustomization(edict_t *pEntity, customization_t *pCust) {
 	META_DLLAPI_HANDLE_void(FN_PLAYERCUSTOMIZATION, pfnPlayerCustomization, 2p, (pEntity, pCust));
 	RETURN_API_void();
 }
-static void mm_SpectatorConnect(edict_t *pEntity) {
+static FORCE_STACK_ALIGN void mm_SpectatorConnect(edict_t *pEntity) {
 	META_DLLAPI_HANDLE_void(FN_SPECTATORCONNECT, pfnSpectatorConnect, p, (pEntity));
 	RETURN_API_void();
 }
-static void mm_SpectatorDisconnect(edict_t *pEntity) {
+static FORCE_STACK_ALIGN void mm_SpectatorDisconnect(edict_t *pEntity) {
 	META_DLLAPI_HANDLE_void(FN_SPECTATORDISCONNECT, pfnSpectatorDisconnect, p, (pEntity));
 	RETURN_API_void();
 }
-static void mm_SpectatorThink(edict_t *pEntity) {
+static FORCE_STACK_ALIGN void mm_SpectatorThink(edict_t *pEntity) {
 	META_DLLAPI_HANDLE_void(FN_SPECTATORTHINK, pfnSpectatorThink, p, (pEntity));
 	RETURN_API_void();
 }
-static void mm_Sys_Error(const char *error_string) {
+static FORCE_STACK_ALIGN void mm_Sys_Error(const char *error_string) {
 	META_DLLAPI_HANDLE_void(FN_SYS_ERROR, pfnSys_Error, p, (error_string));
 	RETURN_API_void();
 }
 
 // From SDK pm_shared/pm_shared.c:
-static void mm_PM_Move (struct playermove_s *ppmove, int server) {
+static FORCE_STACK_ALIGN void mm_PM_Move (struct playermove_s *ppmove, int server) {
 	META_DLLAPI_HANDLE_void(FN_PM_MOVE, pfnPM_Move, pi, (ppmove, server));
 	RETURN_API_void();
 }
-static void mm_PM_Init(struct playermove_s *ppmove) {
+static FORCE_STACK_ALIGN void mm_PM_Init(struct playermove_s *ppmove) {
 	META_DLLAPI_HANDLE_void(FN_PM_INIT, pfnPM_Init, p, (ppmove));
 	RETURN_API_void();
 }
-static char mm_PM_FindTextureType(char *name) {
+static FORCE_STACK_ALIGN char mm_PM_FindTextureType(char *name) {
 	META_DLLAPI_HANDLE(char, '\0', FN_PM_FINDTEXTURETYPE, pfnPM_FindTextureType, p, (name));
 	RETURN_API(char);
 }
 
 // From SDK dlls/client.cpp:
-static void mm_SetupVisibility(edict_t *pViewEntity, edict_t *pClient, unsigned char **pvs, unsigned char **pas) {
+static FORCE_STACK_ALIGN void mm_SetupVisibility(edict_t *pViewEntity, edict_t *pClient, unsigned char **pvs, unsigned char **pas) {
 	META_DLLAPI_HANDLE_void(FN_SETUPVISIBILITY, pfnSetupVisibility, 4p, (pViewEntity, pClient, pvs, pas));
 	RETURN_API_void();
 }
-static void mm_UpdateClientData (const struct edict_s *ent, int sendweapons, struct clientdata_s *cd) {
+static FORCE_STACK_ALIGN void mm_UpdateClientData (const struct edict_s *ent, int sendweapons, struct clientdata_s *cd) {
 	META_DLLAPI_HANDLE_void(FN_UPDATECLIENTDATA, pfnUpdateClientData, pip, (ent, sendweapons, cd));
 	RETURN_API_void();
 }
-static int mm_AddToFullPack(struct entity_state_s *state, int e, edict_t *ent, edict_t *host, int hostflags, int player, unsigned char *pSet) {
+static FORCE_STACK_ALIGN int mm_AddToFullPack(struct entity_state_s *state, int e, edict_t *ent, edict_t *host, int hostflags, int player, unsigned char *pSet) {
 	META_DLLAPI_HANDLE(int, 0, FN_ADDTOFULLPACK, pfnAddToFullPack, pi2p2ip, (state, e, ent, host, hostflags, player, pSet));
 	RETURN_API(int);
 }
-static void mm_CreateBaseline(int player, int eindex, struct entity_state_s *baseline, struct edict_s *entity, int playermodelindex, vec3_t player_mins, vec3_t player_maxs) {
+static FORCE_STACK_ALIGN void mm_CreateBaseline(int player, int eindex, struct entity_state_s *baseline, struct edict_s *entity, int playermodelindex, vec3_t player_mins, vec3_t player_maxs) {
 	META_DLLAPI_HANDLE_void(FN_CREATEBASELINE, pfnCreateBaseline, 2i2pi2p, (player, eindex, baseline, entity, playermodelindex, (float*)player_mins, (float*)player_maxs));
 	RETURN_API_void();
 }
-static void mm_RegisterEncoders(void) {
+static FORCE_STACK_ALIGN void mm_RegisterEncoders(void) {
 	META_DLLAPI_HANDLE_void(FN_REGISTERENCODERS, pfnRegisterEncoders, void, (VOID_ARG));
 	RETURN_API_void();
 }
-static int mm_GetWeaponData(struct edict_s *player, struct weapon_data_s *info) {
+static FORCE_STACK_ALIGN int mm_GetWeaponData(struct edict_s *player, struct weapon_data_s *info) {
 	META_DLLAPI_HANDLE(int, 0, FN_GETWEAPONDATA, pfnGetWeaponData, 2p, (player, info));
 	RETURN_API(int);
 }
-static void mm_CmdStart(const edict_t *player, const struct usercmd_s *cmd, unsigned int random_seed) {
+static FORCE_STACK_ALIGN void mm_CmdStart(const edict_t *player, const struct usercmd_s *cmd, unsigned int random_seed) {
 	META_DLLAPI_HANDLE_void(FN_CMDSTART, pfnCmdStart, 2pui, (player, cmd, random_seed));
 	RETURN_API_void();
 }
-static void mm_CmdEnd (const edict_t *player) {
+static FORCE_STACK_ALIGN void mm_CmdEnd (const edict_t *player) {
 	META_DLLAPI_HANDLE_void(FN_CMDEND, pfnCmdEnd, p, (player));
 	RETURN_API_void();
 }
-static int mm_ConnectionlessPacket(const struct netadr_s *net_from, const char *args, char *response_buffer, int *response_buffer_size) {
+static FORCE_STACK_ALIGN int mm_ConnectionlessPacket(const struct netadr_s *net_from, const char *args, char *response_buffer, int *response_buffer_size) {
 	META_DLLAPI_HANDLE(int, 0, FN_CONNECTIONLESSPACKET, pfnConnectionlessPacket, 4p, (net_from, args, response_buffer, response_buffer_size));
 	RETURN_API(int);
 }
-static int mm_GetHullBounds(int hullnumber, float *mins, float *maxs) {
+static FORCE_STACK_ALIGN int mm_GetHullBounds(int hullnumber, float *mins, float *maxs) {
 	META_DLLAPI_HANDLE(int, 0, FN_GETHULLBOUNDS, pfnGetHullBounds, i2p, (hullnumber, mins, maxs));
 	RETURN_API(int);
 }
-static void mm_CreateInstancedBaselines (void) {
+static FORCE_STACK_ALIGN void mm_CreateInstancedBaselines (void) {
 	META_DLLAPI_HANDLE_void(FN_CREATEINSTANCEDBASELINES, pfnCreateInstancedBaselines, void, (VOID_ARG));
 	RETURN_API_void();
 }
-static int mm_InconsistentFile(const edict_t *player, const char *filename, char *disconnect_message) {
+static FORCE_STACK_ALIGN int mm_InconsistentFile(const edict_t *player, const char *filename, char *disconnect_message) {
 	META_DLLAPI_HANDLE(int, 0, FN_INCONSISTENTFILE, pfnInconsistentFile, 3p, (player, filename, disconnect_message));
 	RETURN_API(int);
 }
-static int mm_AllowLagCompensation(void) {
+static FORCE_STACK_ALIGN int mm_AllowLagCompensation(void) {
 	META_DLLAPI_HANDLE(int, 0, FN_ALLOWLAGCOMPENSATION, pfnAllowLagCompensation, void, (VOID_ARG));
 	RETURN_API(int);
 }
@@ -317,27 +317,27 @@ static int mm_AllowLagCompensation(void) {
 
 // New API functions
 // From SDK ?
-static void mm_OnFreeEntPrivateData(edict_t *pEnt) {
+static FORCE_STACK_ALIGN void mm_OnFreeEntPrivateData(edict_t *pEnt) {
 	META_NEWAPI_HANDLE_void(FN_ONFREEENTPRIVATEDATA, pfnOnFreeEntPrivateData, p, (pEnt));
 	RETURN_API_void();
 }
-static void mm_GameShutdown(void) {
+static FORCE_STACK_ALIGN void mm_GameShutdown(void) {
 	META_NEWAPI_HANDLE_void(FN_GAMESHUTDOWN, pfnGameShutdown, void, (VOID_ARG));
 	RETURN_API_void();
 }
-static int mm_ShouldCollide(edict_t *pentTouched, edict_t *pentOther) {
+static FORCE_STACK_ALIGN int mm_ShouldCollide(edict_t *pentTouched, edict_t *pentOther) {
 	META_NEWAPI_HANDLE(int, 1, FN_SHOULDCOLLIDE, pfnShouldCollide, 2p, (pentTouched, pentOther));
 	RETURN_API(int);
 }
 // Added 2005/08/11 (no SDK update):
-static void mm_CvarValue(const edict_t *pEnt, const char *value) {
+static FORCE_STACK_ALIGN void mm_CvarValue(const edict_t *pEnt, const char *value) {
 	g_Players.clear_player_cvar_query(pEnt);
 	META_NEWAPI_HANDLE_void(FN_CVARVALUE, pfnCvarValue, 2p, (pEnt, value));
 	
 	RETURN_API_void();
 }
 // Added 2005/11/21 (no SDK update):
-static void mm_CvarValue2(const edict_t *pEnt, int requestID, const char *cvarName, const char *value) {
+static FORCE_STACK_ALIGN void mm_CvarValue2(const edict_t *pEnt, int requestID, const char *cvarName, const char *value) {
 	META_NEWAPI_HANDLE_void(FN_CVARVALUE2, pfnCvarValue2, pi2p, (pEnt, requestID, cvarName, value));
 	
 	RETURN_API_void();

@@ -83,7 +83,7 @@ engine_t Engine;
 // This appears to be the _first_ DLL routine called by the engine, so this
 // is where we hook to load all the other DLLs (game, plugins, etc), which
 // is actually all done in meta_startup().
-C_DLLEXPORT void WINAPI GiveFnptrsToDll(enginefuncs_t *pengfuncsFromEngine, 
+C_DLLEXPORT FORCE_STACK_ALIGN void WINAPI GiveFnptrsToDll(enginefuncs_t *pengfuncsFromEngine,
 		globalvars_t *pGlobals)
 {
 #ifdef __linux__
