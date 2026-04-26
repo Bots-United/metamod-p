@@ -58,7 +58,7 @@ static hudtextparms_t default_csay_tparms = {
 };
 
 // Log to console; newline added.
-static void mutil_LogConsole(plid_t /* plid */, const char *fmt, ...) {
+static FORCE_STACK_ALIGN void mutil_LogConsole(plid_t /* plid */, const char *fmt, ...) {
 	va_list ap;
 	char buf[MAX_LOGMSG_LEN];
 	unsigned int len;
@@ -77,7 +77,7 @@ static void mutil_LogConsole(plid_t /* plid */, const char *fmt, ...) {
 }
 
 // Log regular message to logs; newline added.
-static void mutil_LogMessage(plid_t plid, const char *fmt, ...) {
+static FORCE_STACK_ALIGN void mutil_LogMessage(plid_t plid, const char *fmt, ...) {
 	va_list ap;
 	char buf[MAX_LOGMSG_LEN];
 	plugin_info_t *plinfo;
@@ -90,7 +90,7 @@ static void mutil_LogMessage(plid_t plid, const char *fmt, ...) {
 }
 
 // Log an error message to logs; newline added.
-static void mutil_LogError(plid_t plid, const char *fmt, ...) {
+static FORCE_STACK_ALIGN void mutil_LogError(plid_t plid, const char *fmt, ...) {
 	va_list ap;
 	char buf[MAX_LOGMSG_LEN];
 	plugin_info_t *plinfo;
@@ -103,7 +103,7 @@ static void mutil_LogError(plid_t plid, const char *fmt, ...) {
 }
 
 // Log a message only if cvar "developer" set; newline added.
-static void mutil_LogDeveloper(plid_t plid, const char *fmt, ...) {
+static FORCE_STACK_ALIGN void mutil_LogDeveloper(plid_t plid, const char *fmt, ...) {
 	va_list ap;
 	char buf[MAX_LOGMSG_LEN];
 	plugin_info_t *plinfo;
@@ -120,7 +120,7 @@ static void mutil_LogDeveloper(plid_t plid, const char *fmt, ...) {
 
 // Print a center-message, with text parameters and varargs.  Provides
 // functionality to the above center_say interfaces.
-static void mutil_CenterSayVarargs(plid_t plid, hudtextparms_t tparms, 
+static FORCE_STACK_ALIGN void mutil_CenterSayVarargs(plid_t plid, hudtextparms_t tparms, 
 		const char *fmt, va_list ap) 
 {
 	char buf[MAX_LOGMSG_LEN];
@@ -138,7 +138,7 @@ static void mutil_CenterSayVarargs(plid_t plid, hudtextparms_t tparms,
 
 // Print message on center of all player's screens.  Uses default text
 // parameters (color green, 10 second fade-in).
-static void mutil_CenterSay(plid_t plid, const char *fmt, ...) {
+static FORCE_STACK_ALIGN void mutil_CenterSay(plid_t plid, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	mutil_CenterSayVarargs(plid, default_csay_tparms, fmt, ap);
@@ -146,7 +146,7 @@ static void mutil_CenterSay(plid_t plid, const char *fmt, ...) {
 }
 
 // Print a center-message, with given text parameters.
-static void mutil_CenterSayParms(plid_t plid, hudtextparms_t tparms, const char *fmt, ...) {
+static FORCE_STACK_ALIGN void mutil_CenterSayParms(plid_t plid, hudtextparms_t tparms, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	mutil_CenterSayVarargs(plid, tparms, fmt, ap);
@@ -156,7 +156,7 @@ static void mutil_CenterSayParms(plid_t plid, hudtextparms_t tparms, const char 
 // Allow plugins to call the entity functions in the GameDLL.  In
 // particular, calling "player()" as needed by most Bots.  Suggested by
 // Jussi Kivilinna.
-static qboolean mutil_CallGameEntity(plid_t plid, const char *entStr, entvars_t *pev) {
+static FORCE_STACK_ALIGN qboolean mutil_CallGameEntity(plid_t plid, const char *entStr, entvars_t *pev) {
 	plugin_info_t *plinfo;
 	ENTITY_FN pfnEntity;
 
@@ -176,7 +176,7 @@ static qboolean mutil_CallGameEntity(plid_t plid, const char *entStr, entvars_t 
 
 // Find a usermsg, registered by the gamedll, with the corresponding
 // msgname, and return remaining info about it (msgid, size).
-static int mutil_GetUserMsgID(plid_t plid, const char *msgname, int *size) {
+static FORCE_STACK_ALIGN int mutil_GetUserMsgID(plid_t plid, const char *msgname, int *size) {
 	plugin_info_t *plinfo;
 	MRegMsg *umsg;
 
@@ -195,7 +195,7 @@ static int mutil_GetUserMsgID(plid_t plid, const char *msgname, int *size) {
 
 // Find a usermsg, registered by the gamedll, with the corresponding
 // msgid, and return remaining info about it (msgname, size).
-static const char *mutil_GetUserMsgName(plid_t plid, int msgid, int *size) {
+static FORCE_STACK_ALIGN const char *mutil_GetUserMsgName(plid_t plid, int msgid, int *size) {
 	plugin_info_t *plinfo;
 	MRegMsg *umsg;
 
@@ -239,7 +239,7 @@ static const char *mutil_GetUserMsgName(plid_t plid, int msgid, int *size) {
 }
 
 // Return the full path of the plugin's loaded dll/so file.
-static const char *mutil_GetPluginPath(plid_t plid) {
+static FORCE_STACK_ALIGN const char *mutil_GetPluginPath(plid_t plid) {
 	static char buf[PATH_MAX];
 	MPlugin *plug;
 
@@ -254,7 +254,7 @@ static const char *mutil_GetPluginPath(plid_t plid) {
 }
 
 // Return various string-based info about the game/MOD/gamedll.
-static const char *mutil_GetGameInfo(plid_t plid, ginfo_t type) {
+static FORCE_STACK_ALIGN const char *mutil_GetGameInfo(plid_t plid, ginfo_t type) {
 	static char buf[MAX_STRBUF_LEN];
 	const char *cp;
 	switch(type) {
@@ -285,7 +285,7 @@ static const char *mutil_GetGameInfo(plid_t plid, ginfo_t type) {
 	return(buf);
 }
 
-static int mutil_LoadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME now, void **plugin_handle)
+static FORCE_STACK_ALIGN int mutil_LoadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME now, void **plugin_handle)
 {
 	MPlugin *pl_loaded;
 	
@@ -305,7 +305,7 @@ static int mutil_LoadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME no
 	}
 }
 
-static int mutil_UnloadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME now, PL_UNLOAD_REASON reason)
+static FORCE_STACK_ALIGN int mutil_UnloadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME now, PL_UNLOAD_REASON reason)
 {
 	MPlugin *findp = NULL;
 	int pindex;
@@ -332,7 +332,7 @@ static int mutil_UnloadMetaPlugin(plid_t plid, const char *fname, PLUG_LOADTIME 
 	return(meta_errno);
 }
 
-static int mutil_UnloadMetaPluginByHandle(plid_t plid, void *plugin_handle, PLUG_LOADTIME now, PL_UNLOAD_REASON reason)
+static FORCE_STACK_ALIGN int mutil_UnloadMetaPluginByHandle(plid_t plid, void *plugin_handle, PLUG_LOADTIME now, PL_UNLOAD_REASON reason)
 {
 	MPlugin *findp;
 
@@ -352,17 +352,17 @@ static int mutil_UnloadMetaPluginByHandle(plid_t plid, void *plugin_handle, PLUG
 }
 
 // Check if player is being queried for cvar
-static const char * mutil_IsQueryingClientCvar(plid_t /*plid*/, const edict_t *player) {
+static FORCE_STACK_ALIGN const char * mutil_IsQueryingClientCvar(plid_t /*plid*/, const edict_t *player) {
 	return(g_Players.is_querying_cvar(player));
 }
 
 //
-static int mutil_MakeRequestID(plid_t /*plid*/) {
+static FORCE_STACK_ALIGN int mutil_MakeRequestID(plid_t /*plid*/) {
 	return(abs(0xbeef<<16) + (++requestid_counter));
 }
 
 //
-static void mutil_GetHookTables(plid_t plid, enginefuncs_t **peng, DLL_FUNCTIONS **pdll, NEW_DLL_FUNCTIONS **pnewdll) {
+static FORCE_STACK_ALIGN void mutil_GetHookTables(plid_t plid, enginefuncs_t **peng, DLL_FUNCTIONS **pdll, NEW_DLL_FUNCTIONS **pnewdll) {
 	if (peng)
 		*peng = &meta_engfuncs;
 	if (pdll)

@@ -74,8 +74,8 @@ typedef void (*ENTITY_FN) (entvars_t *);
 //  - (plugin loaded) if func still not found, set missing, return
 //  - (plugin loaded, func found) call func
 #define LINK_ENTITY_TO_PLUGIN(entityName, pluginName) \
-	C_DLLEXPORT void entityName(entvars_t *pev); \
-	void entityName(entvars_t *pev) { \
+	C_DLLEXPORT FORCE_STACK_ALIGN void entityName(entvars_t *pev); \
+	FORCE_STACK_ALIGN void entityName(entvars_t *pev) { \
 		static ENTITY_FN pfnEntity = NULL; \
 		static int missing=0; \
 		const char *entStr; \

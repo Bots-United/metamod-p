@@ -113,7 +113,7 @@ inline void DLLINTERNAL reset_dlsym_hook(void)
 //
 // Replacement dlsym function
 //
-static void * __replacement_dlsym(void * module, const char * funcname)
+static FORCE_STACK_ALIGN void * __replacement_dlsym(void * module, const char * funcname)
 {
 	//these are needed in case dlsym calls dlsym, default one doesn't do
 	//it but some LD_PRELOADed library that hooks dlsym might actually
