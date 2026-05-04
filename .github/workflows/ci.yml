@@ -6,11 +6,60 @@ on:
   pull_request:
 
 jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Update package list for i386
+        run: sudo dpkg --add-architecture i386 && sudo apt-get -y update
+      - name: Install packages
+        run: sudo apt-get -y install build-essential g++-multilib
+      - name: Install valgrind
+        run: sudo apt-get -y install valgrind libc6-dbg:i386
+      - name: Run tests
+        run: CXX="g++ -m32" make -j4 -C metamod/tests run
+      - name: Run valgrind
+        run: CXX="g++ -m32" make -C metamod/tests valgrind
+
+  coverage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - name: Update package list for i386
+        run: sudo dpkg --add-architecture i386 && sudo apt-get -y update
+      - name: Install packages
+        run: sudo apt-get -y install build-essential g++-multilib lcov
+      - name: Run coverage
+        run: CXX="g++ -m32" make -C metamod/tests coverage
+      - name: Generate job summary
+        run: |
+          summary=$(lcov --summary metamod/tests/coverage.info --branch-coverage \
+              --ignore-errors inconsistent,deprecated 2>&1)
+          lines=$(echo "$summary" | sed -n 's/.*lines\.\+: \([0-9.]*\)% (\([0-9]*\) of \([0-9]*\).*/| Lines | \2 | \3 | \1% |/p')
+          funcs=$(echo "$summary" | sed -n 's/.*functions\.\+: \([0-9.]*\)% (\([0-9]*\) of \([0-9]*\).*/| Functions | \2 | \3 | \1% |/p')
+          branches=$(echo "$summary" | sed -n 's/.*branches\.\+: \([0-9.]*\)% (\([0-9]*\) of \([0-9]*\).*/| Branches | \2 | \3 | \1% |/p')
+          {
+            echo "### Coverage Summary"
+            echo ""
+            echo "| Metric | Hit | Total | Coverage |"
+            echo "|--------|-----|-------|----------|"
+            echo "$lines"
+            echo "$funcs"
+            echo "$branches"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: metamod/tests/coverage_report
+
   build:
     uses: ./.github/workflows/build.yml
 
   package:
-    needs: [build]
+    needs: [test, build]
     uses: ./.github/workflows/package.yml
     with:
       version: snapshot
