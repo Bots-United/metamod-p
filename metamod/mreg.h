@@ -103,6 +103,9 @@ class MRegCmdList : public class_metamod_new {
 	public:
 	// constructor:
 		MRegCmdList(void) DLLINTERNAL;
+#ifdef UNITTESTS
+		~MRegCmdList(void) { if(mlist) { for(int i=0;i<endlist;i++) if(mlist[i].name) free(mlist[i].name); free(mlist); } }
+#endif
 
 	// functions:
 		MRegCmd * DLLINTERNAL find(const char *findname);	// find by MRegCmd->name
@@ -145,6 +148,21 @@ class MRegCvarList : public class_metamod_new {
 	public:
 	// constructor:
 		MRegCvarList(void) DLLINTERNAL;
+#ifdef UNITTESTS
+		~MRegCvarList(void) {
+			if(vlist) {
+				for(int i = 0; i < endlist; i++)
+					if(vlist[i].data) {
+						if(vlist[i].data->string) free(vlist[i].data->string);
+						if(vlist[i].data->name) free(vlist[i].data->name);
+						free(vlist[i].data);
+					}
+				free(vlist);
+			}
+		}
+		MRegCvar *test_vlist(void) { return vlist; }
+		int test_endlist(void) { return endlist; }
+#endif
 
 	// functions:
 		MRegCvar * DLLINTERNAL add(const char *addname);

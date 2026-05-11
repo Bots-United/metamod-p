@@ -73,6 +73,9 @@ static unsigned char dlsym_old_bytes[BYTES_SIZE];
 //Mutex for our protection
 static pthread_mutex_t mutex_replacement_dlsym = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
+// Tracks whether original dlsym bytes are currently restored (for re-entrant calls)
+static int is_original_restored = 0;
+
 //constructs new jmp forwarder
 inline void construct_jmp_instruction(void *x, void *place, void* target)
 {
@@ -81,9 +84,9 @@ inline void construct_jmp_instruction(void *x, void *place, void* target)
 }
 
 //checks if pointer x points to jump forwarder
-inline bool is_code_trampoline_jmp_opcode(void *x) 
-{ 
-	return (((unsigned char *)x)[0] == 0xff || ((unsigned char *)x)[1] == 0x25); 
+inline bool is_code_trampoline_jmp_opcode(void *x)
+{
+	return (((unsigned char *)x)[0] == 0xff || ((unsigned char *)x)[1] == 0x25);
 }
 
 //extracts pointer from "jmp dword ptr[pointer]"
@@ -118,33 +121,32 @@ static FORCE_STACK_ALIGN void * __replacement_dlsym(void * module, const char * 
 	//these are needed in case dlsym calls dlsym, default one doesn't do
 	//it but some LD_PRELOADed library that hooks dlsym might actually
 	//do so.
-	static int is_original_restored = 0;
 	int was_original_restored = is_original_restored;
-	
+
 	//Lock before modifing original dlsym
 	pthread_mutex_lock(&mutex_replacement_dlsym);
-	
+
 	//restore old dlsym
 	if(!is_original_restored)
 	{
 		restore_original_dlsym();
-		
+
 		is_original_restored = 1;
 	}
-		
+
 	//check if we should hook this call
 	if(module != metamod_module_handle || !metamod_module_handle || !gamedll_module_handle)
 	{
 		//no metamod/gamedll module? should we remove hook now?
 		void * retval = dlsym_original(module, funcname);
-		
+
 		if(metamod_module_handle && gamedll_module_handle)
 		{
 			if(!was_original_restored)
 			{
 				//reset dlsym hook
 				reset_dlsym_hook();
-				
+
 				is_original_restored = 0;
 			}
 		}
@@ -152,33 +154,33 @@ static FORCE_STACK_ALIGN void * __replacement_dlsym(void * module, const char * 
 		{
 			//no metamod/gamedll module? should we remove hook now by not reseting it back?
 		}
-		
+
 		//unlock
 		pthread_mutex_unlock(&mutex_replacement_dlsym);
-		
+
 		return(retval);
 	}
-	
+
 	//dlsym on metamod module
 	void * func = dlsym_original(module, funcname);
-	
+
 	if(!func)
 	{
 		//function not in metamod module, try gamedll
 		func = dlsym_original(gamedll_module_handle, funcname);
 	}
-	
+
 	if(!was_original_restored)
 	{
 		//reset dlsym hook
 		reset_dlsym_hook();
-		
+
 		is_original_restored = 0;
 	}
-	
+
 	//unlock
 	pthread_mutex_unlock(&mutex_replacement_dlsym);
-	
+
 	return(func);
 }
 
@@ -189,25 +191,25 @@ int DLLINTERNAL init_linkent_replacement(DLHANDLE MetamodHandle, DLHANDLE GameDl
 {
 	metamod_module_handle = MetamodHandle;
 	gamedll_module_handle = GameDllHandle;
-	
+
 	// dlsym is already known to be pointing to valid function, we loaded gamedll using it earlier!
 	void * sym_ptr = (void*)&dlsym;
 	while(is_code_trampoline_jmp_opcode(sym_ptr)) {
 		sym_ptr = extract_function_pointer_from_trampoline_jmp(sym_ptr);
 	}
-	
+
 	dlsym_original = (dlsym_func)sym_ptr;
-	
+
 	//Backup old bytes of "dlsym" function
 	memcpy(dlsym_old_bytes, (void*)dlsym_original, BYTES_SIZE);
-	
+
 	//Construct new bytes: "jmp offset[replacement_sendto] @ sendto_original"
 	construct_jmp_instruction((void*)&dlsym_new_bytes[0], (void*)dlsym_original, (void*)&__replacement_dlsym);
-	
-	//Check if bytes overlap page border.	
+
+	//Check if bytes overlap page border.
 	unsigned long start_of_page = PAGE_ALIGN((long)dlsym_original) - PAGE_SIZE;
 	unsigned long size_of_pages = 0;
-	
+
 	if((unsigned long)dlsym_original + BYTES_SIZE > PAGE_ALIGN((unsigned long)dlsym_original))
 	{
 		//bytes are located on two pages
@@ -218,17 +220,20 @@ int DLLINTERNAL init_linkent_replacement(DLHANDLE MetamodHandle, DLHANDLE GameDl
 		//bytes are located entirely on one page.
 		size_of_pages = PAGE_SIZE;
 	}
-	
+
 	//Remove PROT_READ restriction
 	if(mprotect((void*)start_of_page, size_of_pages, PROT_READ|PROT_WRITE|PROT_EXEC))
 	{
 		META_ERROR("Couldn't initialize dynamic linkents, mprotect failed: %i.  Exiting...", errno);
 		return(0);
 	}
-	
+
+	// Reset re-entrancy state before activating hook
+	is_original_restored = 0;
+
 	//Write our own jmp-forwarder on "dlsym"
 	reset_dlsym_hook();
-		
+
 	//done
 	return(1);
 }

@@ -55,9 +55,11 @@ private:
 	mBOOL isQueried;                         // is this player currently queried for a cvar value
 	char *cvarName;                          // name of the cvar if getting queried
 	
+#ifdef UNITTESTS
+public:
+#endif
 	MPlayer (const MPlayer&) DLLINTERNAL;
-	MPlayer& operator=(const MPlayer&) DLLINTERNAL; 
-
+	MPlayer& operator=(const MPlayer&) DLLINTERNAL;
 
 public:
 	MPlayer() DLLINTERNAL;
