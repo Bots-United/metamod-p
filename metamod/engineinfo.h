@@ -138,6 +138,9 @@ class EngineInfo : public class_metamod_new
         bool DLLINTERNAL is_valid_code_pointer(             void (*fp) (const edict_t*, const char*) );
         bool DLLINTERNAL is_valid_code_pointer(             void (*fp) (const edict_t*, const char*, int) );
         bool DLLINTERNAL is_valid_code_pointer(              int (*fp) (const char *, char**) );
+#ifdef UNITTESTS
+        void test_set_state(int state) { m_state = (char)state; }
+#endif
 };
 
 

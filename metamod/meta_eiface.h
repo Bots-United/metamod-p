@@ -87,12 +87,16 @@ struct meta_new_dll_functions_t : public NEW_DLL_FUNCTIONS {
 	// return the engine's version of NEW_DLL_FUNCTIONS
 	int DLLINTERNAL version( void );
 
+#ifdef UNITTESTS
+	public:
+		static void test_set_version(int v) { sm_version = v; }
+#endif
 	private:
 
 	// data :
 
 		// The NEW_DLL_FUNCTIONS struct also changed, but the version
-		// number did not change. That begs the question why to have 
+		// number did not change. That begs the question why to have
 		// it versioned in the first place, but whaddaya know.
 		// While the official version is left at 1, we internally
 		// calculate a different version of the engine's NEW_DLL_FUNCTIONS
@@ -100,7 +104,7 @@ struct meta_new_dll_functions_t : public NEW_DLL_FUNCTIONS {
 		// version that it uses.
 		//
 		// The default version is 1.
-		// 
+		//
 		// With the enginefuncs interface version 156 the function
 		// pfnCvarValue() was added, which we call version 2.
 		//
@@ -112,7 +116,7 @@ struct meta_new_dll_functions_t : public NEW_DLL_FUNCTIONS {
 		// we are in trouble and will need to change our
 		// internal versions.
 
-		static int sm_version;	
+		static int sm_version;
 
 	// functions :
 

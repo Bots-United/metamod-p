@@ -81,6 +81,12 @@ class MConfig : public class_metamod_new {
 		void operator=(const MConfig &src);
 		MConfig(const MConfig &src);
 	public:
+#ifdef UNITTESTS
+		char *test_get_filename(void) { return filename; }
+		void test_set_filename(char *f) { filename = f; }
+		option_t *test_find(const char *lookup) { return find(lookup); }
+		mBOOL test_set(option_t *setp, const char *value) { return set(setp, value); }
+#endif
 		// contructor
 		MConfig(void) DLLINTERNAL;
 		// data

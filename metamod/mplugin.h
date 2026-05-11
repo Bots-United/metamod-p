@@ -202,9 +202,15 @@ class MPlugin : public class_metamod_new {
 		mBOOL DLLINTERNAL query(void);
 		mBOOL DLLINTERNAL attach(PLUG_LOADTIME now);
 		mBOOL DLLINTERNAL detach(PLUG_LOADTIME now, PL_UNLOAD_REASON reason);
-		
+
 		gamedll_funcs_t gamedll_funcs;
 		mutil_funcs_t mutil_funcs;
+
+#ifdef UNITTESTS
+	public:
+		mBOOL test_detach(PLUG_LOADTIME now, PL_UNLOAD_REASON reason) { return detach(now, reason); }
+		gamedll_funcs_t & test_gamedll_funcs() { return gamedll_funcs; }
+#endif
 };
 
 // Macros used by MPlugin::show(), to list the functions that the plugin

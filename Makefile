@@ -24,7 +24,17 @@ subdirs: $(SUBDIRS)
 $(SUBDIRS):
 	$(MAKE) -C $@
 
+test:
+	$(MAKE) -C metamod/tests run
+
+valgrind:
+	$(MAKE) -C metamod/tests valgrind
+
+coverage:
+	$(MAKE) -C metamod/tests coverage
+
 clean cleanall:
+	$(MAKE) -C metamod/tests clean
 	for i in $(SUBDIRS); do \
 		$(MAKE) -C $$i cleanall || exit; \
 	done
