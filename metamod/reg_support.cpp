@@ -215,7 +215,7 @@ FORCE_STACK_ALIGN void DLLHIDDEN meta_CVarRegister(cvar_t *pCvar) {
 
 
 // Replacement for engine routine RegUserMsg; called by plugins. 
-int DLLHIDDEN meta_RegUserMsg(const char *pszName, int iSize) {
+FORCE_STACK_ALIGN int DLLHIDDEN meta_RegUserMsg(const char *pszName, int iSize) {
 	return(REG_USER_MSG(strdup(pszName), iSize));
 }
 

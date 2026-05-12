@@ -428,7 +428,7 @@ DLL_FUNCTIONS *g_pHookedDllFunctions = &gFunctionTable;
 // It's unclear whether a DLL coded under SDK2 needs to provide the older
 // GetAPI or not..
 
-C_DLLEXPORT int GetEntityAPI(DLL_FUNCTIONS *pFunctionTable, int interfaceVersion)
+C_DLLEXPORT FORCE_STACK_ALIGN int GetEntityAPI(DLL_FUNCTIONS *pFunctionTable, int interfaceVersion)
 {
 	META_DEBUG(3, ("called: GetEntityAPI; version=%d", interfaceVersion));
 	if(!pFunctionTable || metamod_not_loaded) {
@@ -443,7 +443,7 @@ C_DLLEXPORT int GetEntityAPI(DLL_FUNCTIONS *pFunctionTable, int interfaceVersion
 	return(TRUE);
 }
 
-C_DLLEXPORT int GetEntityAPI2(DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion)
+C_DLLEXPORT FORCE_STACK_ALIGN int GetEntityAPI2(DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion)
 {
 	META_DEBUG(3, ("called: GetEntityAPI2; version=%d", *interfaceVersion));
 	if(!pFunctionTable || metamod_not_loaded) {
@@ -484,7 +484,7 @@ static meta_new_dll_functions_t sNewFunctionTable(
 
 NEW_DLL_FUNCTIONS *g_pHookedNewDllFunctions = &sNewFunctionTable;
 
-C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *interfaceVersion) 
+C_DLLEXPORT FORCE_STACK_ALIGN int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *interfaceVersion)
 {
 	META_DEBUG(6, ("called: GetNewDLLFunctions; version=%d", *interfaceVersion));
 #if 0 // ~dvander - but then you can't use cvar querying on many mods...

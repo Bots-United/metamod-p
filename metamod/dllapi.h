@@ -47,12 +47,12 @@ typedef int (*GETENTITYAPI2_FN) (DLL_FUNCTIONS *pFunctionTable, int *interfaceVe
 typedef int (*GETNEWDLLFUNCTIONS_FN) (NEW_DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion);
 
 // From SDK dlls/cbase.h:
-C_DLLEXPORT int GetEntityAPI( DLL_FUNCTIONS *pFunctionTable, int interfaceVersion );
-C_DLLEXPORT int GetEntityAPI2( DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion );
+C_DLLEXPORT FORCE_STACK_ALIGN int GetEntityAPI( DLL_FUNCTIONS *pFunctionTable, int interfaceVersion );
+C_DLLEXPORT FORCE_STACK_ALIGN int GetEntityAPI2( DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion );
 
 // No example in SDK..
 // From Adminmod dll.cpp:
-C_DLLEXPORT int GetNewDLLFunctions( NEW_DLL_FUNCTIONS *pNewFunctionTable, int *interfaceVersion );
+C_DLLEXPORT FORCE_STACK_ALIGN int GetNewDLLFunctions( NEW_DLL_FUNCTIONS *pNewFunctionTable, int *interfaceVersion );
 
 // Typedefs for the above functions:
 
