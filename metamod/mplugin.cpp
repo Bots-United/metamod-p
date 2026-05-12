@@ -1399,7 +1399,7 @@ mBOOL DLLINTERNAL MPlugin::newer_file(void) {
 // meta_errno values:
 //  - none
 const char * DLLINTERNAL MPlugin::str_status(STR_STATUS fmt) {
-	switch(status) {
+	switch(status_int) {
 		case PL_EMPTY:
 			if(fmt==ST_SHOW) return("empt");
 			else return("empty");
@@ -1422,8 +1422,8 @@ const char * DLLINTERNAL MPlugin::str_status(STR_STATUS fmt) {
 			if(fmt==ST_SHOW) return("PAUS");
 			else return("paused");
 		default:
-			if(fmt==ST_SHOW) return(META_UTIL_VarArgs("UNK%d", status));
-			return(META_UTIL_VarArgs("unknown (%d)", status));
+			if(fmt==ST_SHOW) return(META_UTIL_VarArgs("UNK%d", status_int));
+			return(META_UTIL_VarArgs("unknown (%d)", status_int));
 	}
 }
 
@@ -1433,7 +1433,7 @@ const char * DLLINTERNAL MPlugin::str_status(STR_STATUS fmt) {
 // meta_errno values:
 //  - none
 const char * DLLINTERNAL MPlugin::str_action(STR_ACTION fmt) {
-	switch(action) {
+	switch(action_int) {
 		case PA_NULL:
 			if(fmt==SA_SHOW) return("NULL");
 			else return("null");
@@ -1456,8 +1456,8 @@ const char * DLLINTERNAL MPlugin::str_action(STR_ACTION fmt) {
 			if(fmt==SA_SHOW) return("relo");
 			else return("reload");
 		default:
-			if(fmt==SA_SHOW) return(META_UTIL_VarArgs("UNK%d", action));
-			else return(META_UTIL_VarArgs("unknown (%d)", action));
+			if(fmt==SA_SHOW) return(META_UTIL_VarArgs("UNK%d", action_int));
+			else return(META_UTIL_VarArgs("unknown (%d)", action_int));
 	}
 }
 
@@ -1469,7 +1469,7 @@ const char * DLLINTERNAL MPlugin::str_action(STR_ACTION fmt) {
 // meta_errno values:
 //  - none
 const char * DLLINTERNAL MPlugin::str_loadtime(PLUG_LOADTIME ptime, STR_LOADTIME fmt) {
-	switch(ptime) {
+	switch((int)ptime) {
 		case PT_NEVER:
 			if(fmt==SL_SHOW) return("Never");
 			else return("never");
@@ -1494,8 +1494,8 @@ const char * DLLINTERNAL MPlugin::str_loadtime(PLUG_LOADTIME ptime, STR_LOADTIME
 			else if(fmt==SL_NOW) return("for requested pause");
 			else return("pausable");
 		default:
-			if(fmt==SL_SHOW) return(META_UTIL_VarArgs("UNK-%d", ptime));
-			else return(META_UTIL_VarArgs("unknown (%d)", ptime));
+			if(fmt==SL_SHOW) return(META_UTIL_VarArgs("UNK-%d", (int)ptime));
+			else return(META_UTIL_VarArgs("unknown (%d)", (int)ptime));
 	}
 }
 
@@ -1510,7 +1510,7 @@ const char * DLLINTERNAL MPlugin::str_reason(PL_UNLOAD_REASON preason, PL_UNLOAD
 	if(preason == PNL_PLG_FORCED)
 		preason = PNL_NULL;
 	
-	switch(preal_reason) {
+	switch((int)preal_reason) {
 		case PNL_NULL:
 			return("null");
 		case PNL_INI_DELETED:
@@ -1530,7 +1530,7 @@ const char * DLLINTERNAL MPlugin::str_reason(PL_UNLOAD_REASON preason, PL_UNLOAD
 		case PNL_RELOAD:
 			return("reloading");
 		default:
-			return(META_UTIL_VarArgs("unknown (%d)", preal_reason));
+			return(META_UTIL_VarArgs("unknown (%d)", (int)preal_reason));
 	}
 }
 
@@ -1538,7 +1538,7 @@ const char * DLLINTERNAL MPlugin::str_reason(PL_UNLOAD_REASON preason, PL_UNLOAD
 // meta_errno values:
 //  - none
 const char * DLLINTERNAL MPlugin::str_source(STR_SOURCE fmt) {
-	switch(source) {
+	switch(source_int) {
 		case PS_INI:
 			if(fmt==SO_SHOW) return("ini");
 			else return("ini file");
@@ -1554,7 +1554,7 @@ const char * DLLINTERNAL MPlugin::str_source(STR_SOURCE fmt) {
 				else return(META_UTIL_VarArgs("plugin [%d]", source_plugin_index));
 			}
 		default:
-			if(fmt==SO_SHOW) return(META_UTIL_VarArgs("UNK%d", source));
-			else return(META_UTIL_VarArgs("unknown (%d)", source));
+			if(fmt==SO_SHOW) return(META_UTIL_VarArgs("UNK%d", source_int));
+			else return(META_UTIL_VarArgs("unknown (%d)", source_int));
 	}
 }

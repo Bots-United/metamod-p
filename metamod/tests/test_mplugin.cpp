@@ -300,7 +300,7 @@ static int test_str_status_show(void)
 	ASSERT_TRUE(strcmp(plug.str_status(ST_SHOW), "RUN") == 0);
 	plug.status = PL_PAUSED;
 	ASSERT_TRUE(strcmp(plug.str_status(ST_SHOW), "PAUS") == 0);
-	plug.status = (PLUG_STATUS)99;
+	plug.status_int = 99;
 	ASSERT_STR_CONTAINS(plug.str_status(ST_SHOW), "UNK");
 
 	teardown_globals();
@@ -405,7 +405,7 @@ static int test_str_source(void)
 	ASSERT_STR_CONTAINS(plug.str_source(SO_SIMPLE), "plugin");
 	ASSERT_STR_CONTAINS(plug.str_source(SO_SHOW), "pl5");
 
-	plug.source = (PLOAD_SOURCE)99;
+	plug.source_int = 99;
 	ASSERT_STR_CONTAINS(plug.str_source(SO_SIMPLE), "unknown");
 	ASSERT_STR_CONTAINS(plug.str_source(SO_SHOW), "UNK");
 
@@ -977,7 +977,7 @@ static int test_str_status_unknown(void)
 	setup_globals();
 	MPlugin plug;
 	memset(&plug, 0, sizeof(plug));
-	plug.status = (PLUG_STATUS)99;
+	plug.status_int = 99;
 	ASSERT_STR_CONTAINS(plug.str_status(), "unknown");
 	ASSERT_STR_CONTAINS(plug.str_status(ST_SHOW), "UNK");
 	teardown_globals();

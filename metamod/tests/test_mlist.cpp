@@ -3825,8 +3825,7 @@ static int test_refresh_default_action(void)
 	temp.source = PS_CMD;
 	MPlugin *added = list->add(&temp);
 	added->status = PL_RUNNING;
-	// Set an action value that doesn't match any case in the switch
-	added->action = (PLUG_ACTION)99;
+	added->action_int = 99;
 	added->source = PS_CMD;
 
 	mBOOL ret = list->refresh(PT_ANYTIME);

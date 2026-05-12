@@ -22,6 +22,18 @@ jobs:
       - name: Run valgrind
         run: CXX="i686-linux-gnu-g++" make -C metamod/tests valgrind
 
+  sanitize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Update package list for i386
+        run: sudo dpkg --add-architecture i386 && sudo apt-get -y update
+      - name: Install packages
+        run: sudo apt-get -y install build-essential g++-i686-linux-gnu libc6:i386 libstdc++6:i386 valgrind libasan8:i386 libubsan1:i386
+      - name: Run tests with ASan and UBSan
+        run: CXX="i686-linux-gnu-g++" make -j4 -C metamod/tests sanitize
+
   coverage:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -59,7 +71,7 @@ jobs:
     uses: ./.github/workflows/build.yml
 
   package:
-    needs: [test, build]
+    needs: [test, sanitize, coverage, build]
     uses: ./.github/workflows/package.yml
     with:
       version: snapshot

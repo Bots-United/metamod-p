@@ -158,7 +158,8 @@ static int test_extract_pointer(void)
 	unsigned char code[6];
 	code[0] = 0xff;
 	code[1] = 0x25;
-	*(void ***)(code + 2) = &target_ptr;
+	void **indirect = &target_ptr;
+	memcpy(code + 2, &indirect, sizeof(indirect));
 
 	void *result = extract_function_pointer_from_trampoline_jmp(code);
 	ASSERT_TRUE(result == (void *)&dummy_target);
