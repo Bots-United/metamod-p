@@ -75,11 +75,11 @@ mutil_funcs_t *gpMetaUtilFuncs;		// metamod utility functions
 //  ifvers			(given) interface_version metamod is using
 //  pPlugInfo		(requested) struct with info about plugin
 //  pMetaUtilFuncs	(given) table of utility functions provided by metamod
-C_DLLEXPORT int Meta_Query(char *ifvers, plugin_info_t **pPlugInfo,
-		mutil_funcs_t *pMetaUtilFuncs) 
+C_DLLEXPORT FORCE_STACK_ALIGN int Meta_Query(char *ifvers, plugin_info_t **pPlugInfo,
+		mutil_funcs_t *pMetaUtilFuncs)
 {
 	if ((int) CVAR_GET_FLOAT("developer") != 0)
-		UTIL_LogPrintf("[%s] dev: called: Meta_Query; version=%s, ours=%s\n", 
+		UTIL_LogPrintf("[%s] dev: called: Meta_Query; version=%s, ours=%s\n",
 				Plugin_info.logtag, ifvers, Plugin_info.ifvers);
 
 	// Check for valid pMetaUtilFuncs before we continue.
@@ -127,7 +127,7 @@ C_DLLEXPORT int Meta_Query(char *ifvers, plugin_info_t **pPlugInfo,
 //  pFunctionTable	(requested) table of function tables this plugin catches
 //  pMGlobals		(given) global vars from metamod
 //  pGamedllFuncs	(given) copy of function tables from game dll
-C_DLLEXPORT int Meta_Attach(PLUG_LOADTIME now, META_FUNCTIONS *pFunctionTable, 
+C_DLLEXPORT FORCE_STACK_ALIGN int Meta_Attach(PLUG_LOADTIME now, META_FUNCTIONS *pFunctionTable,
 		meta_globals_t *pMGlobals, gamedll_funcs_t *pGamedllFuncs)
 {
 	if(now > Plugin_info.loadable) {
@@ -159,7 +159,7 @@ C_DLLEXPORT int Meta_Attach(PLUG_LOADTIME now, META_FUNCTIONS *pFunctionTable,
 // Metamod detaching plugin from the server.
 // now		(given) current phase, ie during map, etc
 // reason	(given) why detaching (refresh, console unload, forced unload, etc)
-C_DLLEXPORT int Meta_Detach(PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
+C_DLLEXPORT FORCE_STACK_ALIGN int Meta_Detach(PLUG_LOADTIME now, PL_UNLOAD_REASON reason) {
 	if(now > Plugin_info.unloadable && reason != PNL_CMD_FORCED) {
 		LOG_ERROR(PLID, "Can't unload plugin right now");
 		return(FALSE);

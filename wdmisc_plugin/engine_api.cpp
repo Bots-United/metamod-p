@@ -45,7 +45,7 @@
 
 enginefuncs_t meta_engfuncs;
 
-C_DLLEXPORT int GetEngineFunctions(enginefuncs_t *pengfuncsFromEngine, 
+C_DLLEXPORT FORCE_STACK_ALIGN int GetEngineFunctions(enginefuncs_t *pengfuncsFromEngine,
 		int *interfaceVersion) 
 {
 	LOG_DEVELOPER(PLID, "called: GetEngineFunctions; version=%d", 
