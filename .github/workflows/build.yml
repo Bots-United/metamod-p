@@ -17,6 +17,10 @@ jobs:
         run: make -j4 -C metamod CC="i686-linux-gnu-gcc" OPT=opt
       - name: Build trace_plugin (optimized)
         run: make -j4 -C trace_plugin CC="i686-linux-gnu-gcc" OPT=opt
+      - name: Build stub_plugin (optimized)
+        run: make -j4 -C stub_plugin CC="i686-linux-gnu-gcc" OPT=opt
+      - name: Build wdmisc_plugin (optimized)
+        run: make -j4 -C wdmisc_plugin CC="i686-linux-gnu-gcc" OPT=opt
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -24,6 +28,8 @@ jobs:
           path: |
             metamod/opt.linux_i386/metamod.so
             trace_plugin/opt.linux_i386/trace_mm.so
+            stub_plugin/opt.linux_i386/stub_mm.so
+            wdmisc_plugin/opt.linux_i386/wdmisc_mm.so
 
   build-linux-bionic:
     runs-on: ubuntu-24.04
@@ -36,7 +42,9 @@ jobs:
             lpenz/ubuntu-bionic-i386 \
             bash -c "apt-get -y update && apt-get -y install build-essential g++ make && \
               make -j4 -C metamod OPT=opt && \
-              make -j4 -C trace_plugin OPT=opt"
+              make -j4 -C trace_plugin OPT=opt && \
+              make -j4 -C stub_plugin OPT=opt && \
+              make -j4 -C wdmisc_plugin OPT=opt"
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -44,6 +52,8 @@ jobs:
           path: |
             metamod/opt.linux_i386/metamod.so
             trace_plugin/opt.linux_i386/trace_mm.so
+            stub_plugin/opt.linux_i386/stub_mm.so
+            wdmisc_plugin/opt.linux_i386/wdmisc_mm.so
 
   build-windows:
     runs-on: ubuntu-24.04
@@ -56,6 +66,10 @@ jobs:
         run: make -j4 -C metamod CC_WIN="i686-w64-mingw32-g++" OS=windows OPT=opt win32
       - name: Build trace_plugin (optimized)
         run: make -j4 -C trace_plugin CC_WIN="i686-w64-mingw32-g++" OS=windows OPT=opt win32
+      - name: Build stub_plugin (optimized)
+        run: make -j4 -C stub_plugin CC_WIN="i686-w64-mingw32-g++" OS=windows OPT=opt win32
+      - name: Build wdmisc_plugin (optimized)
+        run: make -j4 -C wdmisc_plugin CC_WIN="i686-w64-mingw32-g++" OS=windows OPT=opt win32
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -63,3 +77,5 @@ jobs:
           path: |
             metamod/opt.win32/metamod.dll
             trace_plugin/opt.win32/trace_mm.dll
+            stub_plugin/opt.win32/stub_mm.dll
+            wdmisc_plugin/opt.win32/wdmisc_mm.dll

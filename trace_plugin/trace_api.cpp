@@ -86,7 +86,7 @@ void trace_init(void) {
 }
 
 // Parse "trace" console command.
-void svr_trace(void) {
+FORCE_STACK_ALIGN void svr_trace(void) {
 	const char *cmd;
 	cmd=CMD_ARGV(1);
 	if(!strcasecmp(cmd, "version"))

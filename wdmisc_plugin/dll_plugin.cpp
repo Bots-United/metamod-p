@@ -44,7 +44,7 @@
 #include "dll_plugin.h"
 #include "log_plugin.h"
 
-void wd_ServerDeactivate( void ) {
+FORCE_STACK_ALIGN void wd_ServerDeactivate( void ) {
 	bounce_check();
 	RETURN_META(MRES_HANDLED);
 }
@@ -113,7 +113,7 @@ static DLL_FUNCTIONS gFunctionTable =
 	NULL,						//! pfnAllowLagCompensation()
 };
 
-C_DLLEXPORT int GetEntityAPI2(DLL_FUNCTIONS *pFunctionTable, 
+C_DLLEXPORT FORCE_STACK_ALIGN int GetEntityAPI2(DLL_FUNCTIONS *pFunctionTable,
 		int *interfaceVersion)
 {
 	LOG_DEVELOPER(PLID, "called: GetEntityAPI2; version=%d", *interfaceVersion);

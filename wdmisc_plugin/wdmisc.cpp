@@ -115,7 +115,7 @@ void do_my_getengfuncs(void) {
 // on, which makes the code a bit less readable than doing just a "strstr"
 // on the log line. 
 
-void wd_AlertMessage(ALERT_TYPE atype, char *szFmt, ...) {
+FORCE_STACK_ALIGN void wd_AlertMessage(ALERT_TYPE atype, char *szFmt, ...) {
 	va_list ap;
 	static char buf[MAX_LOGMSG_LEN];
 	char *cp, *ep;
@@ -177,7 +177,7 @@ void wd_AlertMessage(ALERT_TYPE atype, char *szFmt, ...) {
 	RETURN_META(MRES_HANDLED);
 }
 
-void wd_msglist(void) {
+FORCE_STACK_ALIGN void wd_msglist(void) {
 	int i, size;
 	const char *cp;
 	LOG_CONSOLE(PLID, "registered user msgs:");
@@ -188,7 +188,7 @@ void wd_msglist(void) {
 	}
 }
 
-void wd_msgid(void) {
+FORCE_STACK_ALIGN void wd_msgid(void) {
 	const char *msgname;
 	int id;
 	msgname=CMD_ARGV(1);
@@ -199,7 +199,7 @@ void wd_msgid(void) {
 		LOG_CONSOLE(PLID, "msg not found: %s", msgname);
 }
 
-void wd_testit(void) {
+FORCE_STACK_ALIGN void wd_testit(void) {
 	cvar_t *cv;
 	cv=CVAR_GET_POINTER("csguard_version");
 	if(cv)

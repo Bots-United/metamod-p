@@ -248,7 +248,7 @@ enginefuncs_t meta_engfuncs =
 	NULL,						// pfnEngCheckParm()
 };
 
-C_DLLEXPORT int GetEngineFunctions(enginefuncs_t *pengfuncsFromEngine, 
+C_DLLEXPORT FORCE_STACK_ALIGN int GetEngineFunctions(enginefuncs_t *pengfuncsFromEngine,
 		int *interfaceVersion) 
 {
 	if(!pengfuncsFromEngine) {

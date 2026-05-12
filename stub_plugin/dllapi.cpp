@@ -101,7 +101,7 @@ static DLL_FUNCTIONS gFunctionTable =
 	NULL,					// pfnAllowLagCompensation
 };
 
-C_DLLEXPORT int GetEntityAPI2(DLL_FUNCTIONS *pFunctionTable, 
+C_DLLEXPORT FORCE_STACK_ALIGN int GetEntityAPI2(DLL_FUNCTIONS *pFunctionTable,
 		int *interfaceVersion)
 {
 	if(!pFunctionTable) {
