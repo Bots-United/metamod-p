@@ -65,34 +65,39 @@ mBOOL DLLINTERNAL MPlugin::ini_parseline(const char *line) {
 	char *tmp_line;
 
 	//
-	tmp_line=strdup(line);
-	if(!tmp_line)
+	char *tmp_alloc;
+	tmp_alloc=strdup(line);
+	if(!tmp_alloc)
 		RETURN_ERRNO(mFALSE, ME_NOMEM);
+	tmp_line=tmp_alloc;
 
 	// skip whitespace at start of line
 	while(*tmp_line==' ' || *tmp_line=='\t') tmp_line++;
 
 	// remove whitespace at end of line
-	cp = tmp_line + strlen(tmp_line) -1;
-	while(*cp==' ' || *cp=='\t') *cp--='\0';
+	int len = strlen(tmp_line);
+	if(len > 0) {
+		cp = tmp_line + len - 1;
+		while(cp >= tmp_line && (*cp==' ' || *cp=='\t')) *cp--='\0';
+	}
 
 	// skip empty lines
 	if(tmp_line[0]=='\0') {
 		META_DEBUG(7, ("ini: Ignoring empty line: %s", tmp_line));
-		free(tmp_line);
+		free(tmp_alloc);
 		RETURN_ERRNO(mFALSE, ME_BLANK);
 	}
 
 	if(tmp_line[0]=='#' || tmp_line[0]==';' || strstr(tmp_line, "//")==tmp_line) {
 		META_DEBUG(7, ("ini: Ignoring commented line: %s", tmp_line));
-		free(tmp_line);
+		free(tmp_alloc);
 		RETURN_ERRNO(mFALSE, ME_COMMENT);
 	}
 	
 	// grab platform ("win32" or "linux")
 	token=strtok_r(tmp_line, " \t", &ptr_token);
 	if(!token) {
-		free(tmp_line);
+		free(tmp_alloc);
 		RETURN_ERRNO(mFALSE, ME_FORMAT);
 	}
 	if(strcasecmp(token, PLATFORM) == 0) {
@@ -102,14 +107,14 @@ mBOOL DLLINTERNAL MPlugin::ini_parseline(const char *line) {
 	} else {
 		// plugin is not for this OS
 		META_DEBUG(7, ("ini: Ignoring entry for %s", token));
-		free(tmp_line);
+		free(tmp_alloc);
 		RETURN_ERRNO(mFALSE, ME_OSNOTSUP);
 	}
 
 	// grab filename
 	token=strtok_r(NULL, " \t\r\n", &ptr_token);
 	if(!token) {
-		free(tmp_line);
+		free(tmp_alloc);
 		RETURN_ERRNO(mFALSE, ME_FORMAT);
 	}
 	STRNCPY(filename, token, sizeof(filename));
@@ -141,7 +146,7 @@ mBOOL DLLINTERNAL MPlugin::ini_parseline(const char *line) {
 	source=PS_INI;
 	status=PL_VALID;
 	
-	free(tmp_line);
+	free(tmp_alloc);
 	return(mTRUE);
 }
 
