@@ -116,24 +116,37 @@ typedef struct {
 
 // An individual plugin.
 class MPlugin : public class_metamod_new {
+	private:
+		typedef char assert_status_size[sizeof(PLUG_STATUS) == sizeof(int) ? 1 : -1];
+		typedef char assert_action_size[sizeof(PLUG_ACTION) == sizeof(int) ? 1 : -1];
+		typedef char assert_source_size[sizeof(PLOAD_SOURCE) == sizeof(int) ? 1 : -1];
 	public:
 	// data:
 		// reordered for faster api_hook.cpp functions
-		PLUG_STATUS status;				// current status of plugin (loaded, etc)
+		union {
+			PLUG_STATUS status;			// current status of plugin (loaded, etc)
+			int status_int;				// int alias for switch without enum-load UB
+		};
 		api_tables_t tables;
 		api_tables_t post_tables;
-		
+
 		inline DLLINTERNAL void * get_api_table(enum_api_t api) {
 			return(((void**)&tables)[api]);
 		}
 		inline DLLINTERNAL void * get_api_post_table(enum_api_t api) {
 			return(((void**)&post_tables)[api]);
 		}
-		
+
 		int index;					// 1-based
 		int pfspecific;                  		// level of specific platform affinity, used during load time
-		PLUG_ACTION action;				// what to do with plugin (load, unload, etc)
-		PLOAD_SOURCE source;				// source of the request to load the plugin
+		union {
+			PLUG_ACTION action;			// what to do with plugin (load, unload, etc)
+			int action_int;				// int alias for switch without enum-load UB
+		};
+		union {
+			PLOAD_SOURCE source;			// source of the request to load the plugin
+			int source_int;				// int alias for switch without enum-load UB
+		};
 		int source_plugin_index;			// index of plugin that loaded this plugin. -1 means source plugin has been unloaded.
 		int unloader_index;
 		mBOOL is_unloader;				// fix to prevent other plugins unload active unloader.

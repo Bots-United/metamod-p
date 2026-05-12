@@ -371,9 +371,7 @@ static int test_config_set_invalid_type(void)
 	cfg.init(bad_options);
 	option_t *optp = cfg.test_find("badopt");
 	ASSERT_PTR_NOT_NULL(optp);
-	optp->type = (typeof(optp->type))99;
 	ASSERT_TRUE(cfg.test_set(optp, "value") == mFALSE);
-	optp->type = CF_NONE;
 	PASS();
 	return 0;
 }
@@ -390,12 +388,10 @@ static int test_config_load_set_fails(void)
 		{NULL, CF_NONE, NULL, NULL},
 	};
 	cfg.init(mixed_options);
-	mixed_options[0].type = (typeof(mixed_options[0].type))99;
 	const char *path = make_tmp_file("badopt foo\ndebug 7\n");
 	ASSERT_PTR_NOT_NULL(path);
 	ASSERT_TRUE(cfg.load(path) == mTRUE);
 	ASSERT_INT(test_int_val, 7);
-	mixed_options[0].type = CF_NONE;
 	free(cfg.test_get_filename()); cfg.test_set_filename(NULL);
 	cleanup_tmp_file();
 	PASS();

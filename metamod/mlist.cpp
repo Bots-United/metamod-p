@@ -737,7 +737,7 @@ mBOOL DLLINTERNAL MPluginList::refresh(PLUG_LOADTIME now) {
 		iplug=&plist[i];
 		if(iplug->status < PL_VALID)
 			continue;
-		switch(iplug->action) {
+		switch(iplug->action_int) {
 			case PA_KEEP:
 				META_DEBUG(1, ("Keeping plugin '%s'", iplug->desc));
 				iplug->action=PA_NONE;
