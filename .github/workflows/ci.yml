@@ -34,6 +34,20 @@ jobs:
       - name: Run tests with ASan and UBSan
         run: CXX="i686-linux-gnu-g++" make -j4 -C metamod/tests sanitize
 
+  clang-sanitize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Update package list for i386
+        run: sudo dpkg --add-architecture i386 && sudo apt-get -y update
+      - name: Install packages
+        run: sudo apt-get -y install clang libclang-rt-dev g++-i686-linux-gnu libc6:i386 libstdc++6:i386 valgrind
+      - name: Run tests with clang
+        run: CXX="clang++ -target i686-linux-gnu" make -j4 -C metamod/tests run
+      - name: Run tests with clang ASan and UBSan
+        run: CXX="clang++ -target i686-linux-gnu" make -j4 -C metamod/tests clang-sanitize
+
   coverage:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -71,7 +85,7 @@ jobs:
     uses: ./.github/workflows/build.yml
 
   package:
-    needs: [test, sanitize, coverage, build]
+    needs: [test, sanitize, clang-sanitize, coverage, build]
     uses: ./.github/workflows/package.yml
     with:
       version: snapshot

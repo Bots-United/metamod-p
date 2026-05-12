@@ -4,6 +4,7 @@ COVERAGE_FLAGS ?=
 SANITIZE_FLAGS ?=
 EXTRA_FLAGS = $(COVERAGE_FLAGS) $(SANITIZE_FLAGS)
 GCOV ?= $(subst g++,gcov,$(firstword $(CXX)))
+TEST_CC = $(subst g++,gcc,$(subst clang++,clang,$(firstword $(CXX))))
 
 PARENT_INCLUDES = -I".." -I"../../hlsdk/engine" -I"../../hlsdk/common" \
     -I"../../hlsdk/pm_shared" -I"../../hlsdk/dlls" -I"../../hlsdk"
@@ -62,13 +63,13 @@ test_game_autodetect: test_game_autodetect.o $(COMMON_OBJS) game_autodetect.o \
 	${CXX} $(EXTRA_FLAGS) -o $@ $(filter %.o,$^) -ldl
 
 engine_test.so: fake_engine.c
-	$(subst g++,gcc,$(firstword $(CXX))) -m32 -shared -fPIC -o $@ $<
+	$(TEST_CC) -m32 -shared -fPIC -o $@ $<
 
 fake_gamedll.so: fake_gamedll.c
-	$(subst g++,gcc,$(firstword $(CXX))) -m32 -shared -fPIC -o $@ $<
+	$(TEST_CC) -m32 -shared -fPIC -o $@ $<
 
 fake_mm_plugin.so: fake_mm_plugin.c
-	$(subst g++,gcc,$(firstword $(CXX))) -m32 -shared -fPIC -o $@ $<
+	$(TEST_CC) -m32 -shared -fPIC -o $@ $<
 
 test_engineinfo: test_engineinfo.o $(COMMON_OBJS) engineinfo.o engine_test.so
 	${CXX} $(EXTRA_FLAGS) -o $@ $(filter %.o,$^) -ldl
@@ -192,7 +193,7 @@ ALL_TESTS = test_support_meta test_osdep test_log_meta test_vdate \
     test_metamod_gamedll \
     test_osdep_detect_gamedll_win32 test_osdep_linkent_win32
 
-.PHONY: all run valgrind sanitize coverage coverage-clean clean
+.PHONY: all run valgrind sanitize clang-sanitize coverage coverage-clean clean
 
 all: $(ALL_TESTS)
 
@@ -207,6 +208,10 @@ valgrind: $(ALL_TESTS)
 sanitize:
 	$(MAKE) clean
 	$(MAKE) SANITIZE_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer" run
+
+clang-sanitize:
+	$(MAKE) clean
+	$(MAKE) SANITIZE_FLAGS="-fsanitize=address,undefined -fno-sanitize=function,enum -fno-sanitize-recover=all -fno-omit-frame-pointer" run
 
 coverage:
 	$(MAKE) clean
