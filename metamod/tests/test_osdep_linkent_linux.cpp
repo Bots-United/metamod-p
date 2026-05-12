@@ -120,18 +120,18 @@ static int test_trampoline_not_ff25(void)
 
 static int test_trampoline_only_ff(void)
 {
-	TEST("is_code_trampoline_jmp_opcode - FF without 25 (bug: || returns true)");
+	TEST("is_code_trampoline_jmp_opcode - FF without 25 returns false");
 	unsigned char code[] = { 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 };
-	ASSERT_TRUE(is_code_trampoline_jmp_opcode(code) == true);
+	ASSERT_TRUE(is_code_trampoline_jmp_opcode(code) == false);
 	PASS();
 	return 0;
 }
 
 static int test_trampoline_only_25(void)
 {
-	TEST("is_code_trampoline_jmp_opcode - 25 at byte[1] without FF (bug: || returns true)");
+	TEST("is_code_trampoline_jmp_opcode - 25 at byte[1] without FF returns false");
 	unsigned char code[] = { 0x00, 0x25, 0x00, 0x00, 0x00, 0x00 };
-	ASSERT_TRUE(is_code_trampoline_jmp_opcode(code) == true);
+	ASSERT_TRUE(is_code_trampoline_jmp_opcode(code) == false);
 	PASS();
 	return 0;
 }
