@@ -45,7 +45,10 @@
 #include "api_info.h"
 
 #define API_TRACE(api_info_table, cvar_trace, api_str, pfnName, post, args) \
-	do { if((cvar_trace->value >= api_info_table.pfnName.loglevel || api_info_table.pfnName.trace) && (unlimit_trace->value || (last_trace_log != time(NULL)))) { \
+	do { \
+		if(post) api_info_table.pfnName.count_post++; \
+		else api_info_table.pfnName.count_pre++; \
+		if((cvar_trace->value >= api_info_table.pfnName.loglevel || api_info_table.pfnName.trace) && (unlimit_trace->value || (last_trace_log != time(NULL)))) { \
 			ALERT(at_logged, "[%s] %s(%d): called: %s%s; %s\n", \
 					Plugin_info.logtag, api_str, \
 					api_info_table.pfnName.loglevel, \
@@ -96,6 +99,8 @@ void cmd_trace_set(void);
 void cmd_trace_unset(void);
 void cmd_trace_show(void);
 void cmd_trace_list(void);
+void cmd_trace_count(void);
+void cmd_trace_resetcount(void);
 
 TRACE_RESULT trace_setflag(const char **pfn_string, mBOOL flagval, const char **api);
 

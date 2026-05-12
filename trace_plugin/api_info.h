@@ -62,6 +62,8 @@ typedef struct api_info_s {
 	int loglevel;			// level at which to log info about this function
 	api_caller_func_t api_caller;	// argument format/type for single-main-hook-function optimization
 	const char *name;		// string representation of function name
+	unsigned long count_pre;	// pre-hook call counter
+	unsigned long count_post;	// post-hook call counter
 } api_info_t;
 
 
