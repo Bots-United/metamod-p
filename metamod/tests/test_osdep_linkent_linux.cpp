@@ -47,7 +47,8 @@ static int test_construct_jmp_basic(void)
 
 	ASSERT_TRUE(buf[0] == 0xe9);
 
-	unsigned long encoded_offset = *(unsigned long *)(buf + 1);
+	unsigned long encoded_offset;
+	memcpy(&encoded_offset, buf + 1, sizeof(encoded_offset));
 	unsigned long expected_offset = target_addr - (place_addr + 5);
 	ASSERT_TRUE(encoded_offset == expected_offset);
 
@@ -69,7 +70,8 @@ static int test_construct_jmp_backward(void)
 
 	ASSERT_TRUE(buf[0] == 0xe9);
 
-	unsigned long encoded_offset = *(unsigned long *)(buf + 1);
+	unsigned long encoded_offset;
+	memcpy(&encoded_offset, buf + 1, sizeof(encoded_offset));
 	unsigned long expected_offset = target_addr - (place_addr + 5);
 	ASSERT_TRUE(encoded_offset == expected_offset);
 
@@ -88,7 +90,8 @@ static int test_construct_jmp_self(void)
 
 	ASSERT_TRUE(buf[0] == 0xe9);
 
-	unsigned long encoded_offset = *(unsigned long *)(buf + 1);
+	unsigned long encoded_offset;
+	memcpy(&encoded_offset, buf + 1, sizeof(encoded_offset));
 	ASSERT_TRUE(encoded_offset == (unsigned long)-5);
 
 	PASS();

@@ -21,7 +21,11 @@
 static int test_get_module_handle_known(void)
 {
 	TEST("get_module_handle_of_memptr - libc function");
-	DLHANDLE h = get_module_handle_of_memptr((void *)printf);
+	// Use dlsym to get the real libc address, not an ASan interceptor wrapper
+	void *real_printf = dlsym(RTLD_NEXT, "printf");
+	if(!real_printf)
+		real_printf = (void *)printf;
+	DLHANDLE h = get_module_handle_of_memptr(real_printf);
 	ASSERT_PTR_NOT_NULL(h);
 	dlclose(h);
 	PASS();

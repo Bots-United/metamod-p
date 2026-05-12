@@ -346,14 +346,23 @@ MPlugin * DLLINTERNAL MPluginList::add(MPlugin *padd) {
 
 	// copy filename into this free slot
 	STRNCPY(iplug->filename, padd->filename, sizeof(iplug->filename));
-	// Copy file offset ptr.
-	// Can't just copy ptr, as it points to offset in padd, which will go
-	// away; need to point to corresponding offset in iplug.
-	iplug->file = iplug->filename + (padd->file - padd->filename);
 	// copy description
 	STRNCPY(iplug->desc, padd->desc, sizeof(iplug->desc));
 	// copy pathname
 	STRNCPY(iplug->pathname, padd->pathname, sizeof(iplug->pathname));
+	// Recompute file pointer from copied pathname (or filename as fallback).
+	// Can't copy padd->file directly since it may point into either
+	// padd->filename or padd->pathname depending on whether resolve() ran.
+	char *cp = strrchr(iplug->pathname, '/');
+	if(cp)
+		iplug->file = cp + 1;
+	else {
+		cp = strrchr(iplug->filename, '/');
+		if(cp)
+			iplug->file = cp + 1;
+		else
+			iplug->file = iplug->filename;
+	}
 	// copy source
 	iplug->source=padd->source;
 	// copy loader-plugin
