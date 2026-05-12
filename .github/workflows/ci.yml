@@ -71,7 +71,7 @@ jobs:
     uses: ./.github/workflows/build.yml
 
   package:
-    needs: [test, build]
+    needs: [test, sanitize, coverage, build]
     uses: ./.github/workflows/package.yml
     with:
       version: snapshot
