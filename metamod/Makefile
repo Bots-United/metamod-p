@@ -260,9 +260,6 @@ TARGET_LINUX = $(OBJDIR_LINUX)/$(LIBFILE_LINUX)
 # windows .dll compile commands
 DO_CC_WIN=$(CC_WIN) $(CFLAGS) $(INCLUDEDIRS) -o $@ -c $<
 DO_RES_WIN=$(RES_WIN) '$(ODEF)' --include-dir . --include-dir ../metamod -i $< -O coff -o $@
-#LINK_WIN=$(LD_WINDLL) -k -mwindows --add-stdcall-alias --def metamod.def -o $@ $(OBJ_WIN)
-#LINK_WIN=$(LD_WINDLL) -A -k -mwindows --export-all-symbols -o $@ $(OBJ_WIN)
-#LINK_WIN=$(LD_WINDLL) -mwindows --add-stdcall-alias $(OBJ_WIN) $(RES_OBJ_WIN) -lstdc++ -s -o $@
 LINK_WIN=$(CC_WIN) $(CFLAGS) -mdll -Xlinker --add-stdcall-alias $(EXTRA_LINK) $(OBJ_WIN) $(RES_OBJ_WIN) -s -o $@
 
 # windows object files
