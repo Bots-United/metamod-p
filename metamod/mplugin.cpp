@@ -847,6 +847,8 @@ mBOOL DLLINTERNAL MPlugin::attach(PLUG_LOADTIME now) {
 	}
 	if(!(pfn_attach = (META_ATTACH_FN) DLSYM(handle, "Meta_Attach"))) {
 		META_WARNING("dll: Failed attach plugin '%s': Couldn't find Meta_Attach(): %s", desc, DLERROR());
+		free(gamedll_funcs.dllapi_table); gamedll_funcs.dllapi_table=NULL;
+		free(gamedll_funcs.newapi_table); gamedll_funcs.newapi_table=NULL;
 		// caller will dlclose()
 		RETURN_ERRNO(mFALSE, ME_DLMISSING);
 	}
@@ -857,6 +859,8 @@ mBOOL DLLINTERNAL MPlugin::attach(PLUG_LOADTIME now) {
 	ret=pfn_attach(now, &meta_table, &PublicMetaGlobals, &gamedll_funcs);
 	if(ret != TRUE) {
 		META_WARNING("dll: Failed attach plugin '%s': Error from Meta_Attach(): %d", desc, ret);
+		free(gamedll_funcs.dllapi_table); gamedll_funcs.dllapi_table=NULL;
+		free(gamedll_funcs.newapi_table); gamedll_funcs.newapi_table=NULL;
 		// caller will dlclose()
 		RETURN_ERRNO(mFALSE, ME_DLERROR);
 	}
