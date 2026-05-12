@@ -87,7 +87,7 @@ inline void construct_jmp_instruction(void *x, void *place, void* target)
 //checks if pointer x points to jump forwarder
 inline bool is_code_trampoline_jmp_opcode(void *x)
 {
-	return (((unsigned char *)x)[0] == 0xff || ((unsigned char *)x)[1] == 0x25);
+	return (((unsigned char *)x)[0] == 0xff && ((unsigned char *)x)[1] == 0x25);
 }
 
 //extracts pointer from "jmp dword ptr[pointer]"

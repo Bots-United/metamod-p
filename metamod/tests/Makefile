@@ -63,15 +63,12 @@ test_game_autodetect: test_game_autodetect.o $(COMMON_OBJS) game_autodetect.o \
 
 engine_test.so: fake_engine.c
 	$(subst g++,gcc,$(firstword $(CXX))) -m32 -shared -fPIC -o $@ $<
-	truncate -s +1 $@
 
 fake_gamedll.so: fake_gamedll.c
 	$(subst g++,gcc,$(firstword $(CXX))) -m32 -shared -fPIC -o $@ $<
-	truncate -s +1 $@
 
 fake_mm_plugin.so: fake_mm_plugin.c
 	$(subst g++,gcc,$(firstword $(CXX))) -m32 -shared -fPIC -o $@ $<
-	truncate -s +1 $@
 
 test_engineinfo: test_engineinfo.o $(COMMON_OBJS) engineinfo.o engine_test.so
 	${CXX} $(EXTRA_FLAGS) -o $@ $(filter %.o,$^) -ldl

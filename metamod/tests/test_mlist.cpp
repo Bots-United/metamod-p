@@ -3873,21 +3873,6 @@ static int test_plugin_addload_attach_fails(void)
 	MPlugin *p = listp->plugin_addload((plid_t)&loader_info, "dlls/pa_attfail.so", PT_ANYTIME);
 	ASSERT_TRUE(p == NULL);
 
-	// Production bug: attach() allocates gamedll_funcs tables before
-	// calling Meta_Attach; when Meta_Attach fails, they leak.
-	// Clean up manually for valgrind.
-	for (int i = 0; i < listp->endlist; i++) {
-		MPlugin &mp = listp->plist[i];
-		if (mp.test_gamedll_funcs().dllapi_table) {
-			free(mp.test_gamedll_funcs().dllapi_table);
-			mp.test_gamedll_funcs().dllapi_table = NULL;
-		}
-		if (mp.test_gamedll_funcs().newapi_table) {
-			free(mp.test_gamedll_funcs().newapi_table);
-			mp.test_gamedll_funcs().newapi_table = NULL;
-		}
-	}
-
 	unsetenv("FAKE_MM_ATTACH_FAIL");
 	unlink("/tmp/test_mlist_gd/dlls/pa_attfail.so");
 	Plugins = NULL;
@@ -3916,19 +3901,6 @@ static int test_cmd_addload_attach_fails(void)
 
 	mBOOL ret = listp->cmd_addload("dlls/cmd_attfail.so");
 	ASSERT_TRUE(ret == mFALSE);
-
-	// Clean up leaked gamedll_funcs tables (production bug)
-	for (int i = 0; i < listp->endlist; i++) {
-		MPlugin &mp = listp->plist[i];
-		if (mp.test_gamedll_funcs().dllapi_table) {
-			free(mp.test_gamedll_funcs().dllapi_table);
-			mp.test_gamedll_funcs().dllapi_table = NULL;
-		}
-		if (mp.test_gamedll_funcs().newapi_table) {
-			free(mp.test_gamedll_funcs().newapi_table);
-			mp.test_gamedll_funcs().newapi_table = NULL;
-		}
-	}
 
 	unsetenv("FAKE_MM_ATTACH_FAIL");
 	unlink("/tmp/test_mlist_gd/dlls/cmd_attfail.so");

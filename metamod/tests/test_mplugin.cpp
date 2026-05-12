@@ -953,10 +953,6 @@ static int test_str_loadable_with_info(void)
 	return 0;
 }
 
-// NOTE: ini_parseline has a bug with whitespace-only lines:
-// strdup + pointer advance + free(advanced_ptr) = invalid free.
-// Skip testing that path to avoid crashing.
-
 static int test_ini_parseline_no_path_separator(void)
 {
 	TEST("ini_parseline - filename without path sets file=filename");
@@ -1347,12 +1343,6 @@ static int test_free_api_pointers_null(void)
 // ini_parseline edge cases
 // ============================================================
 
-// BUG: ini_parseline has a production bug where it advances tmp_line past
-// leading whitespace, then calls free() on the advanced pointer instead of
-// the original strdup result. Also, the trailing-whitespace removal loop
-// underflows when strlen==0 (cp = tmp_line + 0 - 1). Both are UB/crash.
-// Uncomment when the production code is fixed.
-#if 0
 static int test_ini_parseline_empty_line(void)
 {
 	TEST("ini_parseline - empty line returns ME_BLANK");
@@ -1366,7 +1356,6 @@ static int test_ini_parseline_empty_line(void)
 	PASS();
 	return 0;
 }
-#endif
 
 // ============================================================
 // check_input — empty filename[0] but valid file pointer (lines 243-246)
@@ -1712,6 +1701,7 @@ int main(void)
 	fail |= test_ini_parseline_no_filename();
 	fail |= test_ini_parseline_no_description();
 	fail |= test_ini_parseline_no_path_separator();
+	fail |= test_ini_parseline_empty_line();
 
 	// cmd_parseline
 	fail |= test_cmd_parseline_valid();
