@@ -228,15 +228,11 @@ static int test_regcvarlist_add_strdup_fail(void)
 
 	MRegCvarList list;
 	// Fail on second alloc: calloc succeeds, strdup fails.
-	// BUG: production code leaks the calloc'd cvar_t when strdup fails
-	// (mreg.cpp line 337 returns without freeing icvar->data).
 	mock_alloc_fail_after(1);
 	MRegCvar *result = list.add("strdup_fail_cvar");
 	ASSERT_PTR_NULL(result);
 	ASSERT_TRUE(meta_errno == ME_NOMEM);
-	// Clean up the leaked cvar_t to satisfy valgrind
-	free(list.test_vlist()[list.test_endlist()].data);
-	list.test_vlist()[list.test_endlist()].data = NULL;
+	ASSERT_PTR_NULL(list.test_vlist()[list.test_endlist()].data);
 
 	mock_alloc_reset();
 	PASS();
@@ -287,14 +283,11 @@ static int test_regcvarlist_add_grow_strdup_fail(void)
 		ASSERT_PTR_NOT_NULL(list.add(name));
 	}
 	// Growth path: realloc(1) succeeds, calloc(2) succeeds, strdup(3) fails.
-	// BUG: production code leaks the calloc'd cvar_t (same as above).
 	mock_alloc_fail_after(2);
 	MRegCvar *result = list.add("grow_strdup_fail");
 	ASSERT_PTR_NULL(result);
 	ASSERT_TRUE(meta_errno == ME_NOMEM);
-	// Clean up the leaked cvar_t
-	free(list.test_vlist()[list.test_endlist()].data);
-	list.test_vlist()[list.test_endlist()].data = NULL;
+	ASSERT_PTR_NULL(list.test_vlist()[list.test_endlist()].data);
 
 	mock_alloc_reset();
 	PASS();
