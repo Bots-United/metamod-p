@@ -79,8 +79,9 @@ static int is_original_restored = 0;
 //constructs new jmp forwarder
 inline void construct_jmp_instruction(void *x, void *place, void* target)
 {
+	unsigned long rel = (unsigned long)target - ((unsigned long)place + 5);
 	((unsigned char *)x)[0] = 0xe9;
-	*(unsigned long *)((char *)x + 1) = (unsigned long)target - ((unsigned long)place + 5);
+	memcpy((char *)x + 1, &rel, sizeof(rel));
 }
 
 //checks if pointer x points to jump forwarder
@@ -92,7 +93,9 @@ inline bool is_code_trampoline_jmp_opcode(void *x)
 //extracts pointer from "jmp dword ptr[pointer]"
 inline void * extract_function_pointer_from_trampoline_jmp(void *x)
 {
-	return (**(void***)((char *)(x) + 2));
+	void **ptr;
+	memcpy(&ptr, (char *)x + 2, sizeof(ptr));
+	return *ptr;
 }
 
 //
