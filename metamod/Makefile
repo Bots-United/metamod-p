@@ -118,15 +118,15 @@ GCCMAJ_GT_4 = $(shell [ $(GCCMAJ) -gt 4 ] && echo 1 || echo 0)
 
 ifeq "$(HOST)" "cygwin"
 	ifeq "$(TARGETTYPE)" "amd64"
-		CC=gcc-linux-x86_64
+		CC?=gcc-linux-x86_64
 	else
-		CC=gcc-linux
+		CC?=gcc-linux
 	endif
 else
 	ifeq "$(TARGETTYPE)" "amd64"
-		CC=gcc -m64
+		CC?=gcc -m64
 	else
-		CC=gcc -m32
+		CC?=gcc -m32
 	endif
 endif
 

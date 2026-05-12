@@ -14,13 +14,13 @@ jobs:
       - name: Update package list for i386
         run: sudo dpkg --add-architecture i386 && sudo apt-get -y update
       - name: Install packages
-        run: sudo apt-get -y install build-essential g++-multilib
+        run: sudo apt-get -y install build-essential g++-i686-linux-gnu libc6:i386 libstdc++6:i386
       - name: Install valgrind
         run: sudo apt-get -y install valgrind libc6-dbg:i386
       - name: Run tests
-        run: CXX="g++ -m32" make -j4 -C metamod/tests run
+        run: CXX="i686-linux-gnu-g++" make -j4 -C metamod/tests run
       - name: Run valgrind
-        run: CXX="g++ -m32" make -C metamod/tests valgrind
+        run: CXX="i686-linux-gnu-g++" make -C metamod/tests valgrind
 
   coverage:
     runs-on: ubuntu-24.04
@@ -30,9 +30,9 @@ jobs:
       - name: Update package list for i386
         run: sudo dpkg --add-architecture i386 && sudo apt-get -y update
       - name: Install packages
-        run: sudo apt-get -y install build-essential g++-multilib lcov valgrind
+        run: sudo apt-get -y install build-essential g++-i686-linux-gnu libc6:i386 libstdc++6:i386 lcov valgrind
       - name: Run coverage
-        run: CXX="g++ -m32" make -C metamod/tests coverage
+        run: CXX="i686-linux-gnu-g++" make -C metamod/tests coverage
       - name: Generate job summary
         run: |
           summary=$(lcov --summary metamod/tests/coverage.info --branch-coverage \
