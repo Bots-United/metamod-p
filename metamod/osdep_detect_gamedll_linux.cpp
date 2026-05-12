@@ -70,8 +70,8 @@ static void signal_handler_sigsegv(int) {
 	longjmp(signal_jmp_buf, 1);
 }
 
-#define invalid_elf_ptr(x) (((unsigned long)&(x)) > file_end - 1)
-#define invalid_elf_offset(x) (((unsigned long)(x)) > filesize - 1)
+#define invalid_elf_ptr(x) (((unsigned long)&(x)) > file_end)
+#define invalid_elf_offset(x) (((unsigned long)(x)) > filesize)
 #define elf_error_exit() \
 	do { \
 		sigaction(SIGSEGV, &oldaction, 0); \
