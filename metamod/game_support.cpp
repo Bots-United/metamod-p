@@ -150,6 +150,7 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 	const game_modinfo_t *known;
 #ifdef __linux__
         char *strippedfn;
+	char temp_str[NAME_MAX];
 #endif
 	const char *cp, *autofn = 0, *knownfn = 0, *usedfn = 0;
 	int override=0;
@@ -193,8 +194,6 @@ mBOOL DLLINTERNAL setup_gamedll(gamedll_t *gamedll) {
 			// '_i386' part in them anymore, so cs_i386.so became cs.so. We
 			// have to adapt to that and try to load the DSO name without the
 			// '_*' part first, to see if we have a new version file available.
-			char temp_str[NAME_MAX];
-
 			STRNCPY(temp_str, knownfn, sizeof(temp_str));
 			strippedfn = temp_str;
 
