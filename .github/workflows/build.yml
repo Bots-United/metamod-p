@@ -9,16 +9,14 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
-      - name: Update package list for i386
-        run: sudo dpkg --add-architecture i386 && sudo apt-get -y update
       - name: Install packages
-        run: sudo apt-get -y install build-essential g++-multilib
+        run: sudo apt-get -y update && sudo apt-get -y install build-essential gcc-i686-linux-gnu g++-i686-linux-gnu
       - name: Build metamod (debug)
-        run: make -j4 -C metamod CC="gcc -m32"
+        run: make -j4 -C metamod CC="i686-linux-gnu-gcc"
       - name: Build metamod (optimized)
-        run: make -j4 -C metamod CC="gcc -m32" OPT=opt
+        run: make -j4 -C metamod CC="i686-linux-gnu-gcc" OPT=opt
       - name: Build trace_plugin (optimized)
-        run: make -j4 -C trace_plugin CC="gcc -m32" OPT=opt
+        run: make -j4 -C trace_plugin CC="i686-linux-gnu-gcc" OPT=opt
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
