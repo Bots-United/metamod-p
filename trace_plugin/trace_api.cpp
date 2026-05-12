@@ -99,6 +99,10 @@ FORCE_STACK_ALIGN void svr_trace(void) {
 		cmd_trace_unset();
 	else if(!strcasecmp(cmd, "list"))
 		cmd_trace_list();
+	else if(!strcasecmp(cmd, "count"))
+		cmd_trace_count();
+	else if(!strcasecmp(cmd, "resetcount"))
+		cmd_trace_resetcount();
 	else {
 		LOG_CONSOLE(PLID, "Unrecognized trace command: %s", cmd);
 		cmd_trace_usage();
@@ -117,7 +121,9 @@ void cmd_trace_usage(void) {
 	LOG_CONSOLE(PLID, "   list dllapi      - list all dllapi routines available for tracing");
 	LOG_CONSOLE(PLID, "   list newapi      - list all newapi routines available for tracing");
 	LOG_CONSOLE(PLID, "   list engine      - list all engine routines available for tracing");
-	LOG_CONSOLE(PLID, "   list all         - list dllapi, neapi, and engine");
+	LOG_CONSOLE(PLID, "   list all         - list dllapi, newapi, and engine");
+	LOG_CONSOLE(PLID, "   count            - show per-function call counts");
+	LOG_CONSOLE(PLID, "   resetcount       - reset all call counters to zero");
 }
 
 // "trace version" console command.
@@ -253,6 +259,73 @@ void cmd_trace_list(void) {
 		LOG_CONSOLE(PLID, "   engine    - list all engine routines available for tracing");
 		LOG_CONSOLE(PLID, "   all       - list dllapi, newapi, engine");
 	}
+}
+
+// "trace count" console command.
+void cmd_trace_count(void) {
+	int n;
+	unsigned long total_pre=0, total_post=0;
+
+	n=0;
+	LOG_CONSOLE(PLID, "DLLAPI call counts (pre / post):");
+	for(api_info_t *routine=&dllapi_info.pfnGameInit; routine->name; routine++) {
+		if(routine->count_pre || routine->count_post) {
+			LOG_CONSOLE(PLID, "  %-35s %10lu / %10lu", routine->name,
+					routine->count_pre, routine->count_post);
+			total_pre+=routine->count_pre;
+			total_post+=routine->count_post;
+			n++;
+		}
+	}
+	if(!n)
+		LOG_CONSOLE(PLID, "  (none)");
+
+	n=0;
+	LOG_CONSOLE(PLID, "NEWAPI call counts (pre / post):");
+	for(api_info_t *routine=&newapi_info.pfnOnFreeEntPrivateData; routine->name; routine++) {
+		if(routine->count_pre || routine->count_post) {
+			LOG_CONSOLE(PLID, "  %-35s %10lu / %10lu", routine->name,
+					routine->count_pre, routine->count_post);
+			total_pre+=routine->count_pre;
+			total_post+=routine->count_post;
+			n++;
+		}
+	}
+	if(!n)
+		LOG_CONSOLE(PLID, "  (none)");
+
+	n=0;
+	LOG_CONSOLE(PLID, "Engine call counts (pre / post):");
+	for(api_info_t *routine=&engine_info.pfnPrecacheModel; routine->name; routine++) {
+		if(routine->count_pre || routine->count_post) {
+			LOG_CONSOLE(PLID, "  %-35s %10lu / %10lu", routine->name,
+					routine->count_pre, routine->count_post);
+			total_pre+=routine->count_pre;
+			total_post+=routine->count_post;
+			n++;
+		}
+	}
+	if(!n)
+		LOG_CONSOLE(PLID, "  (none)");
+
+	LOG_CONSOLE(PLID, "Total: %lu pre, %lu post", total_pre, total_post);
+}
+
+// "trace resetcount" console command.
+void cmd_trace_resetcount(void) {
+	for(api_info_t *routine=&dllapi_info.pfnGameInit; routine->name; routine++) {
+		routine->count_pre=0;
+		routine->count_post=0;
+	}
+	for(api_info_t *routine=&newapi_info.pfnOnFreeEntPrivateData; routine->name; routine++) {
+		routine->count_pre=0;
+		routine->count_post=0;
+	}
+	for(api_info_t *routine=&engine_info.pfnPrecacheModel; routine->name; routine++) {
+		routine->count_pre=0;
+		routine->count_post=0;
+	}
+	LOG_CONSOLE(PLID, "All call counters reset.");
 }
 
 // Set or unset tracing of a given api routine string.  Searches all three
