@@ -243,16 +243,20 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 	//Return class setup
 	class_ret_t dllret=ret_init;
 	class_ret_t override_ret=ret_init;
-	class_ret_t pub_override_ret=ret_init;
 	class_ret_t orig_ret=ret_init;
-	class_ret_t pub_orig_ret=ret_init;
-	
+
 	//Setup
 	loglevel=api_info->loglevel;
 	mres=MRES_UNSET;
 	status=MRES_UNSET;
 	prev_mres=MRES_UNSET;
 	pfn_routine=NULL;
+
+	// Point PublicMetaGlobals at local return values once; the pointers
+	// remain valid across re-entrant calls because copy_meta_globals
+	// saves/restores them and each stack frame is independent.
+	PublicMetaGlobals.orig_ret = orig_ret.getptr();
+	PublicMetaGlobals.override_ret = override_ret.getptr();
 	
 	//Pre plugin functions
 	prev_mres=MRES_UNSET;
@@ -278,30 +282,23 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 		PublicMetaGlobals.mres = MRES_UNSET;
 		PublicMetaGlobals.prev_mres = prev_mres;
 		PublicMetaGlobals.status = status;
-		pub_orig_ret = orig_ret;
-		PublicMetaGlobals.orig_ret = pub_orig_ret.getptr();
-		if(unlikely(status==MRES_SUPERCEDE)) {
-			pub_override_ret = override_ret;
-			PublicMetaGlobals.override_ret = pub_override_ret.getptr();
-		}
-		
+
 		// call plugin
 		META_DEBUG(loglevel, ("Calling %s:%s()", iplug->file, api_info->name));
 		dllret = class_ret_t(api_info->api_caller(pfn_routine, packed_args));
 		API_UNPAUSE_TSC_TRACKING();
-		
+
 		// plugin's result code
 		mres=PublicMetaGlobals.mres;
 		if(unlikely(mres > status))
 			status = mres;
-		
+
 		// save this for successive plugins to see
 		prev_mres = mres;
-		
+
 		if(unlikely(mres==MRES_SUPERCEDE)) {
-			pub_override_ret = dllret;
 			override_ret = dllret;
-		} 
+		}
 		else if(unlikely(mres==MRES_UNSET)) {
 			META_WARNING("Plugin didn't set meta_result: %s:%s()", iplug->file, api_info->name);
 		}
@@ -334,8 +331,6 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 	} else {
 		META_DEBUG(loglevel, ("Skipped (supercede) %s:%s()", (api==e_api_engine)?"engine":GameDLL.file, api_info->name));
 		orig_ret = override_ret;
-		pub_orig_ret = override_ret;
-		PublicMetaGlobals.orig_ret = pub_orig_ret.getptr();
 	}
 
 	//Post plugin functions
@@ -362,28 +357,21 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 		PublicMetaGlobals.mres = MRES_UNSET;
 		PublicMetaGlobals.prev_mres = prev_mres;
 		PublicMetaGlobals.status = status;
-		pub_orig_ret = orig_ret;
-		PublicMetaGlobals.orig_ret = pub_orig_ret.getptr();
-		if(unlikely(status==MRES_OVERRIDE)) {
-			pub_override_ret = override_ret;
-			PublicMetaGlobals.override_ret = pub_override_ret.getptr();
-		}
-		
+
 		// call plugin
 		META_DEBUG(loglevel, ("Calling %s:%s_Post()", iplug->file, api_info->name));
 		dllret = class_ret_t(api_info->api_caller(pfn_routine, packed_args));
 		API_UNPAUSE_TSC_TRACKING();
-		
+
 		// plugin's result code
 		mres=PublicMetaGlobals.mres;
 		if(unlikely(mres > status))
 			status = mres;
-		
+
 		// save this for successive plugins to see
 		prev_mres = mres;
-		
+
 		if(unlikely(mres==MRES_OVERRIDE)) {
-			pub_override_ret = dllret;
 			override_ret = dllret;
 		}
 		else if(unlikely(mres==MRES_UNSET)) {
