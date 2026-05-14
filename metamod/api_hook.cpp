@@ -72,7 +72,7 @@ static inline void copy_meta_globals(meta_globals_t *dst, const meta_globals_t *
 #endif
 }
 
-static inline const char * api_owner_name(enum_api_t api) {
+static NOINLINE const char * api_owner_name(enum_api_t api) {
 	return (api == e_api_engine) ? "engine" : GameDLL.file;
 }
 
@@ -86,8 +86,17 @@ inline const api_info_t * DLLINTERNAL get_api_info(enum_api_t api, unsigned int 
 	return((const api_info_t *)((unsigned long)api_info_tables[api] + api_info_offset));
 }
 
+// META_DEBUG that can be compile-time eliminated via template parameter
+#ifndef __BUILD_FAST_METAMOD__
+  #define MAYBE_META_DEBUG(do_debug, level, args) \
+	do { if(do_debug) { META_DEBUG(level, args); } } while(0)
+#else
+  #define MAYBE_META_DEBUG(do_debug, level, args) do { break; } while(0)
+#endif
+
 // simplified 'void' version of main hook function
-void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
+template <bool do_debug>
+static inline void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
 	api_info_t api_info;
 	int i, endi;
 	META_RES status;
@@ -124,7 +133,7 @@ void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_
 			continue;
 		}
 
-		META_DEBUG(api_info.loglevel, ("Calling %s:%s()", plist[i].file, api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s()", plist[i].file, api_info.name));
 
 		// initialize PublicMetaGlobals
 		PublicMetaGlobals.mres = MRES_UNSET;
@@ -154,7 +163,7 @@ void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_
 		if(likely(api_table)) {
 			void *pfn_routine = get_api_function(api_table, func_offset);
 			if(likely(pfn_routine)) {
-				META_DEBUG(api_info.loglevel, ("Calling %s:%s()", api_owner_name(api), api_info.name));
+				MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s()", api_owner_name(api), api_info.name));
 				api_info.api_caller(pfn_routine, packed_args);
 				API_UNPAUSE_TSC_TRACKING();
 			} else {
@@ -166,11 +175,11 @@ void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_
 		} else {
 			// don't complain for NULL NEW_DLL_FUNCTIONS-table
 			if(unlikely(api != e_api_newapi))
-				META_DEBUG(api_info.loglevel, ("No api table defined for api call: %s:%s", api_owner_name(api), api_info.name));
+				MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("No api table defined for api call: %s:%s", api_owner_name(api), api_info.name));
 			status=MRES_UNSET;
 		}
 	} else
-		META_DEBUG(api_info.loglevel, ("Skipped (supercede) %s:%s()", api_owner_name(api), api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Skipped (supercede) %s:%s()", api_owner_name(api), api_info.name));
 
 	//Post plugin functions
 	PublicMetaGlobals.prev_mres=MRES_UNSET;
@@ -192,7 +201,7 @@ void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_
 			continue;
 		}
 
-		META_DEBUG(api_info.loglevel, ("Calling %s:%s_Post()", plist[i].file, api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s_Post()", plist[i].file, api_info.name));
 
 		// initialize PublicMetaGlobals
 		PublicMetaGlobals.mres = MRES_UNSET;
@@ -219,8 +228,19 @@ void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_
 	copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
 }
 
+void DLLINTERNAL NOINLINE main_hook_function_void(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
+#ifndef __BUILD_FAST_METAMOD__
+	if(unlikely(meta_debug_value >= get_api_info(api, api_info_offset)->loglevel))
+		main_hook_function_void_t<true>(api_info_offset, api, func_offset, packed_args);
+	else
+#endif
+		main_hook_function_void_t<false>(api_info_offset, api, func_offset, packed_args);
+}
+
 // full return typed version of main hook function
-void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
+template <bool do_debug>
+static inline void * DLLINTERNAL main_hook_function_t(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api,
+						      unsigned int func_offset, const void * packed_args) {
 	api_info_t api_info;
 	int i, endi;
 	META_RES status;
@@ -265,7 +285,7 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 			continue;
 		}
 
-		META_DEBUG(api_info.loglevel, ("Calling %s:%s()", plist[i].file, api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s()", plist[i].file, api_info.name));
 
 		// initialize PublicMetaGlobals
 		PublicMetaGlobals.mres = MRES_UNSET;
@@ -305,7 +325,7 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 		if(likely(api_table)) {
 			void *pfn_routine = get_api_function(api_table, func_offset);
 			if(likely(pfn_routine)) {
-				META_DEBUG(api_info.loglevel, ("Calling %s:%s()", api_owner_name(api), api_info.name));
+				MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s()", api_owner_name(api), api_info.name));
 				class_ret_t dllret = class_ret_t(api_info.api_caller(pfn_routine, packed_args));
 				API_UNPAUSE_TSC_TRACKING();
 				rv.orig_ret = dllret;
@@ -318,11 +338,11 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 		} else {
 			// don't complain for NULL NEW_DLL_FUNCTIONS-table
 			if(unlikely(api != e_api_newapi))
-				META_DEBUG(api_info.loglevel, ("No api table defined for api call: %s:%s", api_owner_name(api), api_info.name));
+				MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("No api table defined for api call: %s:%s", api_owner_name(api), api_info.name));
 			status=MRES_UNSET;
 		}
 	} else {
-		META_DEBUG(api_info.loglevel, ("Skipped (supercede) %s:%s()", api_owner_name(api), api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Skipped (supercede) %s:%s()", api_owner_name(api), api_info.name));
 		rv.orig_ret = rv.override_ret;
 	}
 
@@ -346,7 +366,7 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 			continue;
 		}
 
-		META_DEBUG(api_info.loglevel, ("Calling %s:%s_Post()", plist[i].file, api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s_Post()", plist[i].file, api_info.name));
 
 		// initialize PublicMetaGlobals
 		PublicMetaGlobals.mres = MRES_UNSET;
@@ -380,16 +400,26 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 			META_WARNING("MRES_SUPERCEDE not valid in Post functions: %s:%s_Post()", plist[i].file, api_info.name);
 		}
 	}
-	
+
 	copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
 
 	//return value is passed through ret_init!
 	if(likely(status!=MRES_OVERRIDE)) {
 		return(*(void**)rv.orig_ret.getptr());
 	} else {
-		META_DEBUG(api_info.loglevel, ("Returning (override) %s()", api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Returning (override) %s()", api_info.name));
 		return(*(void**)rv.override_ret.getptr());
 	}
+}
+
+void * DLLINTERNAL NOINLINE main_hook_function(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api,
+					       unsigned int func_offset, const void * packed_args) {
+#ifndef __BUILD_FAST_METAMOD__
+	if(unlikely(meta_debug_value >= get_api_info(api, api_info_offset)->loglevel))
+		return main_hook_function_t<true>(ret_init, api_info_offset, api, func_offset, packed_args);
+	else
+#endif
+		return main_hook_function_t<false>(ret_init, api_info_offset, api, func_offset, packed_args);
 }
 
 //
