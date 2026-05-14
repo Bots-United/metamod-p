@@ -151,17 +151,17 @@ else
 endif
 
 # Compiler (incl. optimization) flags for C++ plugin code
-CCOPT = $(CCO) $(CCOPT_ARCH) -fno-exceptions -fno-rtti
+CCOPT = $(CCO) $(CC_ARCH) -fno-exceptions -fno-rtti
 
 CCO = -O2 -fomit-frame-pointer
 CCO += -flto -fvisibility=hidden
 CCO += -fno-strict-aliasing -fno-strict-overflow
 
-# architecture tuning by target type
+# architecture by target type (applies to all build modes)
 ifeq "$(TARGETTYPE)" "amd64"
-	CCOPT_ARCH =
+	CC_ARCH =
 else
-	CCOPT_ARCH = -march=i686 $(MCPU)=generic -msse2
+	CC_ARCH = -march=i686 $(MCPU)=generic -msse2
 endif
 
 # debugging; halt on warnings
@@ -195,7 +195,7 @@ ifeq "$(OPT)" "opt"
 	OBJDIR_WIN = $(OBJDIR_WIN_OPT)
 else	# debug
 	ODEF = -DOPT_TYPE="\"debugging\""
-	CFLAGS := $(CCDEBUG) $(CFLAGS) $(ODEF)
+	CFLAGS := $(CCDEBUG) $(CC_ARCH) $(CFLAGS) $(ODEF)
 	OBJDIR_LINUX = $(OBJDIR_LINUX_DBG)
 	OBJDIR_WIN = $(OBJDIR_WIN_DBG)
 	DLLS_DIR := $(DLLS_DIR)/debug

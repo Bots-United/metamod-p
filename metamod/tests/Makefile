@@ -11,7 +11,7 @@ PARENT_INCLUDES = -I".." -I"../../hlsdk/engine" -I"../../hlsdk/common" \
 TEST_CXXFLAGS = ${CXXFLAGS} ${PARENT_INCLUDES} -D__METAMOD_BUILD__ -DUNITTESTS \
     -Wall -Wno-class-memaccess -Wno-write-strings -Wno-attributes \
     -Wno-format-truncation -fno-strict-aliasing -fno-strict-overflow \
-    -std=gnu++98 \
+    -std=gnu++98 -march=i686 -msse2 \
     $(EXTRA_FLAGS)
 
 %.o: %.cpp
