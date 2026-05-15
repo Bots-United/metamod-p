@@ -56,12 +56,18 @@ MPluginList::MPluginList(const char *ifile)
 	// store filename of ini file
 	STRNCPY(inifile, ifile, sizeof(inifile));
 	// initialize array
+	memset(hook_lists, 0, sizeof(hook_lists));
+	hook_list_data = NULL;
 	for(i=0; i < size; i++) {
 		//reset to empty
 		plist[i].index=i+1;
 		reset_plugin(&plist[i]);
 	}
 	endlist=0;
+}
+
+MPluginList::~MPluginList(void) {
+	free(hook_list_data);
 }
 
 // Resets plugin to empty
@@ -160,6 +166,57 @@ void DLLINTERNAL MPluginList::trim_list(void) {
 	
 	if(n < endlist)
 		endlist=n;
+}
+
+void DLLINTERNAL MPluginList::rebuild_hook_lists(void) {
+	int i, total;
+
+	memset(hook_lists, 0, sizeof(hook_lists));
+
+	// First pass: count entries per list.
+	for(i = 0; i < endlist; i++) {
+		if(plist[i].status != PL_RUNNING)
+			continue;
+		for(int api = 0; api < 3; api++) {
+			if(plist[i].get_api_table((enum_api_t)api))
+				hook_lists[api][0].count++;
+			if(plist[i].get_api_post_table((enum_api_t)api))
+				hook_lists[api][1].count++;
+		}
+	}
+
+	// Allocate single block for all lists back-to-back.
+	total = 0;
+	for(i = 0; i < 6; i++)
+		total += ((api_plugin_list_t *)hook_lists)[i].count;
+
+	if(total > 0) {
+		hook_list_data = (MPlugin **)realloc(hook_list_data, total * sizeof(MPlugin *));
+	} else {
+		free(hook_list_data);
+		hook_list_data = NULL;
+	}
+
+	// Assign plugs pointers into the allocation.
+	MPlugin **ptr = hook_list_data;
+	for(i = 0; i < 6; i++) {
+		api_plugin_list_t *list = &((api_plugin_list_t *)hook_lists)[i];
+		list->plugs = list->count ? ptr : NULL;
+		ptr += list->count;
+	}
+
+	// Second pass: fill in plugin pointers (reuse counts as write indices).
+	int idx[3][2] = {};
+	for(i = 0; i < endlist; i++) {
+		if(plist[i].status != PL_RUNNING)
+			continue;
+		for(int api = 0; api < 3; api++) {
+			if(plist[i].get_api_table((enum_api_t)api))
+				hook_lists[api][0].plugs[idx[api][0]++] = &plist[i];
+			if(plist[i].get_api_post_table((enum_api_t)api))
+				hook_lists[api][1].plugs[idx[api][1]++] = &plist[i];
+		}
+	}
 }
 
 // Find a plugin with the given plid.

@@ -186,6 +186,7 @@ static void setup_one_plugin(void)
 	memset(&plugin1_pre_funcs, 0, sizeof(plugin1_pre_funcs));
 	memset(&plugin1_post_funcs, 0, sizeof(plugin1_post_funcs));
 
+	free(test_plugins.hook_list_data);
 	memset(&test_plugins, 0, sizeof(test_plugins));
 	MPlugin *plug = &test_plugins.plist[0];
 	memset(plug, 0, sizeof(*plug));
@@ -196,6 +197,7 @@ static void setup_one_plugin(void)
 	plug->tables.dllapi = &plugin1_pre_funcs;
 	plug->post_tables.dllapi = &plugin1_post_funcs;
 	test_plugins.endlist = 1;
+	test_plugins.rebuild_hook_lists();
 }
 
 static void setup_two_plugins(void)
@@ -214,6 +216,7 @@ static void setup_two_plugins(void)
 	plug2->tables.dllapi = &plugin2_pre_funcs;
 	plug2->post_tables.dllapi = &plugin2_post_funcs;
 	test_plugins.endlist = 2;
+	test_plugins.rebuild_hook_lists();
 }
 
 static void teardown(void)
@@ -258,6 +261,7 @@ static int test_no_plugins_calls_gamedll(void)
 	setup_one_plugin();
 	test_plugins.endlist = 0;
 	test_plugins.plist[0].status = PL_EMPTY;
+	test_plugins.rebuild_hook_lists();
 
 	call_hooked_GameInit();
 	ASSERT_TRUE(g_gamedll_called == 1);
@@ -447,6 +451,7 @@ static int test_paused_plugin_skipped(void)
 	plugin1_pre_funcs.pfnGameInit = plugin1_pre_GameInit;
 	plugin2_pre_funcs.pfnGameInit = plugin2_pre_GameInit;
 	test_plugins.plist[0].status = PL_PAUSED;
+	test_plugins.rebuild_hook_lists();
 	g_plugin1_pre_mres = MRES_IGNORED;
 	g_plugin2_pre_mres = MRES_IGNORED;
 
@@ -480,6 +485,7 @@ static int test_plugin_no_table_skipped(void)
 	setup_one_plugin();
 	plugin1_pre_funcs.pfnGameInit = plugin1_pre_GameInit;
 	test_plugins.plist[0].tables.dllapi = NULL;
+	test_plugins.rebuild_hook_lists();
 
 	call_hooked_GameInit();
 	ASSERT_TRUE(g_plugin1_pre_called == 0);
@@ -498,6 +504,7 @@ static int test_return_no_plugins(void)
 	TEST("dispatch return - no plugins, returns game DLL value");
 	setup_one_plugin();
 	test_plugins.endlist = 0;
+	test_plugins.rebuild_hook_lists();
 
 	int ret = call_hooked_Spawn();
 	ASSERT_TRUE(ret == 42);
@@ -662,6 +669,7 @@ static int test_return_paused_plugin_skipped(void)
 	g_plugin1_pre_mres = MRES_IGNORED;
 	g_plugin1_post_mres = MRES_IGNORED;
 	test_plugins.plist[1].status = PL_PAUSED;
+	test_plugins.rebuild_hook_lists();
 	plugin2_post_funcs.pfnSpawn = (int (*)(edict_t *))plugin1_post_Spawn_unset;
 
 	int ret = call_hooked_Spawn();
@@ -681,6 +689,7 @@ static int test_return_plugin_no_post_table(void)
 	plugin1_pre_funcs.pfnSpawn = plugin1_pre_Spawn;
 	g_plugin1_pre_mres = MRES_IGNORED;
 	test_plugins.plist[1].post_tables.dllapi = NULL;
+	test_plugins.rebuild_hook_lists();
 
 	int ret = call_hooked_Spawn();
 	ASSERT_TRUE(g_gamedll_called == 1);
@@ -960,6 +969,7 @@ static int test_void_null_post_table(void)
 	test_plugins.plist[0].post_tables.dllapi = NULL;
 	// Plugin 2 has no hooks at all
 	test_plugins.plist[1].post_tables.dllapi = NULL;
+	test_plugins.rebuild_hook_lists();
 
 	call_hooked_GameInit();
 	ASSERT_TRUE(g_plugin1_pre_called == 1);
@@ -985,6 +995,7 @@ static int test_return_null_pre_table(void)
 	plugin2_pre_funcs.pfnSpawn = plugin2_pre_Spawn;
 	g_plugin2_pre_mres = MRES_IGNORED;
 	test_plugins.plist[1].post_tables.dllapi = NULL;
+	test_plugins.rebuild_hook_lists();
 
 	int ret = call_hooked_Spawn();
 	ASSERT_TRUE(g_plugin1_pre_called == 0);

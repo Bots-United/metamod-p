@@ -611,7 +611,8 @@ mBOOL DLLINTERNAL MPlugin::load(PLUG_LOADTIME now) {
 	
 	status=PL_RUNNING;
 	action=PA_NONE;
-		
+	Plugins->rebuild_hook_lists();
+
 	// If not loading at server startup, then need to call plugin's
 	// GameInit, since we've passed that.
 	if(now != PT_STARTUP) {
@@ -1100,6 +1101,7 @@ mBOOL DLLINTERNAL MPlugin::unload(PLUG_LOADTIME now, PL_UNLOAD_REASON reason, PL
 		action=PA_LOAD;
 		clear();
 	}
+	Plugins->rebuild_hook_lists();
 	META_LOG("dll: Unloaded plugin '%s' for reason '%s'", desc, str_reason(reason, real_reason));
 	return(mTRUE);
 }
@@ -1204,6 +1206,7 @@ mBOOL MPlugin::pause(void) {
 	}
 
 	status=PL_PAUSED;
+	Plugins->rebuild_hook_lists();
 	META_LOG("Paused plugin '%s'", desc);
 	return(mTRUE);
 }
@@ -1217,6 +1220,7 @@ mBOOL DLLINTERNAL MPlugin::unpause(void) {
 		RETURN_ERRNO(mFALSE, ME_BADREQ);
 	}
 	status=PL_RUNNING;
+	Plugins->rebuild_hook_lists();
 	META_LOG("Unpaused plugin '%s'", desc);
 	return(mTRUE);
 }
