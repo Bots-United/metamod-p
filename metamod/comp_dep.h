@@ -96,6 +96,13 @@
 	#define FORCE_STACK_ALIGN
 #endif
 
+// Prevent function inlining to reduce code size at call sites
+#if defined(__GNUC__)
+	#define NOINLINE __attribute__((noinline))
+#else
+	#define NOINLINE
+#endif
+
 // Manual branch optimization for GCC 3.0.0 and newer
 #if !defined(__GNUC__) || __GNUC__ < 3
 	#define likely(x) (x)
