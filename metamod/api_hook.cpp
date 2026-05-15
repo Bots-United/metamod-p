@@ -98,9 +98,10 @@ inline const api_info_t * DLLINTERNAL get_api_info(enum_api_t api, unsigned int 
 template <bool do_debug>
 static inline void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
 	api_info_t api_info;
-	int i, endi;
+	const api_plugin_list_t *list;
+	int i, count;
+	MPlugin * const *plugs;
 	META_RES status;
-	MPlugin *plist;
 	meta_globals_t saved_meta_globals;
 
 	//passing offset from api wrapper function makes code faster/smaller
@@ -115,25 +116,15 @@ static inline void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_o
 
 	//Pre plugin functions
 	PublicMetaGlobals.prev_mres=MRES_UNSET;
-	plist=Plugins->plist;
-	endi=Plugins->endlist;
-	for(i=0; likely(i < endi); i++) {
-		if(unlikely(plist[i].status != PL_RUNNING))
+	list = Plugins->get_hook_list(api);
+	count = list->count;
+	plugs = list->plugs;
+	for(i=0; likely(i < count); i++) {
+		void *pfn_routine=get_api_function(plugs[i]->get_api_table(api), func_offset);
+		if(likely(!pfn_routine))
 			continue;
 
-		const void *api_table = plist[i].get_api_table(api);
-		if(likely(!api_table)) {
-			//plugin doesn't provide this api table
-			continue;
-		}
-
-		void *pfn_routine=get_api_function(api_table, func_offset);
-		if(likely(!pfn_routine)) {
-			//plugin doesn't provide this function
-			continue;
-		}
-
-		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s()", plist[i].file, api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s()", plugs[i]->file, api_info.name));
 
 		// initialize PublicMetaGlobals
 		PublicMetaGlobals.mres = MRES_UNSET;
@@ -152,7 +143,7 @@ static inline void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_o
 		PublicMetaGlobals.prev_mres = mres;
 
 		if(unlikely(mres==MRES_UNSET))
-			META_WARNING("Plugin didn't set meta_result: %s:%s()", plist[i].file, api_info.name);
+			META_WARNING("Plugin didn't set meta_result: %s:%s()", plugs[i]->file, api_info.name);
 	}
 
 	//Api call
@@ -183,25 +174,15 @@ static inline void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_o
 
 	//Post plugin functions
 	PublicMetaGlobals.prev_mres=MRES_UNSET;
-	plist=Plugins->plist;
-	endi=Plugins->endlist;
-	for(i=0; likely(i < endi); i++) {
-		if(unlikely(plist[i].status != PL_RUNNING))
+	list = Plugins->get_hook_post_list(api);
+	count = list->count;
+	plugs = list->plugs;
+	for(i=0; likely(i < count); i++) {
+		void *pfn_routine=get_api_function(plugs[i]->get_api_post_table(api), func_offset);
+		if(likely(!pfn_routine))
 			continue;
 
-		const void *api_table = plist[i].get_api_post_table(api);
-		if(likely(!api_table)) {
-			//plugin doesn't provide this api table
-			continue;
-		}
-
-		void *pfn_routine=get_api_function(api_table, func_offset);
-		if(likely(!pfn_routine)) {
-			//plugin doesn't provide this function
-			continue;
-		}
-
-		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s_Post()", plist[i].file, api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s_Post()", plugs[i]->file, api_info.name));
 
 		// initialize PublicMetaGlobals
 		PublicMetaGlobals.mres = MRES_UNSET;
@@ -220,9 +201,9 @@ static inline void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_o
 		PublicMetaGlobals.prev_mres = mres;
 
 		if(unlikely(mres==MRES_UNSET))
-			META_WARNING("Plugin didn't set meta_result: %s:%s_Post()", plist[i].file, api_info.name);
+			META_WARNING("Plugin didn't set meta_result: %s:%s_Post()", plugs[i]->file, api_info.name);
 		else if(unlikely(mres==MRES_SUPERCEDE))
-			META_WARNING("MRES_SUPERCEDE not valid in Post functions: %s:%s_Post()", plist[i].file, api_info.name);
+			META_WARNING("MRES_SUPERCEDE not valid in Post functions: %s:%s_Post()", plugs[i]->file, api_info.name);
 	}
 
 	copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
@@ -242,9 +223,10 @@ template <bool do_debug>
 static inline void * DLLINTERNAL main_hook_function_t(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api,
 						      unsigned int func_offset, const void * packed_args) {
 	api_info_t api_info;
-	int i, endi;
+	const api_plugin_list_t *list;
+	int i, count;
+	MPlugin * const *plugs;
 	META_RES status;
-	MPlugin *plist;
 	meta_globals_t saved_meta_globals;
 	struct {
 	  class_ret_t orig_ret;
@@ -267,25 +249,15 @@ static inline void * DLLINTERNAL main_hook_function_t(const class_ret_t ret_init
 
 	//Pre plugin functions
 	PublicMetaGlobals.prev_mres = MRES_UNSET;
-	plist=Plugins->plist;
-	endi=Plugins->endlist;
-	for(i=0; likely(i < endi); i++) {
-		if(unlikely(plist[i].status != PL_RUNNING))
+	list = Plugins->get_hook_list(api);
+	count = list->count;
+	plugs = list->plugs;
+	for(i=0; likely(i < count); i++) {
+		void *pfn_routine=get_api_function(plugs[i]->get_api_table(api), func_offset);
+		if(likely(!pfn_routine))
 			continue;
 
-		const void *api_table = plist[i].get_api_table(api);
-		if(likely(!api_table)) {
-			//plugin doesn't provide this api table
-			continue;
-		}
-
-		void *pfn_routine=get_api_function(api_table, func_offset);
-		if(likely(!pfn_routine)) {
-			//plugin doesn't provide this function
-			continue;
-		}
-
-		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s()", plist[i].file, api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s()", plugs[i]->file, api_info.name));
 
 		// initialize PublicMetaGlobals
 		PublicMetaGlobals.mres = MRES_UNSET;
@@ -313,7 +285,7 @@ static inline void * DLLINTERNAL main_hook_function_t(const class_ret_t ret_init
 			rv.override_ret = dllret;
 		}
 		else if(unlikely(mres==MRES_UNSET)) {
-			META_WARNING("Plugin didn't set meta_result: %s:%s()", plist[i].file, api_info.name);
+			META_WARNING("Plugin didn't set meta_result: %s:%s()", plugs[i]->file, api_info.name);
 		}
 	}
 
@@ -348,25 +320,15 @@ static inline void * DLLINTERNAL main_hook_function_t(const class_ret_t ret_init
 
 	//Post plugin functions
 	PublicMetaGlobals.prev_mres = MRES_UNSET;
-	plist=Plugins->plist;
-	endi=Plugins->endlist;
-	for(i=0; likely(i < endi); i++) {
-		if(unlikely(plist[i].status != PL_RUNNING))
+	list = Plugins->get_hook_post_list(api);
+	count = list->count;
+	plugs = list->plugs;
+	for(i=0; likely(i < count); i++) {
+		void *pfn_routine=get_api_function(plugs[i]->get_api_post_table(api), func_offset);
+		if(likely(!pfn_routine))
 			continue;
 
-		const void *api_table = plist[i].get_api_post_table(api);
-		if(likely(!api_table)) {
-			//plugin doesn't provide this api table
-			continue;
-		}
-
-		void *pfn_routine=get_api_function(api_table, func_offset);
-		if(likely(!pfn_routine)) {
-			//plugin doesn't provide this function
-			continue;
-		}
-
-		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s_Post()", plist[i].file, api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s_Post()", plugs[i]->file, api_info.name));
 
 		// initialize PublicMetaGlobals
 		PublicMetaGlobals.mres = MRES_UNSET;
@@ -394,10 +356,10 @@ static inline void * DLLINTERNAL main_hook_function_t(const class_ret_t ret_init
 			rv.override_ret = dllret;
 		}
 		else if(unlikely(mres==MRES_UNSET)) {
-			META_WARNING("Plugin didn't set meta_result: %s:%s_Post()", plist[i].file, api_info.name);
+			META_WARNING("Plugin didn't set meta_result: %s:%s_Post()", plugs[i]->file, api_info.name);
 		}
 		else if(unlikely(mres==MRES_SUPERCEDE)) {
-			META_WARNING("MRES_SUPERCEDE not valid in Post functions: %s:%s_Post()", plist[i].file, api_info.name);
+			META_WARNING("MRES_SUPERCEDE not valid in Post functions: %s:%s_Post()", plugs[i]->file, api_info.name);
 		}
 	}
 

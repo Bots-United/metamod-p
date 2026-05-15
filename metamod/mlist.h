@@ -49,6 +49,12 @@
 // Width required to printf above MAX, for show() functions.
 #define WIDTH_MAX_PLUGINS	2
 
+// Pre-filtered plugin list for a single API group + phase combination.
+// Contains only running plugins that have a non-NULL table for that group.
+struct api_plugin_list_t {
+	int count;
+	MPlugin **plugs;
+};
 
 // A list of plugins.
 class MPluginList : public class_metamod_new {
@@ -58,9 +64,19 @@ class MPluginList : public class_metamod_new {
 		int size;					// size of list, ie MAX_PLUGINS
 		int endlist;					// index of last used entry
 		char inifile[PATH_MAX];				// full pathname
+		api_plugin_list_t hook_lists[3][2];
+		MPlugin **hook_list_data;
 
-	// constructor:
+		inline DLLINTERNAL const api_plugin_list_t * get_hook_list(enum_api_t api) {
+			return(&hook_lists[api][0]);
+		}
+		inline DLLINTERNAL const api_plugin_list_t * get_hook_post_list(enum_api_t api) {
+			return(&hook_lists[api][1]);
+		}
+
+	// constructor/destructor:
 		MPluginList(const char *ifile) DLLINTERNAL;
+		~MPluginList(void) DLLINTERNAL;
 
 	// functions:
 		void DLLINTERNAL reset_plugin(MPlugin *pl_find);
@@ -84,6 +100,7 @@ class MPluginList : public class_metamod_new {
 
 		mBOOL DLLINTERNAL load(void);				// load the list, at startup
 		mBOOL DLLINTERNAL refresh(PLUG_LOADTIME now);		// update from re-read inifile
+		void DLLINTERNAL rebuild_hook_lists(void);
 		void DLLINTERNAL unpause_all(void);			// unpause any paused plugins
 		void DLLINTERNAL retry_all(PLUG_LOADTIME now);		// retry any pending plugin actions
 		void DLLINTERNAL show(int source_index);		// list plugins to console

@@ -4072,6 +4072,468 @@ static int test_load_and_refresh_reload(void)
 }
 
 // ============================================================
+// rebuild_hook_lists
+// ============================================================
+
+static DLL_FUNCTIONS fake_dllapi;
+static DLL_FUNCTIONS fake_dllapi2;
+static NEW_DLL_FUNCTIONS fake_newapi;
+static enginefuncs_t fake_engine_funcs;
+
+static int test_rebuild_empty(void)
+{
+	TEST("rebuild_hook_lists - empty list produces zero counts");
+	setup_globals();
+	HeapPluginList list("test.ini");
+	list->endlist = 0;
+	list->rebuild_hook_lists();
+	for(int api = 0; api < 3; api++) {
+		ASSERT_INT(list->get_hook_list((enum_api_t)api)->count, 0);
+		ASSERT_INT(list->get_hook_post_list((enum_api_t)api)->count, 0);
+	}
+	ASSERT_TRUE(list->hook_list_data == NULL);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_one_running_dllapi(void)
+{
+	TEST("rebuild_hook_lists - one running plugin with dllapi tables");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	MPlugin *plug = &list->plist[0];
+	memset(plug, 0, sizeof(*plug));
+	plug->status = PL_RUNNING;
+	plug->tables.dllapi = &fake_dllapi;
+	plug->post_tables.dllapi = &fake_dllapi;
+	list->endlist = 1;
+
+	list->rebuild_hook_lists();
+
+	ASSERT_INT(list->get_hook_list(e_api_engine)->count, 0);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
+	ASSERT_INT(list->get_hook_list(e_api_newapi)->count, 0);
+	ASSERT_INT(list->get_hook_post_list(e_api_engine)->count, 0);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi)->count, 1);
+	ASSERT_INT(list->get_hook_post_list(e_api_newapi)->count, 0);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug);
+	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi)->plugs[0], plug);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_one_running_all_tables(void)
+{
+	TEST("rebuild_hook_lists - one plugin with all 3 api groups");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_newapi, 0, sizeof(fake_newapi));
+	memset(&fake_engine_funcs, 0, sizeof(fake_engine_funcs));
+	MPlugin *plug = &list->plist[0];
+	memset(plug, 0, sizeof(*plug));
+	plug->status = PL_RUNNING;
+	plug->tables.engine = &fake_engine_funcs;
+	plug->tables.dllapi = &fake_dllapi;
+	plug->tables.newapi = &fake_newapi;
+	plug->post_tables.engine = &fake_engine_funcs;
+	plug->post_tables.dllapi = &fake_dllapi;
+	plug->post_tables.newapi = &fake_newapi;
+	list->endlist = 1;
+
+	list->rebuild_hook_lists();
+
+	for(int api = 0; api < 3; api++) {
+		ASSERT_INT(list->get_hook_list((enum_api_t)api)->count, 1);
+		ASSERT_INT(list->get_hook_post_list((enum_api_t)api)->count, 1);
+		ASSERT_PTR_EQ(list->get_hook_list((enum_api_t)api)->plugs[0], plug);
+		ASSERT_PTR_EQ(list->get_hook_post_list((enum_api_t)api)->plugs[0], plug);
+	}
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_pre_only(void)
+{
+	TEST("rebuild_hook_lists - plugin with pre table only, no post");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	MPlugin *plug = &list->plist[0];
+	memset(plug, 0, sizeof(*plug));
+	plug->status = PL_RUNNING;
+	plug->tables.dllapi = &fake_dllapi;
+	plug->post_tables.dllapi = NULL;
+	list->endlist = 1;
+
+	list->rebuild_hook_lists();
+
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi)->count, 0);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug);
+	ASSERT_PTR_NULL(list->get_hook_post_list(e_api_dllapi)->plugs);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_post_only(void)
+{
+	TEST("rebuild_hook_lists - plugin with post table only, no pre");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	MPlugin *plug = &list->plist[0];
+	memset(plug, 0, sizeof(*plug));
+	plug->status = PL_RUNNING;
+	plug->tables.dllapi = NULL;
+	plug->post_tables.dllapi = &fake_dllapi;
+	list->endlist = 1;
+
+	list->rebuild_hook_lists();
+
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 0);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi)->count, 1);
+	ASSERT_PTR_NULL(list->get_hook_list(e_api_dllapi)->plugs);
+	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi)->plugs[0], plug);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_skips_non_running(void)
+{
+	TEST("rebuild_hook_lists - skips paused/unloaded/empty plugins");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+
+	PLUG_STATUS skip_statuses[] = { PL_PAUSED, PL_EMPTY, PL_VALID, PL_OPENED };
+	for(int s = 0; s < 4; s++) {
+		MPlugin *plug = &list->plist[s];
+		memset(plug, 0, sizeof(*plug));
+		plug->status = skip_statuses[s];
+		plug->tables.dllapi = &fake_dllapi;
+		plug->post_tables.dllapi = &fake_dllapi;
+	}
+	list->endlist = 4;
+
+	list->rebuild_hook_lists();
+
+	for(int api = 0; api < 3; api++) {
+		ASSERT_INT(list->get_hook_list((enum_api_t)api)->count, 0);
+		ASSERT_INT(list->get_hook_post_list((enum_api_t)api)->count, 0);
+	}
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_mixed_statuses(void)
+{
+	TEST("rebuild_hook_lists - only PL_RUNNING included among mixed");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->status = PL_PAUSED;
+	plug0->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug2 = &list->plist[2];
+	memset(plug2, 0, sizeof(*plug2));
+	plug2->status = PL_EMPTY;
+	plug2->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plug3 = &list->plist[3];
+	memset(plug3, 0, sizeof(*plug3));
+	plug3->status = PL_RUNNING;
+	plug3->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 4;
+	list->rebuild_hook_lists();
+
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 2);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug1);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[1], plug3);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_two_plugins_order(void)
+{
+	TEST("rebuild_hook_lists - plugin order preserved");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->status = PL_RUNNING;
+	plug0->tables.dllapi = &fake_dllapi;
+	plug0->post_tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi2;
+	plug1->post_tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 2;
+	list->rebuild_hook_lists();
+
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 2);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug0);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[1], plug1);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi)->count, 2);
+	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi)->plugs[0], plug0);
+	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi)->plugs[1], plug1);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_different_api_groups(void)
+{
+	TEST("rebuild_hook_lists - plugins in different api groups");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_newapi, 0, sizeof(fake_newapi));
+	memset(&fake_engine_funcs, 0, sizeof(fake_engine_funcs));
+
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->status = PL_RUNNING;
+	plug0->tables.engine = &fake_engine_funcs;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi;
+	plug1->post_tables.newapi = &fake_newapi;
+
+	list->endlist = 2;
+	list->rebuild_hook_lists();
+
+	ASSERT_INT(list->get_hook_list(e_api_engine)->count, 1);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_engine)->plugs[0], plug0);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug1);
+	ASSERT_INT(list->get_hook_list(e_api_newapi)->count, 0);
+	ASSERT_INT(list->get_hook_post_list(e_api_engine)->count, 0);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi)->count, 0);
+	ASSERT_INT(list->get_hook_post_list(e_api_newapi)->count, 1);
+	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_newapi)->plugs[0], plug1);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_realloc_shrinks(void)
+{
+	TEST("rebuild_hook_lists - rebuild after unload shrinks lists");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->status = PL_RUNNING;
+	plug0->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 2;
+	list->rebuild_hook_lists();
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 2);
+
+	plug1->status = PL_EMPTY;
+	list->rebuild_hook_lists();
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug0);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_to_empty_frees(void)
+{
+	TEST("rebuild_hook_lists - all plugins removed frees allocation");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	MPlugin *plug = &list->plist[0];
+	memset(plug, 0, sizeof(*plug));
+	plug->status = PL_RUNNING;
+	plug->tables.dllapi = &fake_dllapi;
+	list->endlist = 1;
+
+	list->rebuild_hook_lists();
+	ASSERT_PTR_NOT_NULL(list->hook_list_data);
+
+	plug->status = PL_EMPTY;
+	list->rebuild_hook_lists();
+	ASSERT_PTR_NULL(list->hook_list_data);
+	for(int api = 0; api < 3; api++) {
+		ASSERT_INT(list->get_hook_list((enum_api_t)api)->count, 0);
+		ASSERT_INT(list->get_hook_post_list((enum_api_t)api)->count, 0);
+	}
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_null_tables_ignored(void)
+{
+	TEST("rebuild_hook_lists - NULL table pointers not counted");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	MPlugin *plug = &list->plist[0];
+	memset(plug, 0, sizeof(*plug));
+	plug->status = PL_RUNNING;
+	plug->tables.engine = NULL;
+	plug->tables.dllapi = NULL;
+	plug->tables.newapi = NULL;
+	plug->post_tables.engine = NULL;
+	plug->post_tables.dllapi = NULL;
+	plug->post_tables.newapi = NULL;
+	list->endlist = 1;
+
+	list->rebuild_hook_lists();
+
+	for(int api = 0; api < 3; api++) {
+		ASSERT_INT(list->get_hook_list((enum_api_t)api)->count, 0);
+		ASSERT_INT(list->get_hook_post_list((enum_api_t)api)->count, 0);
+	}
+	ASSERT_PTR_NULL(list->hook_list_data);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_plugs_contiguous(void)
+{
+	TEST("rebuild_hook_lists - plugs arrays are contiguous in memory");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_engine_funcs, 0, sizeof(fake_engine_funcs));
+
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->status = PL_RUNNING;
+	plug0->tables.engine = &fake_engine_funcs;
+	plug0->tables.dllapi = &fake_dllapi;
+	plug0->post_tables.dllapi = &fake_dllapi;
+
+	list->endlist = 1;
+	list->rebuild_hook_lists();
+
+	// All plugs pointers should point into hook_list_data
+	MPlugin **base = list->hook_list_data;
+	ASSERT_PTR_NOT_NULL(base);
+
+	// engine pre (1) + engine post (0) + dllapi pre (1) + dllapi post (1) = 3 total
+	const api_plugin_list_t *eng_pre = list->get_hook_list(e_api_engine);
+	const api_plugin_list_t *dll_pre = list->get_hook_list(e_api_dllapi);
+	const api_plugin_list_t *dll_post = list->get_hook_post_list(e_api_dllapi);
+
+	ASSERT_PTR_EQ(eng_pre->plugs, base);
+	ASSERT_PTR_EQ(dll_pre->plugs, base + 1);
+	ASSERT_PTR_EQ(dll_post->plugs, base + 2);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_repeated_calls(void)
+{
+	TEST("rebuild_hook_lists - repeated rebuilds produce same result");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	MPlugin *plug = &list->plist[0];
+	memset(plug, 0, sizeof(*plug));
+	plug->status = PL_RUNNING;
+	plug->tables.dllapi = &fake_dllapi;
+	plug->post_tables.dllapi = &fake_dllapi;
+	list->endlist = 1;
+
+	list->rebuild_hook_lists();
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi)->count, 1);
+
+	list->rebuild_hook_lists();
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi)->count, 1);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug);
+	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi)->plugs[0], plug);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_endlist_bounds(void)
+{
+	TEST("rebuild_hook_lists - only scans up to endlist");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->status = PL_RUNNING;
+	plug0->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 1;
+	list->rebuild_hook_lists();
+
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug0);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// ============================================================
 // main
 // ============================================================
 
@@ -4274,6 +4736,23 @@ int main(void)
 	fail |= test_refresh_pa_load_success();
 	fail |= test_load_success();
 	fail |= test_load_and_refresh_reload();
+
+	// rebuild_hook_lists
+	fail |= test_rebuild_empty();
+	fail |= test_rebuild_one_running_dllapi();
+	fail |= test_rebuild_one_running_all_tables();
+	fail |= test_rebuild_pre_only();
+	fail |= test_rebuild_post_only();
+	fail |= test_rebuild_skips_non_running();
+	fail |= test_rebuild_mixed_statuses();
+	fail |= test_rebuild_two_plugins_order();
+	fail |= test_rebuild_different_api_groups();
+	fail |= test_rebuild_realloc_shrinks();
+	fail |= test_rebuild_to_empty_frees();
+	fail |= test_rebuild_null_tables_ignored();
+	fail |= test_rebuild_plugs_contiguous();
+	fail |= test_rebuild_repeated_calls();
+	fail |= test_rebuild_endlist_bounds();
 
 	system("rm -rf /tmp/test_mlist_gd");
 
