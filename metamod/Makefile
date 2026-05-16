@@ -52,7 +52,7 @@ ifeq "$(OS)" "linux"
 	TST_DIR=$(HOME)/tmp
 else	## windows
 	INST_DIR=/hlserver/tfc/dlls
-	TEST_DIR=/hlserver/tfc/dlls
+	TEST_DIR=/hlserver/test/tfc/dlls
 endif
 
 DLLS_DIR=../dlls
@@ -154,7 +154,7 @@ endif
 CCOPT = $(CCO) $(CC_ARCH) -fno-exceptions -fno-rtti
 
 CCO = -O2 -fomit-frame-pointer
-CCO += -flto -fvisibility=hidden
+CCO += -flto=auto -fvisibility=hidden
 CCO += -fno-strict-aliasing -fno-strict-overflow
 
 # architecture by target type (applies to all build modes)
@@ -308,11 +308,12 @@ opt:
 	$(MAKE) default OPT=opt
 
 linux: do_dll_linux
-win32: do_dll_win32
+win32:
+	$(MAKE) do_dll_win32 OS=windows
 
-linux_opt: 
+linux_opt:
 	$(MAKE) linux OPT=opt
-win32_opt: 
+win32_opt:
 	$(MAKE) win32 OPT=opt
 
 $(TARGET_LINUX): msgs/debug msgs/warning msgs/log msgs/error $(OBJDIR_LINUX) $(OBJ_LINUX)
