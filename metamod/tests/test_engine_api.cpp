@@ -66,7 +66,7 @@ static void setup_globals(void)
 	mock_eng_table.pfnPrecacheModel = mock_eng_precache_model;
 	mock_eng_table.pfnPrecacheSound = mock_eng_precache_sound;
 	mock_eng_table.pfnServerPrint = mock_eng_server_print;
-	Engine.funcs = &mock_eng_table;
+	Engine_funcs = &mock_eng_table;
 
 	g_precache_model_called = 0;
 	g_precache_sound_called = 0;
@@ -135,7 +135,7 @@ static int test_hook_null_engine_table(void)
 {
 	TEST("engine hook - NULL engine table handled gracefully");
 	setup_globals();
-	Engine.funcs = NULL;
+	Engine_funcs = NULL;
 	meta_engfuncs.pfnServerPrint("test");
 	ASSERT_TRUE(g_server_print_called == 0);
 	teardown_globals();

@@ -47,7 +47,7 @@
 
 cvar_t meta_debug = {"meta_debug", "0", FCVAR_EXTDLL, 0, NULL};
 
-int meta_debug_value = 0; //meta_debug_value is converted from float(meta_debug.value) to int on every frame
+HOT_DATA int meta_debug_value = 0; //meta_debug_value is converted from float(meta_debug.value) to int on every frame
 
 enum MLOG_SERVICE {
 	mlsCONS = 1,

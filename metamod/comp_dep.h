@@ -114,6 +114,15 @@
 	#define NOINLINE
 #endif
 
+// Place hot-path data in dedicated sections for cache locality
+#if defined(__GNUC__)
+	#define HOT_DATA __attribute__((section(".data.hot_data")))
+	#define HOT_RODATA __attribute__((section(".data.hot_rodata")))
+#else
+	#define HOT_DATA
+	#define HOT_RODATA
+#endif
+
 // Manual branch optimization for GCC 3.0.0 and newer
 #if !defined(__GNUC__) || __GNUC__ < 3
 	#define likely(x) (x)

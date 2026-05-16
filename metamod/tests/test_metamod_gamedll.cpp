@@ -213,13 +213,13 @@ static void cleanup_startup_allocs(void)
 		if (Config->test_get_filename()) { free(Config->test_get_filename()); Config->test_set_filename(NULL); }
 	}
 	Config = &static_config;
-	if (GameDLL.funcs.dllapi_table) {
-		free(GameDLL.funcs.dllapi_table);
-		GameDLL.funcs.dllapi_table = NULL;
+	if (GameDLL_funcs.dllapi_table) {
+		free(GameDLL_funcs.dllapi_table);
+		GameDLL_funcs.dllapi_table = NULL;
 	}
-	if (GameDLL.funcs.newapi_table) {
-		free(GameDLL.funcs.newapi_table);
-		GameDLL.funcs.newapi_table = NULL;
+	if (GameDLL_funcs.newapi_table) {
+		free(GameDLL_funcs.newapi_table);
+		GameDLL_funcs.newapi_table = NULL;
 	}
 }
 
@@ -250,8 +250,8 @@ static int test_load_gamedll_success(void)
 	ASSERT_TRUE(g_getentityapi2_called);
 	ASSERT_TRUE(g_getnewdllfunctions_called);
 	ASSERT_TRUE(GameDLL.handle == (DLHANDLE)FAKE_GAMEDLL_HANDLE);
-	ASSERT_PTR_NOT_NULL(GameDLL.funcs.dllapi_table);
-	ASSERT_PTR_NOT_NULL(GameDLL.funcs.newapi_table);
+	ASSERT_PTR_NOT_NULL(GameDLL_funcs.dllapi_table);
+	ASSERT_PTR_NOT_NULL(GameDLL_funcs.newapi_table);
 	cleanup_startup_allocs();
 
 	PASS();
@@ -328,7 +328,7 @@ static int test_load_gamedll_api1_fallback(void)
 	ASSERT_TRUE(ret == mTRUE);
 	ASSERT_FALSE(g_getentityapi2_called);
 	ASSERT_TRUE(g_getentityapi_called);
-	ASSERT_PTR_NOT_NULL(GameDLL.funcs.dllapi_table);
+	ASSERT_PTR_NOT_NULL(GameDLL_funcs.dllapi_table);
 	cleanup_startup_allocs();
 
 	PASS();
@@ -376,8 +376,8 @@ static int test_load_gamedll_no_newdll(void)
 
 	mBOOL ret = meta_load_gamedll();
 	ASSERT_TRUE(ret == mTRUE);
-	ASSERT_PTR_NULL(GameDLL.funcs.newapi_table);
-	ASSERT_PTR_NOT_NULL(GameDLL.funcs.dllapi_table);
+	ASSERT_PTR_NULL(GameDLL_funcs.newapi_table);
+	ASSERT_PTR_NOT_NULL(GameDLL_funcs.dllapi_table);
 	cleanup_startup_allocs();
 
 	PASS();
@@ -392,8 +392,8 @@ static int test_load_gamedll_newdll_returns_false(void)
 
 	mBOOL ret = meta_load_gamedll();
 	ASSERT_TRUE(ret == mTRUE);
-	ASSERT_PTR_NULL(GameDLL.funcs.newapi_table);
-	ASSERT_PTR_NOT_NULL(GameDLL.funcs.dllapi_table);
+	ASSERT_PTR_NULL(GameDLL_funcs.newapi_table);
+	ASSERT_PTR_NOT_NULL(GameDLL_funcs.dllapi_table);
 	cleanup_startup_allocs();
 
 	PASS();
@@ -434,7 +434,7 @@ static int test_startup_full_success(void)
 	ASSERT_TRUE(ret == 1);
 	ASSERT_TRUE(g_givefnptrstodll_called);
 	ASSERT_TRUE(g_getentityapi2_called);
-	ASSERT_PTR_NOT_NULL(GameDLL.funcs.dllapi_table);
+	ASSERT_PTR_NOT_NULL(GameDLL_funcs.dllapi_table);
 	cleanup_startup_allocs();
 
 	PASS();

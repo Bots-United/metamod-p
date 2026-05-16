@@ -41,13 +41,13 @@
 #include "osdep.h"			//unlikely
 
 // getting pointer with table index is faster than with if-else
-static const void * const * const api_tables[3] = {
-	(const void * const *)&Engine.funcs,
-	(const void * const *)&GameDLL.funcs.dllapi_table,
-	(const void * const *)&GameDLL.funcs.newapi_table
+static HOT_RODATA const void * const * const api_tables[3] = {
+	(const void * const *)&Engine_funcs,
+	(const void * const *)&GameDLL_funcs.dllapi_table,
+	(const void * const *)&GameDLL_funcs.newapi_table
 };
 
-static const void * const * const api_info_tables[3] = {
+static HOT_RODATA const void * const * const api_info_tables[3] = {
 	(const void * const *)&engine_info,
 	(const void * const *)&dllapi_info,
 	(const void * const *)&newapi_info

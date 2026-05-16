@@ -500,7 +500,7 @@ C_DLLEXPORT FORCE_STACK_ALIGN int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunc
 	// Don't provide these functions to engine if gamedll doesn't provide
 	// them.  Otherwise, we're in the position of having to provide answers
 	// we can't necessarily provide (for instance, ShouldCollide())...
-	if(!GameDLL.funcs.newapi_table)
+	if(!GameDLL_funcs.newapi_table)
 		return(FALSE);
 #endif
 

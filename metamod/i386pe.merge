@@ -48,6 +48,9 @@ SECTIONS
     *(.data)
     *(.data2)
     *(SORT(.data$*))
+    . = ALIGN(64);
+    *(.data.hot_data)
+    *(.data.hot_rodata)
     __data_end__ = . ;
     *(.data_cygwin_nocopy)
     *(.eh_frame)

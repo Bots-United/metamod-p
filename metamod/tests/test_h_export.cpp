@@ -76,7 +76,7 @@ static int test_give_sets_engine_globals(void)
 
 static int test_give_sets_engine_funcs(void)
 {
-	TEST("GiveFnptrsToDll - sets Engine.funcs to g_engfuncs");
+	TEST("GiveFnptrsToDll - sets Engine_funcs to g_engfuncs");
 	mock_reset();
 	g_metamod_startup_retval = 1;
 	metamod_not_loaded = 0;
@@ -88,7 +88,7 @@ static int test_give_sets_engine_funcs(void)
 
 	GiveFnptrsToDll(&test_engfuncs, &test_globals);
 
-	ASSERT_TRUE(Engine.funcs == (enginefuncs_t *)&g_engfuncs);
+	ASSERT_TRUE(Engine_funcs == (enginefuncs_t *)&g_engfuncs);
 	PASS();
 	return 0;
 }

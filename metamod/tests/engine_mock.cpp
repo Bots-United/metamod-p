@@ -37,6 +37,7 @@ __attribute__((weak)) globalvars_t *gpGlobals = &mock_globalvars;
 
 __attribute__((weak)) HL_enginefuncs_t g_engfuncs;
 __attribute__((weak)) engine_t Engine;
+__attribute__((weak)) enginefuncs_t *Engine_funcs = NULL;
 __attribute__((weak)) meta_enginefuncs_t g_plugin_engfuncs;
 
 // ============================================================
@@ -414,7 +415,7 @@ void mock_reset(void)
 	mock_gamedir[0] = '\0';
 	mock_localinfo_count = 0;
 
-	Engine.funcs = (enginefuncs_t *)&g_engfuncs;
+	Engine_funcs = (enginefuncs_t *)&g_engfuncs;
 	Engine.globals = gpGlobals;
 
 	memset(&GameDLL, 0, sizeof(GameDLL));
