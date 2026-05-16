@@ -76,6 +76,7 @@ void _fini(void) {
 //! Holds engine functionality callbacks
 HL_enginefuncs_t g_engfuncs;
 globalvars_t  *gpGlobals;
+HOT_DATA enginefuncs_t *Engine_funcs;
 engine_t Engine;
 
 // Receive engine function table from engine.
@@ -90,7 +91,7 @@ C_DLLEXPORT FORCE_STACK_ALIGN void WINAPI GiveFnptrsToDll(enginefuncs_t *pengfun
 	metamod_handle = get_module_handle_of_memptr((void*)&g_engfuncs);
 #endif /* __linux__ */
 	gpGlobals = pGlobals;
-	Engine.funcs = &g_engfuncs;
+	Engine_funcs = &g_engfuncs;
 	Engine.globals = pGlobals;
 	Engine.info.initialise(pengfuncsFromEngine);
 

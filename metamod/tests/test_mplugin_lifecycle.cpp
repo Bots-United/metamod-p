@@ -583,8 +583,8 @@ static int test_load_with_gamedll_tables(void)
 	NEW_DLL_FUNCTIONS gdll_newapi;
 	memset(&gdll_funcs, 0, sizeof(gdll_funcs));
 	memset(&gdll_newapi, 0, sizeof(gdll_newapi));
-	GameDLL.funcs.dllapi_table = &gdll_funcs;
-	GameDLL.funcs.newapi_table = &gdll_newapi;
+	GameDLL_funcs.dllapi_table = &gdll_funcs;
+	GameDLL_funcs.newapi_table = &gdll_newapi;
 	MPlugin plug;
 	setup_plugin_for_load(&plug, "dlls/copytbl.so");
 	mBOOL ret = plug.load(PT_ANYTIME);
@@ -593,8 +593,8 @@ static int test_load_with_gamedll_tables(void)
 	ASSERT_PTR_NOT_NULL(plug.test_gamedll_funcs().dllapi_table);
 	ASSERT_PTR_NOT_NULL(plug.test_gamedll_funcs().newapi_table);
 	plug.free_api_pointers();
-	GameDLL.funcs.dllapi_table = NULL;
-	GameDLL.funcs.newapi_table = NULL;
+	GameDLL_funcs.dllapi_table = NULL;
+	GameDLL_funcs.newapi_table = NULL;
 	teardown_globals();
 	PASS();
 	return 0;

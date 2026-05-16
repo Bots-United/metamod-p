@@ -41,16 +41,16 @@
 #include "osdep.h"			//unlikely
 
 // getting pointer with table index is faster than with if-else
-static const void ** api_tables[3] = {
-	(const void**)&Engine.funcs,
-	(const void**)&GameDLL.funcs.dllapi_table,
-	(const void**)&GameDLL.funcs.newapi_table
+static HOT_RODATA const void * const * const api_tables[3] = {
+	(const void * const *)&Engine_funcs,
+	(const void * const *)&GameDLL_funcs.dllapi_table,
+	(const void * const *)&GameDLL_funcs.newapi_table
 };
 
-static const void ** api_info_tables[3] = {
-	(const void**)&engine_info,
-	(const void**)&dllapi_info,
-	(const void**)&newapi_info
+static HOT_RODATA const void * const * const api_info_tables[3] = {
+	(const void * const *)&engine_info,
+	(const void * const *)&dllapi_info,
+	(const void * const *)&newapi_info
 };
 
 static inline void copy_meta_globals(meta_globals_t *dst, const meta_globals_t *src) {
@@ -96,7 +96,7 @@ inline const api_info_t * DLLINTERNAL get_api_info(enum_api_t api, unsigned int 
 
 // simplified 'void' version of main hook function
 template <bool do_debug>
-static inline void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
+static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
 	api_info_t api_info;
 	const api_plugin_list_t *list;
 	int i, count;
@@ -209,7 +209,7 @@ static inline void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_o
 	copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
 }
 
-void DLLINTERNAL NOINLINE main_hook_function_void(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
+HOT_FUNC void DLLINTERNAL NOINLINE main_hook_function_void(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
 #ifndef __BUILD_FAST_METAMOD__
 	if(unlikely(meta_debug_value >= get_api_info(api, api_info_offset)->loglevel))
 		main_hook_function_void_t<true>(api_info_offset, api, func_offset, packed_args);
@@ -220,7 +220,7 @@ void DLLINTERNAL NOINLINE main_hook_function_void(unsigned int api_info_offset, 
 
 // full return typed version of main hook function
 template <bool do_debug>
-static inline void * DLLINTERNAL main_hook_function_t(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api,
+static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api,
 						      unsigned int func_offset, const void * packed_args) {
 	api_info_t api_info;
 	const api_plugin_list_t *list;
@@ -374,7 +374,7 @@ static inline void * DLLINTERNAL main_hook_function_t(const class_ret_t ret_init
 	}
 }
 
-void * DLLINTERNAL NOINLINE main_hook_function(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api,
+HOT_FUNC void * DLLINTERNAL NOINLINE main_hook_function(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api,
 					       unsigned int func_offset, const void * packed_args) {
 #ifndef __BUILD_FAST_METAMOD__
 	if(unlikely(meta_debug_value >= get_api_info(api, api_info_offset)->loglevel))
@@ -388,7 +388,7 @@ void * DLLINTERNAL NOINLINE main_hook_function(const class_ret_t ret_init, unsig
 // Macros for creating api caller functions
 //
 #define BEGIN_API_CALLER_FUNC(ret_type, args_type_code) \
-	void * DLLINTERNAL _COMBINE4(api_caller_, ret_type, _args_, args_type_code)(const void * func, const void * packed_args) { \
+	HOT_FUNC void * DLLINTERNAL _COMBINE4(api_caller_, ret_type, _args_, args_type_code)(const void * func, const void * packed_args) { \
 		_COMBINE2(pack_args_type_, args_type_code) * p ATTRIBUTE(unused)= (_COMBINE2(pack_args_type_, args_type_code) *)packed_args;
 #define END_API_CALLER_FUNC(ret_t, args_t, args) \
 		API_PAUSE_TSC_TRACKING(); \

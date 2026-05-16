@@ -96,11 +96,31 @@
 	#define FORCE_STACK_ALIGN
 #endif
 
+// Optimize hot dispatch functions: skip stack canary, hint for aggressive optimization
+#if defined(__clang__) && __clang_major__ >= 7
+	#define HOT_FUNC __attribute__((hot, no_stack_protector))
+#elif defined(__GNUC__) && __GNUC__ >= 11
+	#define HOT_FUNC __attribute__((hot, no_stack_protector))
+#elif defined(__GNUC__)
+	#define HOT_FUNC __attribute__((hot))
+#else
+	#define HOT_FUNC
+#endif
+
 // Prevent function inlining to reduce code size at call sites
 #if defined(__GNUC__)
 	#define NOINLINE __attribute__((noinline))
 #else
 	#define NOINLINE
+#endif
+
+// Place hot-path data in dedicated sections for cache locality
+#if defined(__GNUC__)
+	#define HOT_DATA __attribute__((section(".data.hot_data")))
+	#define HOT_RODATA __attribute__((section(".data.hot_rodata")))
+#else
+	#define HOT_DATA
+	#define HOT_RODATA
 #endif
 
 // Manual branch optimization for GCC 3.0.0 and newer

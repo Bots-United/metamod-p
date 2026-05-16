@@ -42,33 +42,34 @@
 #include "comp_dep.h"
 #include "osdep.h"	//unlikely, OPEN_ARGS
 
+// Engine function table pointer (hot path, extracted for cache locality).
+extern enginefuncs_t *Engine_funcs DLLHIDDEN;
+
 // Our structure for storing engine references.
 struct engine_t {
 	engine_t() DLLINTERNAL;
 	engine_t(const engine_t&) DLLINTERNAL;
 	engine_t& operator=(const engine_t&) DLLINTERNAL;
 
-	enginefuncs_t	*funcs;			// engine funcs
 	globalvars_t	*globals;		// engine globals
 	enginefuncs_t	*pl_funcs;		// "modified" eng funcs we give to plugins
 	EngineInfo       info;          // some special info elements
 };
 
-inline engine_t::engine_t() 
-    : funcs(NULL), globals(NULL), pl_funcs(NULL), info() 
+inline engine_t::engine_t()
+    : globals(NULL), pl_funcs(NULL), info()
 {
 }
 
 
-inline engine_t::engine_t(const engine_t& _rhs) 
-    : funcs(_rhs.funcs), globals(_rhs.globals), pl_funcs(_rhs.pl_funcs), info(_rhs.info) 
+inline engine_t::engine_t(const engine_t& _rhs)
+    : globals(_rhs.globals), pl_funcs(_rhs.pl_funcs), info(_rhs.info)
 {
 }
 
 
-inline engine_t& engine_t::operator=(const engine_t& _rhs) 
+inline engine_t& engine_t::operator=(const engine_t& _rhs)
 {
-    funcs = _rhs.funcs;
     globals = _rhs.globals;
     pl_funcs = _rhs.pl_funcs;
     info = _rhs.info;

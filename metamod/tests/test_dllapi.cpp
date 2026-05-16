@@ -60,7 +60,7 @@ static void setup_globals(void)
 	mock_dll_funcs.pfnThink = mock_think;
 	mock_dll_funcs.pfnServerDeactivate = mock_server_deactivate;
 	mock_dll_funcs.pfnStartFrame = mock_start_frame;
-	GameDLL.funcs.dllapi_table = &mock_dll_funcs;
+	GameDLL_funcs.dllapi_table = &mock_dll_funcs;
 
 	g_game_init_called = 0;
 	g_spawn_called = 0;
@@ -76,7 +76,7 @@ static void teardown_globals(void)
 	RegCvars = NULL;
 	RegMsgs = NULL;
 	Config = NULL;
-	GameDLL.funcs.dllapi_table = NULL;
+	GameDLL_funcs.dllapi_table = NULL;
 }
 
 // ============================================================
@@ -307,7 +307,7 @@ static int test_hook_null_game_table(void)
 {
 	TEST("hook - NULL game DLL table handled gracefully");
 	setup_globals();
-	GameDLL.funcs.dllapi_table = NULL;
+	GameDLL_funcs.dllapi_table = NULL;
 	DLL_FUNCTIONS funcs;
 	memset(&funcs, 0, sizeof(funcs));
 	int ver = INTERFACE_VERSION;
@@ -492,7 +492,7 @@ static int test_hook_new_dll_functions(void)
 	mock_new_funcs.pfnShouldCollide = stub_should_collide;
 	mock_new_funcs.pfnCvarValue = stub_cvar_value;
 	mock_new_funcs.pfnCvarValue2 = stub_cvar_value2;
-	GameDLL.funcs.newapi_table = &mock_new_funcs;
+	GameDLL_funcs.newapi_table = &mock_new_funcs;
 
 	NEW_DLL_FUNCTIONS funcs;
 	memset(&funcs, 0, sizeof(funcs));
@@ -510,7 +510,7 @@ static int test_hook_new_dll_functions(void)
 	funcs.pfnCvarValue(&ed, "val"); ASSERT_INT(g_call_count, 4);
 	funcs.pfnCvarValue2(&ed, 1, "cv", "val"); ASSERT_INT(g_call_count, 5);
 
-	GameDLL.funcs.newapi_table = NULL;
+	GameDLL_funcs.newapi_table = NULL;
 	teardown_globals();
 	PASS();
 	return 0;
@@ -523,7 +523,7 @@ static int test_hook_client_command_meta(void)
 	test_config.clientmeta = 1;
 
 	mock_dll_funcs.pfnClientCommand = stub_void_p;
-	GameDLL.funcs.dllapi_table = &mock_dll_funcs;
+	GameDLL_funcs.dllapi_table = &mock_dll_funcs;
 
 	DLL_FUNCTIONS funcs;
 	memset(&funcs, 0, sizeof(funcs));

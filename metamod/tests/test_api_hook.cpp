@@ -181,7 +181,7 @@ static void setup_one_plugin(void)
 	memset(&gamedll_funcs, 0, sizeof(gamedll_funcs));
 	gamedll_funcs.pfnGameInit = mock_gamedll_init;
 	gamedll_funcs.pfnSpawn = mock_gamedll_spawn;
-	GameDLL.funcs.dllapi_table = &gamedll_funcs;
+	GameDLL_funcs.dllapi_table = &gamedll_funcs;
 
 	memset(&plugin1_pre_funcs, 0, sizeof(plugin1_pre_funcs));
 	memset(&plugin1_post_funcs, 0, sizeof(plugin1_post_funcs));
@@ -226,7 +226,7 @@ static void teardown(void)
 	RegCvars = NULL;
 	RegMsgs = NULL;
 	Config = NULL;
-	GameDLL.funcs.dllapi_table = NULL;
+	GameDLL_funcs.dllapi_table = NULL;
 }
 
 // Helper: call GameDLLInit through the hook dispatcher
@@ -703,7 +703,7 @@ static int test_return_null_gamedll_table(void)
 {
 	TEST("dispatch return - NULL game DLL table handled");
 	setup_one_plugin();
-	GameDLL.funcs.dllapi_table = NULL;
+	GameDLL_funcs.dllapi_table = NULL;
 	call_hooked_Spawn();
 	ASSERT_TRUE(g_gamedll_called == 0);
 	teardown();
@@ -731,7 +731,7 @@ static int test_null_gamedll_table(void)
 {
 	TEST("dispatch void - NULL game DLL table handled gracefully");
 	setup_one_plugin();
-	GameDLL.funcs.dllapi_table = NULL;
+	GameDLL_funcs.dllapi_table = NULL;
 
 	call_hooked_GameInit();
 	ASSERT_TRUE(g_gamedll_called == 0);

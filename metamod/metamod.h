@@ -68,16 +68,18 @@ extern DLHANDLE metamod_handle DLLHIDDEN;
 // cvar to contain version
 extern cvar_t meta_version DLLHIDDEN;
 
+// Game DLL function tables (hot path, extracted for cache locality).
+extern gamedll_funcs_t GameDLL_funcs DLLHIDDEN;
+
 // Info about the game dll/mod.
 typedef struct gamedll_s {
+	char const *file;		// ie "cs_i386.so"
+	const char *desc;		// ie "Counter-Strike"
+	DLHANDLE handle;
 	char name[NAME_MAX];		// ie "cstrike" (from gamedir)
-	const char *desc;				// ie "Counter-Strike"
 	char gamedir[PATH_MAX];		// ie "/home/willday/half-life/cstrike"
 	char pathname[PATH_MAX];	// ie "/home/willday/half-life/cstrike/dlls/cs_i386.so"
-	char const *file;			// ie "cs_i386.so"
 	char real_pathname[PATH_MAX];	// in case pathname overridden by bot, etc
-	DLHANDLE handle;
-	gamedll_funcs_t funcs;		// dllapi_table, newapi_table
 } gamedll_t;
 extern gamedll_t GameDLL DLLHIDDEN;
 

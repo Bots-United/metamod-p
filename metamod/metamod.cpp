@@ -71,14 +71,15 @@ option_t global_options[] = {
 	{ NULL, CF_NONE, NULL, NULL }
 };
 
+HOT_DATA gamedll_funcs_t GameDLL_funcs;
 gamedll_t GameDLL;
 
-meta_globals_t PublicMetaGlobals;
+HOT_DATA meta_globals_t PublicMetaGlobals;
 meta_globals_t PrivateMetaGlobals;
 
 meta_enginefuncs_t g_plugin_engfuncs;
 
-MPluginList *Plugins;
+HOT_DATA MPluginList *Plugins;
 MRegCmdList *RegCmds;
 MRegCvarList *RegCvars;
 MRegMsgList *RegMsgs;
@@ -207,7 +208,7 @@ int DLLINTERNAL metamod_startup(void) {
 	// Copy, and store pointer in Engine struct.  Yes, we could just store
 	// the actual engine_t struct in Engine, but then it wouldn't be a
 	// pointer to match the other g_engfuncs.
-	g_plugin_engfuncs.set_from(Engine.funcs);
+	g_plugin_engfuncs.set_from(Engine_funcs);
 	Engine.pl_funcs=&g_plugin_engfuncs;
 	// substitute our special versions of various commands
 	Engine.pl_funcs->pfnAddServerCommand = meta_AddServerCommand;
@@ -393,18 +394,18 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 	// Yes...another macro.
 #define GET_FUNC_TABLE_FROM_GAME(gamedll, pfnGetFuncs, STR_GetFuncs, struct_field, API_TYPE, TABLE_TYPE, vers_pass, vers_int, vers_want, gotit) \
 		if((pfnGetFuncs = (API_TYPE) DLSYM(gamedll.handle, STR_GetFuncs))) { \
-			gamedll.funcs.struct_field = (TABLE_TYPE*) calloc(1, sizeof(TABLE_TYPE)); \
-			if(!gamedll.funcs.struct_field) {\
+			GameDLL_funcs.struct_field = (TABLE_TYPE*) calloc(1, sizeof(TABLE_TYPE)); \
+			if(!GameDLL_funcs.struct_field) {\
 				META_WARNING("malloc failed for gamedll struct_field: %s", STR_GetFuncs); \
 			} \
-			else if(pfnGetFuncs(gamedll.funcs.struct_field, vers_pass)) { \
+			else if(pfnGetFuncs(GameDLL_funcs.struct_field, vers_pass)) { \
 				META_DEBUG(3, ("dll: Game '%s': Found %s", gamedll.name, STR_GetFuncs)); \
 				gotit=1; \
 			} \
 			else { \
 				META_WARNING("dll: Failure calling %s in game '%s'", STR_GetFuncs, gamedll.name); \
-				free(gamedll.funcs.struct_field); \
-				gamedll.funcs.struct_field=NULL; \
+				free(GameDLL_funcs.struct_field); \
+				GameDLL_funcs.struct_field=NULL; \
 				if(vers_int != vers_want) { \
 					META_WARNING("dll: Interface version didn't match; we wanted %d, they had %d", vers_want, vers_int); \
 					/* reproduce error from engine */ \
@@ -422,7 +423,7 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 		} \
 		else { \
 			META_DEBUG(5, ("dll: Game '%s': No %s", gamedll.name, STR_GetFuncs)); \
-			gamedll.funcs.struct_field=NULL; \
+			GameDLL_funcs.struct_field=NULL; \
 		}
 
 	// Look for API-NEW interface in Game dll.  We do this before API2/API, because
@@ -453,7 +454,7 @@ mBOOL DLLINTERNAL meta_load_gamedll(void) {
 		RETURN_ERRNO(mFALSE, ME_DLMISSING);
 	}
 
-	if(!GameDLL.funcs.dllapi_table) {
+	if(!GameDLL_funcs.dllapi_table) {
 		META_WARNING("dll: GetEntityAPI function pointer is null in game DLL '%s'", GameDLL.name);
 		RETURN_ERRNO(mFALSE, ME_DLMISSING);
 	}

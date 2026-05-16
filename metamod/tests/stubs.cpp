@@ -16,7 +16,9 @@
 extern __attribute__((weak)) const dllapi_info_t dllapi_info = {};
 extern __attribute__((weak)) const newapi_info_t newapi_info = {};
 extern __attribute__((weak)) const engine_info_t engine_info = {};
+__attribute__((weak)) gamedll_funcs_t GameDLL_funcs = {};
 __attribute__((weak)) mutil_funcs_t MetaUtilFunctions = {};
+__attribute__((weak)) enginefuncs_t *Engine_funcs = NULL;
 __attribute__((weak)) meta_enginefuncs_t meta_engfuncs;
 
 __attribute__((weak)) void main_hook_function_void(unsigned int, enum_api_t, unsigned int, const void *) {}

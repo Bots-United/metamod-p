@@ -835,8 +835,8 @@ mBOOL DLLINTERNAL MPlugin::attach(PLUG_LOADTIME now) {
 			META_WARNING("dll: Failed attach plugin '%s': Failed malloc() for dllapi_table");
 			RETURN_ERRNO(mFALSE, ME_NOMEM);
 		}
-		if(GameDLL.funcs.dllapi_table)
-			memcpy(gamedll_funcs.dllapi_table, GameDLL.funcs.dllapi_table, sizeof(DLL_FUNCTIONS));
+		if(GameDLL_funcs.dllapi_table)
+			memcpy(gamedll_funcs.dllapi_table, GameDLL_funcs.dllapi_table, sizeof(DLL_FUNCTIONS));
 		else
 			memset(gamedll_funcs.dllapi_table, 0, sizeof(DLL_FUNCTIONS));
 	}
@@ -846,8 +846,8 @@ mBOOL DLLINTERNAL MPlugin::attach(PLUG_LOADTIME now) {
 			META_WARNING("dll: Failed attach plugin '%s': Failed malloc() for newapi_table");
 			RETURN_ERRNO(mFALSE, ME_NOMEM);
 		}
-		if(GameDLL.funcs.newapi_table)
-			memcpy(gamedll_funcs.newapi_table, GameDLL.funcs.newapi_table, sizeof(NEW_DLL_FUNCTIONS));
+		if(GameDLL_funcs.newapi_table)
+			memcpy(gamedll_funcs.newapi_table, GameDLL_funcs.newapi_table, sizeof(NEW_DLL_FUNCTIONS));
 		else
 			memset(gamedll_funcs.newapi_table, 0, sizeof(NEW_DLL_FUNCTIONS));
 	}

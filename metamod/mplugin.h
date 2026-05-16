@@ -127,8 +127,8 @@ class MPlugin : public class_metamod_new {
 			PLUG_STATUS status;			// current status of plugin (loaded, etc)
 			int status_int;				// int alias for switch without enum-load UB
 		};
-		api_tables_t tables;
-		api_tables_t post_tables;
+		api_tables_t tables;				// plugin's API function tables
+		api_tables_t post_tables;			// plugin's post-API function tables
 
 		inline DLLINTERNAL void * get_api_table(enum_api_t api) {
 			return(((void**)&tables)[api]);
@@ -137,6 +137,7 @@ class MPlugin : public class_metamod_new {
 			return(((void**)&post_tables)[api]);
 		}
 
+		char *file;					// ie "mm_test_i386.so", ptr from filename
 		int index;					// 1-based
 		int pfspecific;                  		// level of specific platform affinity, used during load time
 		union {
@@ -150,16 +151,15 @@ class MPlugin : public class_metamod_new {
 		int source_plugin_index;			// index of plugin that loaded this plugin. -1 means source plugin has been unloaded.
 		int unloader_index;
 		mBOOL is_unloader;				// fix to prevent other plugins unload active unloader.
-		
+
 		DLHANDLE handle;				// handle for dlopen, dlsym, etc
 		plugin_info_t *info;				// information plugin provides about itself
 		time_t time_loaded;				// when plugin was loaded
 		
-		char filename[PATH_MAX];			// ie "dlls/mm_test_i386.so", from inifile
-		char *file;					// ie "mm_test_i386.so", ptr from filename
 		char desc[MAX_DESC_LEN];			// ie "Test metamod plugin", from inifile
+		char filename[PATH_MAX];			// ie "dlls/mm_test_i386.so", from inifile
 		char pathname[PATH_MAX];			// UNIQUE, ie "/home/willday/half-life/cstrike/dlls/mm_test_i386.so", built with GameDLL.gamedir
-		
+
 	// functions:		
 		mBOOL DLLINTERNAL ini_parseline(const char *line);		// parse line from inifile
 		mBOOL DLLINTERNAL cmd_parseline(const char *line);		// parse from console command

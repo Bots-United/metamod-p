@@ -52,7 +52,7 @@ ifeq "$(OS)" "linux"
 	TST_DIR=$(HOME)/tmp
 else	## windows
 	INST_DIR=/hlserver/tfc/dlls
-	TEST_DIR=/hlserver/tfc/dlls
+	TEST_DIR=/hlserver/test/tfc/dlls
 endif
 
 DLLS_DIR=../dlls
@@ -154,7 +154,7 @@ endif
 CCOPT = $(CCO) $(CC_ARCH) -fno-exceptions -fno-rtti
 
 CCO = -O2 -fomit-frame-pointer
-CCO += -flto -fvisibility=hidden
+CCO += -flto=auto -fvisibility=hidden
 CCO += -fno-strict-aliasing -fno-strict-overflow
 
 # architecture by target type (applies to all build modes)
@@ -236,7 +236,7 @@ $(STLOBJ): CFLAGS += -Wno-error
 
 # linux .so compile commands
 DO_CC_LINUX=$(CC) $(CFLAGS) -fPIC $(INCLUDEDIRS) -o $@ -c $< $(FILTER)
-LINK_LINUX=$(CC) $(CFLAGS) -shared -ldl -lm -static-libgcc $(EXTRA_LINK) $(OBJ_LINUX) -o $@
+LINK_LINUX=$(CC) $(CFLAGS) -shared -ldl -lm -static-libgcc $(EXTRA_LINK) $(OBJ_LINUX) -Wl,-T,$(METADIR)/hotdata.ld -o $@
 
 # sort by date
 #SRCFILES := $(shell ls -t $(SRCFILES))
@@ -308,11 +308,12 @@ opt:
 	$(MAKE) default OPT=opt
 
 linux: do_dll_linux
-win32: do_dll_win32
+win32:
+	$(MAKE) do_dll_win32 OS=windows
 
-linux_opt: 
+linux_opt:
 	$(MAKE) linux OPT=opt
-win32_opt: 
+win32_opt:
 	$(MAKE) win32 OPT=opt
 
 $(TARGET_LINUX): msgs/debug msgs/warning msgs/log msgs/error $(OBJDIR_LINUX) $(OBJ_LINUX)
