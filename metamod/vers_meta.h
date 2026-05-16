@@ -43,8 +43,12 @@
 #endif /* not OPT_TYPE */
 
 
+#ifndef VDATE
 #define VDATE 			"2018/02/11"
+#endif
+#ifndef VPATCH_COPYRIGHT_YEAR
 #define VPATCH_COPYRIGHT_YEAR   "2018"
+#endif
 #define VMETA_VERSION		"1.21"
 
 #define VPATCH_NAME		"Metamod-P (mm-p)"

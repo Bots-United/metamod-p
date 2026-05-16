@@ -19,13 +19,20 @@ jobs:
       - name: Parse patch version
         id: ver
         if: inputs.version
+        env:
+          VERSION_TAG: ${{ inputs.version }}
         run: |
-          PATCH=$(echo "${{ inputs.version }}" | sed -n 's/^v[0-9]*\.[0-9]*p\([0-9]*\)$/\1/p')
+          PATCH=$(echo "$VERSION_TAG" | sed -n 's/^v[0-9]*\.[0-9]*p0*\([0-9]\+\)$/\1/p')
+          if [ -z "$PATCH" ]; then
+            echo "::error::Failed to parse patch version from '$VERSION_TAG'"
+            exit 1
+          fi
           echo "patch=$PATCH" >> "$GITHUB_OUTPUT"
+          echo "date=$(date +%Y/%m/%d)" >> "$GITHUB_OUTPUT"
       - name: Build metamod (debug)
-        run: make -j4 -C metamod CC="i686-linux-gnu-gcc" ${{ steps.ver.outputs.patch && format('META_VERSION={0}', steps.ver.outputs.patch) || '' }}
+        run: make -j4 -C metamod CC="i686-linux-gnu-gcc" ${{ steps.ver.outputs.patch && format('META_VERSION={0} META_DATE={1}', steps.ver.outputs.patch, steps.ver.outputs.date) || '' }}
       - name: Build metamod (optimized)
-        run: make -j4 -C metamod CC="i686-linux-gnu-gcc" OPT=opt ${{ steps.ver.outputs.patch && format('META_VERSION={0}', steps.ver.outputs.patch) || '' }}
+        run: make -j4 -C metamod CC="i686-linux-gnu-gcc" OPT=opt ${{ steps.ver.outputs.patch && format('META_VERSION={0} META_DATE={1}', steps.ver.outputs.patch, steps.ver.outputs.date) || '' }}
       - name: Build trace_plugin (optimized)
         run: make -j4 -C trace_plugin CC="i686-linux-gnu-gcc" OPT=opt
       - name: Build stub_plugin (optimized)
@@ -50,15 +57,22 @@ jobs:
       - name: Parse patch version
         id: ver
         if: inputs.version
+        env:
+          VERSION_TAG: ${{ inputs.version }}
         run: |
-          PATCH=$(echo "${{ inputs.version }}" | sed -n 's/^v[0-9]*\.[0-9]*p\([0-9]*\)$/\1/p')
+          PATCH=$(echo "$VERSION_TAG" | sed -n 's/^v[0-9]*\.[0-9]*p0*\([0-9]\+\)$/\1/p')
+          if [ -z "$PATCH" ]; then
+            echo "::error::Failed to parse patch version from '$VERSION_TAG'"
+            exit 1
+          fi
           echo "patch=$PATCH" >> "$GITHUB_OUTPUT"
+          echo "date=$(date +%Y/%m/%d)" >> "$GITHUB_OUTPUT"
       - name: Build in Ubuntu 18.04 i386 container
         run: |
           docker run --rm -v "${{ github.workspace }}:/workspace" -w /workspace \
             lpenz/ubuntu-bionic-i386 \
             bash -c "apt-get -y update && apt-get -y install build-essential g++ make && \
-              make -j4 -C metamod OPT=opt ${{ steps.ver.outputs.patch && format('META_VERSION={0}', steps.ver.outputs.patch) || '' }} && \
+              make -j4 -C metamod OPT=opt ${{ steps.ver.outputs.patch && format('META_VERSION={0} META_DATE={1}', steps.ver.outputs.patch, steps.ver.outputs.date) || '' }} && \
               make -j4 -C trace_plugin OPT=opt && \
               make -j4 -C stub_plugin OPT=opt && \
               make -j4 -C wdmisc_plugin OPT=opt"
@@ -82,11 +96,18 @@ jobs:
       - name: Parse patch version
         id: ver
         if: inputs.version
+        env:
+          VERSION_TAG: ${{ inputs.version }}
         run: |
-          PATCH=$(echo "${{ inputs.version }}" | sed -n 's/^v[0-9]*\.[0-9]*p\([0-9]*\)$/\1/p')
+          PATCH=$(echo "$VERSION_TAG" | sed -n 's/^v[0-9]*\.[0-9]*p0*\([0-9]\+\)$/\1/p')
+          if [ -z "$PATCH" ]; then
+            echo "::error::Failed to parse patch version from '$VERSION_TAG'"
+            exit 1
+          fi
           echo "patch=$PATCH" >> "$GITHUB_OUTPUT"
+          echo "date=$(date +%Y/%m/%d)" >> "$GITHUB_OUTPUT"
       - name: Build metamod (optimized)
-        run: make -j4 -C metamod CC_WIN="i686-w64-mingw32-g++" OS=windows OPT=opt win32 ${{ steps.ver.outputs.patch && format('META_VERSION={0}', steps.ver.outputs.patch) || '' }}
+        run: make -j4 -C metamod CC_WIN="i686-w64-mingw32-g++" OS=windows OPT=opt win32 ${{ steps.ver.outputs.patch && format('META_VERSION={0} META_DATE={1}', steps.ver.outputs.patch, steps.ver.outputs.date) || '' }}
       - name: Build trace_plugin (optimized)
         run: make -j4 -C trace_plugin CC_WIN="i686-w64-mingw32-g++" OS=windows OPT=opt win32
       - name: Build stub_plugin (optimized)

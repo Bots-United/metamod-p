@@ -180,10 +180,17 @@ CFLAGS=-Wall -Wno-unknown-pragmas -Wno-attributes -Wno-write-strings -Wno-class-
 
 CFLAGS+=-std=gnu++98 -Wno-c++11-compat
 
-# Override version from command line: make META_VERSION=99
+# Override version from command line: make META_VERSION=99 META_DATE=2026/05/16
 ifdef META_VERSION
-CFLAGS += -DVPATCH_IVERSION=$(META_VERSION) -DVPATCH_VERSION="\"$(META_VERSION)\""
+META_DEFS += -DVPATCH_IVERSION=$(META_VERSION) -DVPATCH_VERSION="\"$(META_VERSION)\""
+META_DEFS_RES += '-DVPATCH_IVERSION=$(META_VERSION)' '-DVPATCH_VERSION="\"$(META_VERSION)\""'
 endif
+ifdef META_DATE
+META_COPYRIGHT_YEAR := $(firstword $(subst /, ,$(META_DATE)))
+META_DEFS += -DVDATE="\"$(META_DATE)\"" -DVPATCH_COPYRIGHT_YEAR="\"$(META_COPYRIGHT_YEAR)\""
+META_DEFS_RES += '-DVDATE="\"$(META_DATE)\""' '-DVPATCH_COPYRIGHT_YEAR="\"$(META_COPYRIGHT_YEAR)\""'
+endif
+CFLAGS += $(META_DEFS)
 
 #CFLAGS += -DTEST
 
@@ -264,7 +271,7 @@ TARGET_LINUX = $(OBJDIR_LINUX)/$(LIBFILE_LINUX)
 
 # windows .dll compile commands
 DO_CC_WIN=$(CC_WIN) $(CFLAGS) $(INCLUDEDIRS) -o $@ -c $<
-DO_RES_WIN=$(RES_WIN) '$(ODEF)' --include-dir . --include-dir ../metamod -i $< -O coff -o $@
+DO_RES_WIN=$(RES_WIN) '$(ODEF)' $(META_DEFS_RES) --include-dir . --include-dir ../metamod -i $< -O coff -o $@
 LINK_WIN=$(CC_WIN) $(CFLAGS) -mdll -Xlinker --add-stdcall-alias $(EXTRA_LINK) $(OBJ_WIN) $(RES_OBJ_WIN) -s -o $@
 
 # windows object files
