@@ -270,6 +270,8 @@ const engine_info_t engine_info = {
 	{3,	api_caller_void_args_2pi,	"QueryClientCvarValue2" },	// pfnQueryClientCvarValue2
 	// Added 2009-06-17 (no SDK update):
 	{8,	api_caller_int_args_2p,		"EngCheckParm" },		// pfnEngCheckParm
+	// Added 2024/08/21 (HL25 SDK update):
+	{26,	api_caller_ptr_args_i,		"PEntityOfEntIndexAllEntities" },	// pfnPEntityOfEntIndexAllEntities
 	// end
 	{0,   NULL,	NULL },
 };
