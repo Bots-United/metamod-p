@@ -937,6 +937,89 @@ static int test_return_post_only_plugin(void)
 }
 
 // ============================================================
+// Tests: nested call with two plugins preserves prev_mres
+// ============================================================
+
+static void plugin1_reentrant_pre_GameInit(void)
+{
+	g_plugin1_pre_called++;
+
+	plugin1_pre_funcs.pfnGameInit = NULL;
+
+	DLL_FUNCTIONS inner_funcs;
+	memset(&inner_funcs, 0, sizeof(inner_funcs));
+	int ver = INTERFACE_VERSION;
+	GetEntityAPI2(&inner_funcs, &ver);
+	inner_funcs.pfnGameInit();
+
+	RETURN_META(MRES_HANDLED);
+}
+
+static int test_nested_two_plugins_prev_mres_preserved(void)
+{
+	TEST("dispatch void - nested call with two plugins preserves prev_mres");
+	setup_two_plugins();
+	plugin1_pre_funcs.pfnGameInit = plugin1_reentrant_pre_GameInit;
+	plugin2_pre_funcs.pfnGameInit = plugin2_pre_GameInit;
+	g_plugin2_pre_mres = MRES_IGNORED;
+	g_plugin2_pre_seen_prev_mres = MRES_UNSET;
+
+	call_hooked_GameInit();
+	ASSERT_TRUE(g_plugin1_pre_called == 1);
+	ASSERT_TRUE(g_plugin2_pre_called == 2);
+	ASSERT_TRUE(g_gamedll_called == 2);
+	// Plugin 2 in outer dispatch should see MRES_HANDLED from plugin 1
+	ASSERT_TRUE(g_plugin2_pre_seen_prev_mres == MRES_HANDLED);
+	teardown();
+	PASS();
+	return 0;
+}
+
+static int g_nested_ret_plugin2_seen_prev_mres;
+
+static int plugin1_reentrant_pre_Spawn(edict_t *ed)
+{
+	g_plugin1_pre_called++;
+
+	plugin1_pre_funcs.pfnSpawn = NULL;
+
+	DLL_FUNCTIONS inner_funcs;
+	memset(&inner_funcs, 0, sizeof(inner_funcs));
+	int ver = INTERFACE_VERSION;
+	GetEntityAPI2(&inner_funcs, &ver);
+	inner_funcs.pfnSpawn(ed);
+
+	RETURN_META_VALUE(MRES_HANDLED, 99);
+}
+
+static int plugin2_pre_Spawn_track_prev(edict_t *)
+{
+	g_plugin2_pre_called++;
+	g_nested_ret_plugin2_seen_prev_mres = gpMetaGlobals->prev_mres;
+	RETURN_META_VALUE(MRES_IGNORED, 0);
+}
+
+static int test_nested_two_plugins_return_prev_mres_preserved(void)
+{
+	TEST("dispatch return - nested call with two plugins preserves prev_mres");
+	setup_two_plugins();
+	plugin1_pre_funcs.pfnSpawn = plugin1_reentrant_pre_Spawn;
+	plugin2_pre_funcs.pfnSpawn = plugin2_pre_Spawn_track_prev;
+	g_nested_ret_plugin2_seen_prev_mres = MRES_UNSET;
+
+	int ret = call_hooked_Spawn();
+	ASSERT_TRUE(g_plugin1_pre_called == 1);
+	ASSERT_TRUE(g_plugin2_pre_called == 2);
+	ASSERT_TRUE(g_gamedll_called == 2);
+	// Plugin 2 in outer dispatch should see MRES_HANDLED from plugin 1
+	ASSERT_TRUE(g_nested_ret_plugin2_seen_prev_mres == MRES_HANDLED);
+	ASSERT_TRUE(ret == 42);
+	teardown();
+	PASS();
+	return 0;
+}
+
+// ============================================================
 // Tests: void dispatch - post hook MRES_UNSET warning (line 212)
 // ============================================================
 
@@ -1059,12 +1142,14 @@ int main(void)
 
 	// nested call
 	fail |= test_nested_call_restores_globals();
+	fail |= test_nested_two_plugins_prev_mres_preserved();
 
 	// pre MRES_UNSET for return function
 	fail |= test_return_pre_unset_warns();
 
 	// nested return call
 	fail |= test_nested_return_call_restores_globals();
+	fail |= test_nested_two_plugins_return_prev_mres_preserved();
 
 	// post-only plugin
 	fail |= test_void_post_only_plugin();
