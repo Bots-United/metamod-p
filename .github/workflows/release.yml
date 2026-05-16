@@ -26,6 +26,8 @@ jobs:
   build:
     needs: validate-tag
     uses: ./.github/workflows/build.yml
+    with:
+      version: ${{ needs.validate-tag.outputs.version }}
 
   package:
     needs: [validate-tag, build]
