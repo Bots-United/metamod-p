@@ -191,7 +191,14 @@ void DLLINTERNAL MPluginList::rebuild_hook_lists(void) {
 		total += ((api_plugin_list_t *)hook_lists)[i].count;
 
 	if(total > 0) {
-		hook_list_data = (MPlugin **)realloc(hook_list_data, total * sizeof(MPlugin *));
+		MPlugin **newdata = (MPlugin **)realloc(hook_list_data, total * sizeof(MPlugin *));
+		if(newdata) {
+			hook_list_data = newdata;
+		} else {
+			META_WARNING("Failed to realloc hook_list_data for %d entries: %s", total, strerror(errno));
+			memset(hook_lists, 0, sizeof(hook_lists));
+			return;
+		}
 	} else {
 		free(hook_list_data);
 		hook_list_data = NULL;
