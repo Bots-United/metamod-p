@@ -38,4 +38,4 @@ clean cleanall:
 	for i in $(SUBDIRS); do \
 		$(MAKE) -C $$i cleanall || exit; \
 	done
-	-rm dlls/* dlls/debug/*
+	-rm -fr dlls/* dlls/debug/*
