@@ -206,7 +206,7 @@ static void buffered_ALERT(MLOG_SERVICE service, ALERT_TYPE atype, const char *p
 	msg->service = service;
 	msg->atype = atype;
 	msg->prefix = prefix;
-	vsnprintf(msg->buf, sizeof(buf), fmt, ap);
+	vsnprintf(msg->buf, sizeof(msg->buf), fmt, ap);
 	msg->next = NULL;
 
 	if (NULL == messageQueueEnd) {
