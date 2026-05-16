@@ -18,6 +18,16 @@
 #include "engine_mock.h"
 #include "test_common.h"
 
+static bool force_realloc_fail = false;
+
+extern "C" void *__real_realloc(void *ptr, size_t size);
+extern "C" void *__wrap_realloc(void *ptr, size_t size)
+{
+	if (force_realloc_fail)
+		return NULL;
+	return __real_realloc(ptr, size);
+}
+
 static MRegCmdList test_reg_cmds;
 static MRegCvarList test_reg_cvars;
 static MRegMsgList test_reg_msgs;
@@ -4383,6 +4393,45 @@ static int test_rebuild_realloc_shrinks(void)
 	return 0;
 }
 
+static int test_rebuild_realloc_failure_keeps_old(void)
+{
+	TEST("rebuild_hook_lists - realloc failure keeps old lists");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	MPlugin *plug = &list->plist[0];
+	memset(plug, 0, sizeof(*plug));
+	plug->status = PL_RUNNING;
+	plug->tables.dllapi = &fake_dllapi;
+	list->endlist = 1;
+
+	list->rebuild_hook_lists();
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
+	MPlugin **old_data = list->hook_list_data;
+	ASSERT_PTR_NOT_NULL(old_data);
+
+	// Add a second plugin and force realloc to fail
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi2;
+	list->endlist = 2;
+
+	force_realloc_fail = true;
+	list->rebuild_hook_lists();
+	force_realloc_fail = false;
+
+	// Old allocation preserved, but lists zeroed so dispatch is safe
+	ASSERT_PTR_EQ(list->hook_list_data, old_data);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 0);
+	ASSERT_PTR_NULL(list->get_hook_list(e_api_dllapi)->plugs);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
 static int test_rebuild_to_empty_frees(void)
 {
 	TEST("rebuild_hook_lists - all plugins removed frees allocation");
@@ -4748,6 +4797,7 @@ int main(void)
 	fail |= test_rebuild_two_plugins_order();
 	fail |= test_rebuild_different_api_groups();
 	fail |= test_rebuild_realloc_shrinks();
+	fail |= test_rebuild_realloc_failure_keeps_old();
 	fail |= test_rebuild_to_empty_frees();
 	fail |= test_rebuild_null_tables_ignored();
 	fail |= test_rebuild_plugs_contiguous();

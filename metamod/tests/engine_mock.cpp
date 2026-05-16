@@ -48,6 +48,7 @@ __attribute__((weak)) DLHANDLE metamod_handle = NULL;
 __attribute__((weak)) cvar_t meta_version = {(char *)"metamod_version", (char *)"test", 0, 0, NULL};
 
 __attribute__((weak)) gamedll_t GameDLL;
+__attribute__((weak)) gamedll_funcs_t GameDLL_funcs;
 
 __attribute__((weak)) MConfig *Config = NULL;
 __attribute__((weak)) MPluginList *Plugins = NULL;
@@ -419,6 +420,7 @@ void mock_reset(void)
 	Engine.globals = gpGlobals;
 
 	memset(&GameDLL, 0, sizeof(GameDLL));
+	memset(&GameDLL_funcs, 0, sizeof(GameDLL_funcs));
 
 	metamod_handle = NULL;
 	Config = NULL;

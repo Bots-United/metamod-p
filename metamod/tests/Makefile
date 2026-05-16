@@ -118,7 +118,7 @@ test_metamod: test_metamod.o $(EXTENDED_OBJS) $(METAMOD_EXTRA)
 	${CXX} $(EXTRA_FLAGS) -o $@ $^ -ldl
 
 test_mlist: test_mlist.o $(EXTENDED_OBJS) fake_mm_plugin.so
-	${CXX} $(EXTRA_FLAGS) -o $@ $(filter %.o,$^) -ldl
+	${CXX} $(EXTRA_FLAGS) -o $@ $(filter %.o,$^) -ldl -Wl,--wrap=realloc
 
 test_mplugin: test_mplugin.o $(EXTENDED_OBJS) mutil.o
 	${CXX} $(EXTRA_FLAGS) -o $@ $^ -ldl
