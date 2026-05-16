@@ -60,12 +60,12 @@ struct api_plugin_list_t {
 class MPluginList : public class_metamod_new {
 	public:
 	// data:
-		MPlugin plist[MAX_PLUGINS];			// array of plugins
+		api_plugin_list_t hook_lists[3][2];		// pre-filtered per-api [pre,post] plugin arrays
+		MPlugin **hook_list_data;			// backing allocation for hook_lists plugs pointers
 		int size;					// size of list, ie MAX_PLUGINS
 		int endlist;					// index of last used entry
+		MPlugin plist[MAX_PLUGINS];			// array of plugins
 		char inifile[PATH_MAX];				// full pathname
-		api_plugin_list_t hook_lists[3][2];
-		MPlugin **hook_list_data;
 
 		inline DLLINTERNAL const api_plugin_list_t * get_hook_list(enum_api_t api) {
 			return(&hook_lists[api][0]);
