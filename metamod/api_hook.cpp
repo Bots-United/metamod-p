@@ -96,7 +96,7 @@ inline const api_info_t * DLLINTERNAL get_api_info(enum_api_t api, unsigned int 
 
 // simplified 'void' version of main hook function
 template <bool do_debug>
-static inline void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
+static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
 	api_info_t api_info;
 	const api_plugin_list_t *list;
 	int i, count;
@@ -209,7 +209,7 @@ static inline void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_o
 	copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
 }
 
-void DLLINTERNAL NOINLINE main_hook_function_void(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
+HOT_FUNC void DLLINTERNAL NOINLINE main_hook_function_void(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
 #ifndef __BUILD_FAST_METAMOD__
 	if(unlikely(meta_debug_value >= get_api_info(api, api_info_offset)->loglevel))
 		main_hook_function_void_t<true>(api_info_offset, api, func_offset, packed_args);
@@ -220,7 +220,7 @@ void DLLINTERNAL NOINLINE main_hook_function_void(unsigned int api_info_offset, 
 
 // full return typed version of main hook function
 template <bool do_debug>
-static inline void * DLLINTERNAL main_hook_function_t(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api,
+static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api,
 						      unsigned int func_offset, const void * packed_args) {
 	api_info_t api_info;
 	const api_plugin_list_t *list;
@@ -374,7 +374,7 @@ static inline void * DLLINTERNAL main_hook_function_t(const class_ret_t ret_init
 	}
 }
 
-void * DLLINTERNAL NOINLINE main_hook_function(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api,
+HOT_FUNC void * DLLINTERNAL NOINLINE main_hook_function(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api,
 					       unsigned int func_offset, const void * packed_args) {
 #ifndef __BUILD_FAST_METAMOD__
 	if(unlikely(meta_debug_value >= get_api_info(api, api_info_offset)->loglevel))
@@ -388,7 +388,7 @@ void * DLLINTERNAL NOINLINE main_hook_function(const class_ret_t ret_init, unsig
 // Macros for creating api caller functions
 //
 #define BEGIN_API_CALLER_FUNC(ret_type, args_type_code) \
-	void * DLLINTERNAL _COMBINE4(api_caller_, ret_type, _args_, args_type_code)(const void * func, const void * packed_args) { \
+	HOT_FUNC void * DLLINTERNAL _COMBINE4(api_caller_, ret_type, _args_, args_type_code)(const void * func, const void * packed_args) { \
 		_COMBINE2(pack_args_type_, args_type_code) * p ATTRIBUTE(unused)= (_COMBINE2(pack_args_type_, args_type_code) *)packed_args;
 #define END_API_CALLER_FUNC(ret_t, args_t, args) \
 		API_PAUSE_TSC_TRACKING(); \
