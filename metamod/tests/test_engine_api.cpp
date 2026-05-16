@@ -443,6 +443,7 @@ static int test_hook_all_engine_functions(void)
 	mock_eng_table.pfnQueryClientCvarValue = eng_querycvar;
 	mock_eng_table.pfnQueryClientCvarValue2 = eng_querycvar2;
 	mock_eng_table.pfnEngCheckParm = eng_checkparm;
+	mock_eng_table.pfnPEntityOfEntIndexAllEntities = eng_edict_i;
 
 	edict_t ed;
 	memset(&ed, 0, sizeof(ed));
@@ -613,6 +614,7 @@ static int test_hook_all_engine_functions(void)
 	meta_engfuncs.pfnQueryClientCvarValue(&ed, "c");
 	meta_engfuncs.pfnQueryClientCvarValue2(&ed, "c", 1);
 	meta_engfuncs.pfnEngCheckParm("p", NULL);
+	meta_engfuncs.pfnPEntityOfEntIndexAllEntities(0);
 
 	ASSERT_TRUE(g_eng_call_count > 100);
 
@@ -739,6 +741,21 @@ static int test_engcheckparm_invalid_ptr(void)
 	return 0;
 }
 
+static edict_t *pentity_allents_stub(int) { return NULL; }
+
+static int test_pentityallentities_invalid_ptr(void)
+{
+	TEST("engine hook - PEntityOfEntIndexAllEntities validates invalid pointer");
+	setup_globals();
+	mock_eng_table.pfnPEntityOfEntIndexAllEntities = pentity_allents_stub;
+	g_engfuncs.pfnPEntityOfEntIndexAllEntities = (edict_t *(*)(int))0x4;
+	meta_engfuncs.pfnPEntityOfEntIndexAllEntities(0);
+	ASSERT_TRUE(g_engfuncs.pfnPEntityOfEntIndexAllEntities == NULL);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
 // ============================================================
 // main
 // ============================================================
@@ -755,6 +772,7 @@ int main(void)
 	fail |= test_querycvar_invalid_ptr();
 	fail |= test_querycvar2_invalid_ptr();
 	fail |= test_engcheckparm_invalid_ptr();
+	fail |= test_pentityallentities_invalid_ptr();
 
 	fail |= test_hook_precache_model();
 	fail |= test_hook_precache_sound();

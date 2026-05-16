@@ -314,6 +314,9 @@ typedef struct enginefuncs_s
 	// Added 2009/06/19 (no SDK update):
 	int 		(*pfnEngCheckParm)			(const char *pchCmdLineToken, char **pchNextVal);
 
+	// Added 2024/08/21 (HL25 SDK update):
+	edict_t*	(*pfnPEntityOfEntIndexAllEntities)	(int iEntIndex);
+
 #ifdef __METAMOD_BUILD__
 	//extra (future updates)
 	void * extra_functions[16];

@@ -926,6 +926,18 @@ static HOT_FUNC FORCE_STACK_ALIGN int mm_EngCheckParm(const char *pchCmdLineToke
 	RETURN_API(int)
 }
 
+// Added 2024/08/21 (HL25 SDK update):
+static HOT_FUNC FORCE_STACK_ALIGN edict_t *mm_PEntityOfEntIndexAllEntities(int iEntIndex) {
+	static mBOOL s_check = mFALSE;
+
+	if (!s_check && g_engfuncs.pfnPEntityOfEntIndexAllEntities) {
+	     check_engine_pointer_validity(&s_check, (void **)&g_engfuncs.pfnPEntityOfEntIndexAllEntities);
+	}
+
+	META_ENGINE_HANDLE(edict_t *, NULL, FN_PENTITYOFENTINDEXALLENTITIES, pfnPEntityOfEntIndexAllEntities, i, (iEntIndex));
+	RETURN_API(edict_t *)
+}
+
 meta_enginefuncs_t meta_engfuncs (
 	&mm_PrecacheModel,			// pfnPrecacheModel()
 	&mm_PrecacheSound,			// pfnPrecacheSound()
@@ -1137,5 +1149,8 @@ meta_enginefuncs_t meta_engfuncs (
 	&mm_QueryClientCvarValue2,		// pfnQueryClientCvarValue2()
 
 	// Added 2009/06/17 (no SDK update):
-	&mm_EngCheckParm			// pfnEngCheckParm()
+	&mm_EngCheckParm,			// pfnEngCheckParm()
+
+	// Added 2024/08/21 (HL25 SDK update):
+	&mm_PEntityOfEntIndexAllEntities	// pfnPEntityOfEntIndexAllEntities()
 );

@@ -236,5 +236,7 @@ typedef void (*FN_QUERYCLIENTCVARVALUE) ( const edict_t *player, const char *cva
 typedef void (*FN_QUERYCLIENTCVARVALUE2) ( const edict_t *player, const char *cvarName, int requestID );
 // Added 2009/06/17 (no SDK update):
 typedef void (*FN_ENGCHECKPARM) ( const char *pchCmdLineToken, char **pchNextVal );
+// Added 2024/08/21 (HL25 SDK update):
+typedef edict_t * (*FN_PENTITYOFENTINDEXALLENTITIES) (int iEntIndex);
 
 #endif /* ENGINE_API_H */

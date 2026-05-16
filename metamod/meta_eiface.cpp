@@ -329,7 +329,8 @@ meta_enginefuncs_t::meta_enginefuncs_t(
 	void             (*_pfnResetTutorMessageDecayData)      (void),
 	void             (*_pfnQueryClientCvarValue)            (const edict_t*, const char*),
 	void             (*_pfnQueryClientCvarValue2)           (const edict_t*, const char*, int),
-	int             (*_pfnEngCheckParm)           		(const char*, char**)
+	int             (*_pfnEngCheckParm)           		(const char*, char**),
+	edict_t*        (*_pfnPEntityOfEntIndexAllEntities)	(int)
     )
 {
 	pfnPrecacheModel = _pfnPrecacheModel;
@@ -490,6 +491,7 @@ meta_enginefuncs_t::meta_enginefuncs_t(
 	pfnQueryClientCvarValue = _pfnQueryClientCvarValue;
 	pfnQueryClientCvarValue2 = _pfnQueryClientCvarValue2;
 	pfnEngCheckParm = _pfnEngCheckParm;
+	pfnPEntityOfEntIndexAllEntities = _pfnPEntityOfEntIndexAllEntities;
 
 	memset( extra_functions, 0, sizeof(extra_functions));
 
@@ -553,6 +555,7 @@ void HL_enginefuncs_t::initialise_interface( enginefuncs_t *_pFuncs )
 // 156:	void		(*pfnQueryClientCvarValue)		( const edict_t *player, const char *cvarName );
 // 157:	void		(*pfnQueryClientCvarValue2)             ( const edict_t *player, const char *cvarName, int requestID );
 // 158: int		(*pfnEngCheckParm)			( const char *pchCmdLineToke, char **pchNextValue );
+// 159: edict_t*	(*pfnPEntityOfEntIndexAllEntities)	( int iEntIndex );	// Added 2024/08/21 (HL25 SDK update)
 
 void HL_enginefuncs_t::determine_engine_interface_version( void )
 {
@@ -683,6 +686,14 @@ void HL_enginefuncs_t::determine_engine_interface_version( void )
 		return;
 	}
 	sm_version = 158;
+
+	// All functions up to PEntityOfEntIndexAllEntities() are valid.
+	// If PEntityOfEntIndexAllEntities() is not valid, leave it at the
+	// so far determined version. Otherwise the version is at least 159.
+	if ( pfnPEntityOfEntIndexAllEntities == NULL) {
+		return;
+	}
+	sm_version = 159;
 }
 
 
@@ -718,6 +729,8 @@ void HL_enginefuncs_t::fixup_engine_interface( void )
 		pfnQueryClientCvarValue2 = NULL;
 	case 157:
 		pfnEngCheckParm = NULL;
+	case 158:
+		pfnPEntityOfEntIndexAllEntities = NULL;
 	}
 }
 

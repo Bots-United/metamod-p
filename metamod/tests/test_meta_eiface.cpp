@@ -64,6 +64,7 @@ static void set_sig_pointers(enginefuncs_t *ef, void *valid_addr)
 	ef->pfnQueryClientCvarValue = (void (*)(const edict_t *, const char *))va;
 	ef->pfnQueryClientCvarValue2 = (void (*)(const edict_t *, const char *, int))va;
 	ef->pfnEngCheckParm = (int (*)(const char *, char **))va;
+	ef->pfnPEntityOfEntIndexAllEntities = (edict_t *(*)(int))va;
 }
 
 // ============================================================
@@ -275,6 +276,7 @@ static int test_hl_engfuncs_init_version_155(void)
 	ef.pfnQueryClientCvarValue = NULL;
 	ef.pfnQueryClientCvarValue2 = NULL;
 	ef.pfnEngCheckParm = NULL;
+	ef.pfnPEntityOfEntIndexAllEntities = NULL;
 	HL_enginefuncs_t hlef;
 	hlef.initialise_interface(&ef);
 	ASSERT_INT(meta_enginefuncs_t::version(), 155);
@@ -297,6 +299,7 @@ static int test_hl_engfuncs_init_version_156(void)
 	set_sig_pointers(&ef, fake_engine_sym);
 	ef.pfnQueryClientCvarValue2 = NULL;
 	ef.pfnEngCheckParm = NULL;
+	ef.pfnPEntityOfEntIndexAllEntities = NULL;
 	HL_enginefuncs_t hlef;
 	hlef.initialise_interface(&ef);
 	ASSERT_INT(meta_enginefuncs_t::version(), 156);
@@ -318,6 +321,7 @@ static int test_hl_engfuncs_init_version_157(void)
 	memset(&ef, 0, sizeof(ef));
 	set_sig_pointers(&ef, fake_engine_sym);
 	ef.pfnEngCheckParm = NULL;
+	ef.pfnPEntityOfEntIndexAllEntities = NULL;
 	HL_enginefuncs_t hlef;
 	hlef.initialise_interface(&ef);
 	ASSERT_INT(meta_enginefuncs_t::version(), 157);
@@ -328,7 +332,28 @@ static int test_hl_engfuncs_init_version_157(void)
 
 static int test_hl_engfuncs_init_version_158(void)
 {
-	TEST("HL_enginefuncs_t::initialise - all valid gives version 158");
+	TEST("HL_enginefuncs_t::initialise - through EngCheckParm gives 158");
+	mock_reset();
+	if (load_fake_engine()) {
+		printf("SKIP\n"); tests_run--; return 0;
+	}
+	Engine.info.initialise(NULL);
+	engfuncs_version_resetter::reset();
+	enginefuncs_t ef;
+	memset(&ef, 0, sizeof(ef));
+	set_sig_pointers(&ef, fake_engine_sym);
+	ef.pfnPEntityOfEntIndexAllEntities = NULL;
+	HL_enginefuncs_t hlef;
+	hlef.initialise_interface(&ef);
+	ASSERT_INT(meta_enginefuncs_t::version(), 158);
+	unload_fake_engine();
+	PASS();
+	return 0;
+}
+
+static int test_hl_engfuncs_init_version_159(void)
+{
+	TEST("HL_enginefuncs_t::initialise - all valid gives version 159");
 	mock_reset();
 	if (load_fake_engine()) {
 		printf("SKIP\n"); tests_run--; return 0;
@@ -340,7 +365,7 @@ static int test_hl_engfuncs_init_version_158(void)
 	set_sig_pointers(&ef, fake_engine_sym);
 	HL_enginefuncs_t hlef;
 	hlef.initialise_interface(&ef);
-	ASSERT_INT(meta_enginefuncs_t::version(), 158);
+	ASSERT_INT(meta_enginefuncs_t::version(), 159);
 	unload_fake_engine();
 	PASS();
 	return 0;
@@ -376,6 +401,7 @@ static int test_fixup_version_138(void)
 	ef.pfnSequenceGet = (sequenceEntry_s *(*)(const char *, const char *))0x1;
 	ef.pfnQueryClientCvarValue = (void (*)(const edict_t *, const char *))0x1;
 	ef.pfnEngCheckParm = (int (*)(const char *, char **))0x1;
+	ef.pfnPEntityOfEntIndexAllEntities = (edict_t *(*)(int))0x1;
 	HL_enginefuncs_t hlef;
 	hlef.initialise_interface(&ef);
 	ASSERT_INT(meta_enginefuncs_t::version(), 138);
@@ -383,13 +409,14 @@ static int test_fixup_version_138(void)
 	ASSERT_PTR_NULL(hlef.pfnSequenceGet);
 	ASSERT_PTR_NULL(hlef.pfnQueryClientCvarValue);
 	ASSERT_PTR_NULL(hlef.pfnEngCheckParm);
+	ASSERT_PTR_NULL(hlef.pfnPEntityOfEntIndexAllEntities);
 	PASS();
 	return 0;
 }
 
-static int test_fixup_version_158_keeps_ptrs(void)
+static int test_fixup_version_159_keeps_ptrs(void)
 {
-	TEST("fixup - version 158 keeps all sig ptrs");
+	TEST("fixup - version 159 keeps all sig ptrs");
 	mock_reset();
 	if (load_fake_engine()) {
 		printf("SKIP\n"); tests_run--; return 0;
@@ -401,9 +428,10 @@ static int test_fixup_version_158_keeps_ptrs(void)
 	set_sig_pointers(&ef, fake_engine_sym);
 	HL_enginefuncs_t hlef;
 	hlef.initialise_interface(&ef);
-	ASSERT_INT(meta_enginefuncs_t::version(), 158);
+	ASSERT_INT(meta_enginefuncs_t::version(), 159);
 	ASSERT_PTR_NOT_NULL(hlef.pfnGetPlayerAuthId);
 	ASSERT_PTR_NOT_NULL(hlef.pfnEngCheckParm);
+	ASSERT_PTR_NOT_NULL(hlef.pfnPEntityOfEntIndexAllEntities);
 	unload_fake_engine();
 	PASS();
 	return 0;
@@ -480,11 +508,12 @@ int main(void)
 	fail |= test_hl_engfuncs_init_version_156();
 	fail |= test_hl_engfuncs_init_version_157();
 	fail |= test_hl_engfuncs_init_version_158();
+	fail |= test_hl_engfuncs_init_version_159();
 	fail |= test_hl_engfuncs_cached_version();
 
 	// fixup verification
 	fail |= test_fixup_version_138();
-	fail |= test_fixup_version_158_keeps_ptrs();
+	fail |= test_fixup_version_159_keeps_ptrs();
 
 	printf("\n%d/%d tests passed\n", tests_passed, tests_run);
 	return fail ? EXIT_FAILURE : EXIT_SUCCESS;
