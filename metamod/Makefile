@@ -180,6 +180,11 @@ CFLAGS=-Wall -Wno-unknown-pragmas -Wno-attributes -Wno-write-strings -Wno-class-
 
 CFLAGS+=-std=gnu++98 -Wno-c++11-compat
 
+# Override version from command line: make META_VERSION=99
+ifdef META_VERSION
+CFLAGS += -DVPATCH_IVERSION=$(META_VERSION) -DVPATCH_VERSION="\"$(META_VERSION)\""
+endif
+
 #CFLAGS += -DTEST
 
 ifeq "$(OPT)" "opt-fast"
