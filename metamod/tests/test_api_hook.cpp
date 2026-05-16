@@ -1020,6 +1020,64 @@ static int test_nested_two_plugins_return_prev_mres_preserved(void)
 }
 
 // ============================================================
+// Tests: debug template path produces META_DEBUG messages
+// ============================================================
+
+static int test_debug_dispatch_logs_calls(void)
+{
+	TEST("dispatch void - debug path logs plugin and gamedll calls");
+	setup_one_plugin();
+	plugin1_pre_funcs.pfnGameInit = plugin1_pre_GameInit;
+	plugin1_post_funcs.pfnGameInit = plugin1_post_GameInit;
+	g_plugin1_pre_mres = MRES_IGNORED;
+	g_plugin1_post_mres = MRES_IGNORED;
+
+	meta_debug_value = 3;
+	call_hooked_GameInit();
+	meta_debug_value = 0;
+
+	ASSERT_TRUE(g_plugin1_pre_called == 1);
+	ASSERT_TRUE(g_gamedll_called == 1);
+	ASSERT_TRUE(g_plugin1_post_called == 1);
+	int found_pre = 0, found_post = 0;
+	for (int i = 0; i < mock_get_alert_count(); i++) {
+		const char *msg = mock_get_alert_msg(i);
+		if (strstr(msg, "Calling plugin1:GameDLLInit()") && !strstr(msg, "Post"))
+			found_pre = 1;
+		if (strstr(msg, "Calling plugin1:GameDLLInit_Post()"))
+			found_post = 1;
+	}
+	ASSERT_TRUE(found_pre);
+	ASSERT_TRUE(found_post);
+	teardown();
+	PASS();
+	return 0;
+}
+
+static int test_no_debug_dispatch_no_logs(void)
+{
+	TEST("dispatch void - non-debug path produces no META_DEBUG messages");
+	setup_one_plugin();
+	plugin1_pre_funcs.pfnGameInit = plugin1_pre_GameInit;
+	g_plugin1_pre_mres = MRES_IGNORED;
+
+	meta_debug_value = 0;
+	call_hooked_GameInit();
+
+	ASSERT_TRUE(g_plugin1_pre_called == 1);
+	ASSERT_TRUE(g_gamedll_called == 1);
+	int found_calling = 0;
+	for (int i = 0; i < mock_get_alert_count(); i++) {
+		if (strstr(mock_get_alert_msg(i), "Calling"))
+			found_calling = 1;
+	}
+	ASSERT_TRUE(!found_calling);
+	teardown();
+	PASS();
+	return 0;
+}
+
+// ============================================================
 // Tests: void dispatch - post hook MRES_UNSET warning (line 212)
 // ============================================================
 
@@ -1139,6 +1197,10 @@ int main(void)
 	// null game DLL (void)
 	fail |= test_null_gamedll_table();
 	fail |= test_null_gamedll_function();
+
+	// debug template path
+	fail |= test_debug_dispatch_logs_calls();
+	fail |= test_no_debug_dispatch_no_logs();
 
 	// nested call
 	fail |= test_nested_call_restores_globals();
