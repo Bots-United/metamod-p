@@ -80,11 +80,7 @@
 // DLL.
 #undef DLLEXPORT
 #ifdef _WIN32
-	#if defined(_MSC_VER)
 	#define DLLEXPORT	__declspec(dllexport)
-	#elif defined(__GNUC__)
-	#define DLLEXPORT	__attribute__ ((externally_visible))
-	#endif
 	// WINAPI should be provided in the windows compiler headers.
 	// It's usually defined to something like "__stdcall".
 #elif defined(__linux__)
