@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include <extdll.h>
 
@@ -27,6 +30,23 @@
 // Plugins normally get this pointer via Meta_Query/Meta_Attach.
 // Point it at metamod's PublicMetaGlobals so RETURN_META works.
 meta_globals_t *gpMetaGlobals = &PublicMetaGlobals;
+
+// Wrap realloc to always move the allocation (exposes use-after-free bugs).
+static size_t last_realloc_old_size = 0;
+extern "C" void *__real_realloc(void *ptr, size_t size);
+extern "C" void *__wrap_realloc(void *ptr, size_t size)
+{
+	void *newptr = malloc(size);
+	if (!newptr)
+		return NULL;
+	if (ptr) {
+		memcpy(newptr, ptr, size);
+		memset(ptr, 0, last_realloc_old_size);
+		free(ptr);
+	}
+	last_realloc_old_size = size;
+	return newptr;
+}
 
 // ============================================================
 // Test tracking state
@@ -125,10 +145,56 @@ static int plugin2_pre_Spawn(edict_t *)
 }
 
 // ============================================================
+// Callbacks that trigger rebuild_hook_lists (issue #108)
+// ============================================================
+
+static DLL_FUNCTIONS plugin3_pre_funcs;
+static DLL_FUNCTIONS plugin3_post_funcs;
+
+static void plugin1_pre_GameInit_load_plugin3(void)
+{
+	g_plugin1_pre_called++;
+
+	// Simulate AMXX loading a new module from within a hook callback:
+	// activate plugin3 and call rebuild_hook_lists().
+	MPlugin *plug3 = &Plugins->plist[2];
+	memset(plug3, 0, sizeof(*plug3));
+	plug3->status = PL_RUNNING;
+	plug3->index = 3;
+	snprintf(plug3->filename, sizeof(plug3->filename), "plugin3");
+	plug3->file = plug3->filename;
+	plug3->tables.dllapi = &plugin3_pre_funcs;
+	plug3->post_tables.dllapi = &plugin3_post_funcs;
+	Plugins->endlist = 3;
+	Plugins->rebuild_hook_lists();
+
+	RETURN_META(MRES_IGNORED);
+}
+
+static void plugin1_post_GameInit_load_plugin3(void)
+{
+	g_plugin1_post_called++;
+
+	// Same as above but triggered from post hook path.
+	MPlugin *plug3 = &Plugins->plist[2];
+	memset(plug3, 0, sizeof(*plug3));
+	plug3->status = PL_RUNNING;
+	plug3->index = 3;
+	snprintf(plug3->filename, sizeof(plug3->filename), "plugin3");
+	plug3->file = plug3->filename;
+	plug3->tables.dllapi = &plugin3_pre_funcs;
+	plug3->post_tables.dllapi = &plugin3_post_funcs;
+	Plugins->endlist = 3;
+	Plugins->rebuild_hook_lists();
+
+	RETURN_META(MRES_IGNORED);
+}
+
+// ============================================================
 // Infrastructure: set up a MPluginList with mock plugins
 // ============================================================
 
-static MPluginList test_plugins("plugins.ini");
+MPluginList test_plugins("plugins.ini");
 static MRegCmdList test_reg_cmds;
 static MRegCvarList test_reg_cvars;
 static MRegMsgList test_reg_msgs;
@@ -1150,6 +1216,70 @@ static int test_return_null_pre_table(void)
 }
 
 // ============================================================
+// Issue #108: rebuild_hook_lists during iteration segfaults
+// ============================================================
+
+static int test_rebuild_during_pre_hook_segfaults(void)
+{
+	TEST("issue #108 - rebuild during pre hook iteration segfaults");
+	setup_two_plugins();
+
+	// plugin1 pre hook triggers rebuild (loads plugin3), invalidating
+	// the cached plugs pointer. plugin2's pre hook then dereferences
+	// the stale pointer → SIGSEGV.
+	plugin1_pre_funcs.pfnGameInit = plugin1_pre_GameInit_load_plugin3;
+	plugin2_pre_funcs.pfnGameInit = plugin2_pre_GameInit;
+	g_plugin2_pre_mres = MRES_IGNORED;
+	memset(&plugin3_pre_funcs, 0, sizeof(plugin3_pre_funcs));
+	memset(&plugin3_post_funcs, 0, sizeof(plugin3_post_funcs));
+
+	pid_t pid = fork();
+	if (pid == 0) {
+		call_hooked_GameInit();
+		_exit(0);
+	}
+
+	int status = 0;
+	waitpid(pid, &status, 0);
+	ASSERT_TRUE(WIFSIGNALED(status));
+	ASSERT_TRUE(WTERMSIG(status) == SIGSEGV);
+
+	teardown();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_during_post_hook_segfaults(void)
+{
+	TEST("issue #108 - rebuild during post hook iteration segfaults");
+	setup_two_plugins();
+
+	// plugin1 post hook triggers rebuild (loads plugin3), invalidating
+	// the cached plugs pointer. plugin2's post hook then dereferences
+	// the stale pointer → SIGSEGV.
+	plugin1_post_funcs.pfnGameInit = plugin1_post_GameInit_load_plugin3;
+	plugin2_post_funcs.pfnGameInit = plugin2_post_GameInit;
+	g_plugin2_post_mres = MRES_IGNORED;
+	memset(&plugin3_pre_funcs, 0, sizeof(plugin3_pre_funcs));
+	memset(&plugin3_post_funcs, 0, sizeof(plugin3_post_funcs));
+
+	pid_t pid = fork();
+	if (pid == 0) {
+		call_hooked_GameInit();
+		_exit(0);
+	}
+
+	int status = 0;
+	waitpid(pid, &status, 0);
+	ASSERT_TRUE(WIFSIGNALED(status));
+	ASSERT_TRUE(WTERMSIG(status) == SIGSEGV);
+
+	teardown();
+	PASS();
+	return 0;
+}
+
+// ============================================================
 // main
 // ============================================================
 
@@ -1223,6 +1353,10 @@ int main(void)
 	// NULL table tests
 	fail |= test_void_null_post_table();
 	fail |= test_return_null_pre_table();
+
+	// Issue #108: rebuild during hook iteration
+	fail |= test_rebuild_during_pre_hook_segfaults();
+	fail |= test_rebuild_during_post_hook_segfaults();
 
 	printf("\n%d/%d tests passed\n", tests_passed, tests_run);
 	return fail ? EXIT_FAILURE : EXIT_SUCCESS;

@@ -6,6 +6,9 @@
 #include <string.h>
 #include <utime.h>
 #include <time.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include <extdll.h>
 
@@ -19,13 +22,25 @@
 #include "test_common.h"
 
 static bool force_realloc_fail = false;
+static size_t last_realloc_old_size = 0;
 
 extern "C" void *__real_realloc(void *ptr, size_t size);
 extern "C" void *__wrap_realloc(void *ptr, size_t size)
 {
 	if (force_realloc_fail)
 		return NULL;
-	return __real_realloc(ptr, size);
+	// Always move the allocation so tests can detect stale pointers.
+	void *newptr = malloc(size);
+	if (!newptr)
+		return NULL;
+	if (ptr) {
+		memcpy(newptr, ptr, size);
+		// Zero old memory to make use-after-free deterministic (NULL derefs).
+		memset(ptr, 0, last_realloc_old_size);
+		free(ptr);
+	}
+	last_realloc_old_size = size;
+	return newptr;
 }
 
 static MRegCmdList test_reg_cmds;
@@ -4583,6 +4598,386 @@ static int test_rebuild_endlist_bounds(void)
 }
 
 // ============================================================
+// hook_list stability during iteration (issue #108)
+// ============================================================
+
+// Simulates the iteration pattern in main_hook_function:
+// cache plugs pointer and count, then iterate. Tests verify that
+// rebuild_hook_lists called mid-iteration causes problems with the
+// cached values.
+
+static DLL_FUNCTIONS fake_dllapi3;
+
+static int test_rebuild_during_iteration_load(void)
+{
+	TEST("rebuild during iteration - load invalidates cached plugs");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	// Start with 2 running plugins
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->index = 1;
+	plug0->status = PL_RUNNING;
+	plug0->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->index = 2;
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 2;
+	list->rebuild_hook_lists();
+
+	// Simulate main_hook_function: cache plugs and count
+	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi);
+	int count = hlist->count;
+	MPlugin * const *plugs = hlist->plugs;
+
+	ASSERT_INT(count, 2);
+	ASSERT_PTR_EQ(plugs[0], plug0);
+	ASSERT_PTR_EQ(plugs[1], plug1);
+
+	// Simulate: during iteration at i=0, a new plugin is loaded
+	// (AMXX loads module via LOAD_PLUGIN from within hook callback)
+	MPlugin *plug2 = &list->plist[2];
+	memset(plug2, 0, sizeof(*plug2));
+	plug2->index = 3;
+	plug2->status = PL_RUNNING;
+	plug2->tables.dllapi = &fake_dllapi3;
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	// After rebuild: the hook list has 3 entries now
+	ASSERT_INT(hlist->count, 3);
+
+	// BUG: cached 'count' is stale (still 2), new plugin won't be called
+	ASSERT_TRUE(count != hlist->count);
+
+	// BUG: cached 'plugs' pointer is dangling (realloc moved data)
+	ASSERT_TRUE(plugs != hlist->plugs);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_during_iteration_unload_later(void)
+{
+	TEST("rebuild during iteration - unload later plugin shifts nothing");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	// 3 running plugins
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->index = 1;
+	plug0->status = PL_RUNNING;
+	plug0->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->index = 2;
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plug2 = &list->plist[2];
+	memset(plug2, 0, sizeof(*plug2));
+	plug2->index = 3;
+	plug2->status = PL_RUNNING;
+	plug2->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	// Cache like main_hook_function does
+	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi);
+	int count = hlist->count;
+	MPlugin * const *plugs = hlist->plugs;
+
+	ASSERT_INT(count, 3);
+
+	// Simulate: at i=0, plug2 (last one) is unloaded
+	plug2->status = PL_EMPTY;
+	plug2->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	// After rebuild: only 2 plugins, plug0 and plug1 stay in positions 0,1
+	ASSERT_INT(hlist->count, 2);
+
+	// BUG: cached count is 3, loop would try to access plugs[2]
+	// which is now beyond valid data (use-after-free or garbage)
+	ASSERT_TRUE(count > hlist->count);
+
+	// BUG: cached plugs pointer is dangling
+	ASSERT_TRUE(plugs != hlist->plugs);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_during_iteration_unload_earlier(void)
+{
+	TEST("rebuild during iteration - unload earlier plugin shifts indices");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	// 3 running plugins
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->index = 1;
+	plug0->status = PL_RUNNING;
+	plug0->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->index = 2;
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plug2 = &list->plist[2];
+	memset(plug2, 0, sizeof(*plug2));
+	plug2->index = 3;
+	plug2->status = PL_RUNNING;
+	plug2->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	// Cache like main_hook_function does
+	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi);
+	int count = hlist->count;
+	(void)count;
+
+	// Verify initial order
+	ASSERT_PTR_EQ(hlist->plugs[0], plug0);
+	ASSERT_PTR_EQ(hlist->plugs[1], plug1);
+	ASSERT_PTR_EQ(hlist->plugs[2], plug2);
+
+	// Simulate: while iterating at i=1 (calling plug1),
+	// plug0 (earlier plugin) gets unloaded
+	plug0->status = PL_EMPTY;
+	plug0->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	// After rebuild: [plug1, plug2], count=2
+	ASSERT_INT(hlist->count, 2);
+	ASSERT_PTR_EQ(hlist->plugs[0], plug1);
+	ASSERT_PTR_EQ(hlist->plugs[1], plug2);
+
+	// BUG: if loop was at i=1 and continues to i=2 with old count=3,
+	// it accesses plugs[2] which is beyond the new list.
+	// Even with fixed arrays, if loop increments i to 2 and count is
+	// re-read as 2, loop ends — but plug2 (now at index 1) was SKIPPED.
+	// The iteration at i=1 already processed plug1 (now at index 0),
+	// so effectively plug2 never gets called.
+	//
+	// Correct behavior after fix: detect rebuild happened, find plug1
+	// in new list at index 0, set i=0, re-read count=2, continue from
+	// i=1 which is plug2.
+	ASSERT_TRUE(hlist->plugs[1] == plug2);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_during_iteration_load_post(void)
+{
+	TEST("rebuild during post iteration - load invalidates cached plugs");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	// 2 running plugins with post tables
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->index = 1;
+	plug0->status = PL_RUNNING;
+	plug0->post_tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->index = 2;
+	plug1->status = PL_RUNNING;
+	plug1->post_tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 2;
+	list->rebuild_hook_lists();
+
+	// Cache post hook list like main_hook_function does
+	const api_plugin_list_t *hlist = list->get_hook_post_list(e_api_dllapi);
+	int count = hlist->count;
+	MPlugin * const *plugs = hlist->plugs;
+
+	ASSERT_INT(count, 2);
+	ASSERT_PTR_EQ(plugs[0], plug0);
+	ASSERT_PTR_EQ(plugs[1], plug1);
+
+	// New plugin loaded during post hook callback
+	MPlugin *plug2 = &list->plist[2];
+	memset(plug2, 0, sizeof(*plug2));
+	plug2->index = 3;
+	plug2->status = PL_RUNNING;
+	plug2->post_tables.dllapi = &fake_dllapi3;
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	ASSERT_INT(hlist->count, 3);
+
+	// BUG: cached count and plugs are stale
+	ASSERT_TRUE(count != hlist->count);
+	ASSERT_TRUE(plugs != hlist->plugs);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_during_iteration_unload_earlier_post(void)
+{
+	TEST("rebuild during post iteration - unload earlier shifts indices");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	// 3 running plugins with post tables
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->index = 1;
+	plug0->status = PL_RUNNING;
+	plug0->post_tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->index = 2;
+	plug1->status = PL_RUNNING;
+	plug1->post_tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plug2 = &list->plist[2];
+	memset(plug2, 0, sizeof(*plug2));
+	plug2->index = 3;
+	plug2->status = PL_RUNNING;
+	plug2->post_tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	// Cache post hook list
+	const api_plugin_list_t *hlist = list->get_hook_post_list(e_api_dllapi);
+	int count = hlist->count;
+	(void)count;
+
+	ASSERT_PTR_EQ(hlist->plugs[0], plug0);
+	ASSERT_PTR_EQ(hlist->plugs[1], plug1);
+	ASSERT_PTR_EQ(hlist->plugs[2], plug2);
+
+	// Simulate: during post iteration at i=1, plug0 unloaded
+	plug0->status = PL_EMPTY;
+	plug0->post_tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	// After rebuild: [plug1, plug2], count=2
+	ASSERT_INT(hlist->count, 2);
+	ASSERT_PTR_EQ(hlist->plugs[0], plug1);
+	ASSERT_PTR_EQ(hlist->plugs[1], plug2);
+
+	// Same bug: plug2 at new index 1 would be skipped if loop
+	// continues from old i=1 -> i=2 which is beyond new count.
+	ASSERT_TRUE(hlist->plugs[1] == plug2);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_during_iteration_segfault(void)
+{
+	TEST("rebuild during iteration - use-after-free segfaults");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	// 2 running plugins
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->index = 1;
+	plug0->status = PL_RUNNING;
+	plug0->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->index = 2;
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 2;
+	list->rebuild_hook_lists();
+
+	// Simulate main_hook_function: cache plugs and count
+	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi);
+	int count = hlist->count;
+	MPlugin * const *plugs = hlist->plugs;
+
+	ASSERT_INT(count, 2);
+	ASSERT_PTR_EQ(plugs[0], plug0);
+
+	// A new plugin is loaded from within a hook callback → rebuild
+	MPlugin *plug2 = &list->plist[2];
+	memset(plug2, 0, sizeof(*plug2));
+	plug2->index = 3;
+	plug2->status = PL_RUNNING;
+	plug2->tables.dllapi = &fake_dllapi3;
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	// Old 'plugs' is now freed+zeroed memory.
+	// Fork a child that dereferences it like main_hook_function would:
+	//   plug = plugs[0];          // reads NULL from zeroed memory
+	//   table = plug->tables...;  // SIGSEGV
+	pid_t pid = fork();
+	if (pid == 0) {
+		// Child: simulate the crash path
+		volatile MPlugin *plug = plugs[0];
+		volatile void *table = plug->tables.dllapi;
+		(void)table;
+		_exit(0);
+	}
+
+	int status = 0;
+	waitpid(pid, &status, 0);
+	ASSERT_TRUE(WIFSIGNALED(status));
+	ASSERT_TRUE(WTERMSIG(status) == SIGSEGV);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// ============================================================
 // main
 // ============================================================
 
@@ -4803,6 +5198,14 @@ int main(void)
 	fail |= test_rebuild_plugs_contiguous();
 	fail |= test_rebuild_repeated_calls();
 	fail |= test_rebuild_endlist_bounds();
+
+	// hook_list stability during iteration (issue #108)
+	fail |= test_rebuild_during_iteration_load();
+	fail |= test_rebuild_during_iteration_unload_later();
+	fail |= test_rebuild_during_iteration_unload_earlier();
+	fail |= test_rebuild_during_iteration_load_post();
+	fail |= test_rebuild_during_iteration_unload_earlier_post();
+	fail |= test_rebuild_during_iteration_segfault();
 
 	system("rm -rf /tmp/test_mlist_gd");
 
