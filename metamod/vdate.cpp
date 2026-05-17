@@ -48,7 +48,7 @@
 char const *COMPILE_TIME=__DATE__ ", " __TIME__;
 
 #ifndef COMPILE_TZ
-	#define COMPILE_TZ "EET"
+	#define COMPILE_TZ "UTC"
 #endif
 
 char const *COMPILE_TZONE = COMPILE_TZ;
