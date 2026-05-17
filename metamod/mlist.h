@@ -56,6 +56,10 @@ struct api_plugin_list_t {
 	MPlugin **plugs;
 };
 
+// Set by rebuild_hook_lists() to signal main_hook_function that cached
+// pointers are stale and need to be refreshed.
+extern mBOOL DLLHIDDEN hook_list_tables_updated;
+
 // A list of plugins.
 class MPluginList : public class_metamod_new {
 	public:
@@ -72,6 +76,21 @@ class MPluginList : public class_metamod_new {
 		}
 		inline DLLINTERNAL const api_plugin_list_t * get_hook_post_list(enum_api_t api) {
 			return(&hook_lists[api][1]);
+		}
+		inline DLLINTERNAL int find_plugin_after_rebuild(
+			enum_api_t api, mBOOL post, MPlugin *current_plugin,
+			int &out_count, MPlugin * const * &out_plugs)
+		{
+			const api_plugin_list_t *list = &hook_lists[api][post ? 1 : 0];
+			out_plugs = list->plugs;
+			out_count = list->count;
+			for(int j = 0; j < out_count; j++) {
+				if(out_plugs[j] == current_plugin)
+					return j;
+				if(out_plugs[j] > current_plugin)
+					return j - 1;
+			}
+			return out_count - 1;
 		}
 
 	// constructor/destructor:

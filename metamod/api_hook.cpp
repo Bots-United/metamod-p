@@ -36,6 +36,7 @@
 #include "types_meta.h"
 #include "api_info.h"
 #include "api_hook.h"
+#include "mlist.h"
 #include "mplugin.h"
 #include "metamod.h"
 #include "osdep.h"			//unlikely
@@ -94,6 +95,8 @@ inline const api_info_t * DLLINTERNAL get_api_info(enum_api_t api, unsigned int 
   #define MAYBE_META_DEBUG(do_debug, level, args) do { break; } while(0)
 #endif
 
+HOT_DATA static DLLHIDDEN int reentry_count;
+
 // simplified 'void' version of main hook function
 template <bool do_debug>
 static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
@@ -103,6 +106,7 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 	MPlugin * const *plugs;
 	META_RES status;
 	meta_globals_t saved_meta_globals;
+	mBOOL rebuild_happened = mFALSE;
 
 	//passing offset from api wrapper function makes code faster/smaller
 	api_info = *get_api_info(api, api_info_offset);
@@ -113,18 +117,22 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 
 	//Setup
 	status=MRES_UNSET;
+	if (likely(reentry_count++ == 0))
+		hook_list_tables_updated = mFALSE;
 
 	//Pre plugin functions
 	PublicMetaGlobals.prev_mres=MRES_UNSET;
+	rebuild_happened = hook_list_tables_updated;
 	list = Plugins->get_hook_list(api);
 	count = list->count;
 	plugs = list->plugs;
 	for(i=0; likely(i < count); i++) {
-		void *pfn_routine=get_api_function(plugs[i]->get_api_table(api), func_offset);
+		MPlugin *plug = plugs[i];
+		void *pfn_routine=get_api_function(plug->get_api_table(api), func_offset);
 		if(likely(!pfn_routine))
 			continue;
 
-		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s()", plugs[i]->file, api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s()", plug->file, api_info.name));
 
 		// initialize PublicMetaGlobals
 		PublicMetaGlobals.mres = MRES_UNSET;
@@ -133,6 +141,12 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 		// call plugin
 		api_info.api_caller(pfn_routine, packed_args);
 		API_UNPAUSE_TSC_TRACKING();
+
+		if(unlikely(hook_list_tables_updated)) {
+			hook_list_tables_updated = mFALSE;
+			rebuild_happened = mTRUE;
+			i = Plugins->find_plugin_after_rebuild(api, mFALSE, plug, count, plugs);
+		}
 
 		// plugin's result code
 		META_RES mres=PublicMetaGlobals.mres;
@@ -143,7 +157,7 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 		PublicMetaGlobals.prev_mres = mres;
 
 		if(unlikely(mres==MRES_UNSET))
-			META_WARNING("Plugin didn't set meta_result: %s:%s()", plugs[i]->file, api_info.name);
+			META_WARNING("Plugin didn't set meta_result: %s:%s()", plug->file, api_info.name);
 	}
 
 	//Api call
@@ -174,15 +188,18 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 
 	//Post plugin functions
 	PublicMetaGlobals.prev_mres=MRES_UNSET;
+	rebuild_happened = (mBOOL)(rebuild_happened | hook_list_tables_updated);
+	hook_list_tables_updated = mFALSE;
 	list = Plugins->get_hook_post_list(api);
 	count = list->count;
 	plugs = list->plugs;
 	for(i=0; likely(i < count); i++) {
-		void *pfn_routine=get_api_function(plugs[i]->get_api_post_table(api), func_offset);
+		MPlugin *plug = plugs[i];
+		void *pfn_routine=get_api_function(plug->get_api_post_table(api), func_offset);
 		if(likely(!pfn_routine))
 			continue;
 
-		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s_Post()", plugs[i]->file, api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s_Post()", plug->file, api_info.name));
 
 		// initialize PublicMetaGlobals
 		PublicMetaGlobals.mres = MRES_UNSET;
@@ -191,6 +208,12 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 		// call plugin
 		api_info.api_caller(pfn_routine, packed_args);
 		API_UNPAUSE_TSC_TRACKING();
+
+		if(unlikely(hook_list_tables_updated)) {
+			hook_list_tables_updated = mFALSE;
+			rebuild_happened = mTRUE;
+			i = Plugins->find_plugin_after_rebuild(api, mTRUE, plug, count, plugs);
+		}
 
 		// plugin's result code
 		META_RES mres=PublicMetaGlobals.mres;
@@ -201,12 +224,16 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 		PublicMetaGlobals.prev_mres = mres;
 
 		if(unlikely(mres==MRES_UNSET))
-			META_WARNING("Plugin didn't set meta_result: %s:%s_Post()", plugs[i]->file, api_info.name);
+			META_WARNING("Plugin didn't set meta_result: %s:%s_Post()", plug->file, api_info.name);
 		else if(unlikely(mres==MRES_SUPERCEDE))
-			META_WARNING("MRES_SUPERCEDE not valid in Post functions: %s:%s_Post()", plugs[i]->file, api_info.name);
+			META_WARNING("MRES_SUPERCEDE not valid in Post functions: %s:%s_Post()", plug->file, api_info.name);
 	}
 
 	copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
+	if(unlikely(rebuild_happened))
+		hook_list_tables_updated = mTRUE;
+	if (likely(--reentry_count == 0))
+		hook_list_tables_updated = mFALSE;
 }
 
 HOT_FUNC void DLLINTERNAL NOINLINE main_hook_function_void(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
@@ -228,6 +255,7 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 	MPlugin * const *plugs;
 	META_RES status;
 	meta_globals_t saved_meta_globals;
+	mBOOL rebuild_happened = mFALSE;
 	struct {
 	  class_ret_t orig_ret;
 	  class_ret_t override_ret;
@@ -246,18 +274,22 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 
 	//Setup
 	status=MRES_UNSET;
+	if (likely(reentry_count++ == 0))
+		hook_list_tables_updated = mFALSE;
 
 	//Pre plugin functions
 	PublicMetaGlobals.prev_mres = MRES_UNSET;
+	rebuild_happened = hook_list_tables_updated;
 	list = Plugins->get_hook_list(api);
 	count = list->count;
 	plugs = list->plugs;
 	for(i=0; likely(i < count); i++) {
-		void *pfn_routine=get_api_function(plugs[i]->get_api_table(api), func_offset);
+		MPlugin *plug = plugs[i];
+		void *pfn_routine=get_api_function(plug->get_api_table(api), func_offset);
 		if(likely(!pfn_routine))
 			continue;
 
-		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s()", plugs[i]->file, api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s()", plug->file, api_info.name));
 
 		// initialize PublicMetaGlobals
 		PublicMetaGlobals.mres = MRES_UNSET;
@@ -273,6 +305,12 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 
 		rv = backup_rv;
 
+		if(unlikely(hook_list_tables_updated)) {
+			hook_list_tables_updated = mFALSE;
+			rebuild_happened = mTRUE;
+			i = Plugins->find_plugin_after_rebuild(api, mFALSE, plug, count, plugs);
+		}
+
 		// plugin's result code
 		META_RES mres=PublicMetaGlobals.mres;
 		if(unlikely(mres > status))
@@ -285,7 +323,7 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 			rv.override_ret = dllret;
 		}
 		else if(unlikely(mres==MRES_UNSET)) {
-			META_WARNING("Plugin didn't set meta_result: %s:%s()", plugs[i]->file, api_info.name);
+			META_WARNING("Plugin didn't set meta_result: %s:%s()", plug->file, api_info.name);
 		}
 	}
 
@@ -320,15 +358,18 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 
 	//Post plugin functions
 	PublicMetaGlobals.prev_mres = MRES_UNSET;
+	rebuild_happened = (mBOOL)(rebuild_happened | hook_list_tables_updated);
+	hook_list_tables_updated = mFALSE;
 	list = Plugins->get_hook_post_list(api);
 	count = list->count;
 	plugs = list->plugs;
 	for(i=0; likely(i < count); i++) {
-		void *pfn_routine=get_api_function(plugs[i]->get_api_post_table(api), func_offset);
+		MPlugin *plug = plugs[i];
+		void *pfn_routine=get_api_function(plug->get_api_post_table(api), func_offset);
 		if(likely(!pfn_routine))
 			continue;
 
-		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s_Post()", plugs[i]->file, api_info.name));
+		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s_Post()", plug->file, api_info.name));
 
 		// initialize PublicMetaGlobals
 		PublicMetaGlobals.mres = MRES_UNSET;
@@ -344,6 +385,12 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 
 		rv = backup_rv;
 
+		if(unlikely(hook_list_tables_updated)) {
+			hook_list_tables_updated = mFALSE;
+			rebuild_happened = mTRUE;
+			i = Plugins->find_plugin_after_rebuild(api, mTRUE, plug, count, plugs);
+		}
+
 		// plugin's result code
 		META_RES mres=PublicMetaGlobals.mres;
 		if(unlikely(mres > status))
@@ -356,14 +403,18 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 			rv.override_ret = dllret;
 		}
 		else if(unlikely(mres==MRES_UNSET)) {
-			META_WARNING("Plugin didn't set meta_result: %s:%s_Post()", plugs[i]->file, api_info.name);
+			META_WARNING("Plugin didn't set meta_result: %s:%s_Post()", plug->file, api_info.name);
 		}
 		else if(unlikely(mres==MRES_SUPERCEDE)) {
-			META_WARNING("MRES_SUPERCEDE not valid in Post functions: %s:%s_Post()", plugs[i]->file, api_info.name);
+			META_WARNING("MRES_SUPERCEDE not valid in Post functions: %s:%s_Post()", plug->file, api_info.name);
 		}
 	}
 
 	copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
+	if(unlikely(rebuild_happened))
+		hook_list_tables_updated = mTRUE;
+	if (likely(--reentry_count == 0))
+		hook_list_tables_updated = mFALSE;
 
 	//return value is passed through ret_init!
 	if(likely(status!=MRES_OVERRIDE)) {
