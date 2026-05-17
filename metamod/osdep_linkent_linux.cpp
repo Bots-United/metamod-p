@@ -53,8 +53,10 @@
 //  -- by Jussi Kivilinna
 //
 
-//opcode, e9, + sizeof pointer
-#define BYTES_SIZE (1 + sizeof(void*))
+// endbr32 (4 bytes) + jmp rel32 (5 bytes)
+#define ENDBR32_SIZE 4
+#define JMP_INSN_SIZE 5
+#define BYTES_SIZE (ENDBR32_SIZE + JMP_INSN_SIZE)
 
 typedef void * (*dlsym_func)(void * module, const char * funcname);
 
@@ -76,12 +78,16 @@ static pthread_mutex_t mutex_replacement_dlsym = PTHREAD_RECURSIVE_MUTEX_INITIAL
 // Tracks whether original dlsym bytes are currently restored (for re-entrant calls)
 static int is_original_restored = 0;
 
-//constructs new jmp forwarder
+//constructs endbr32 + jmp forwarder
 inline void construct_jmp_instruction(void *x, void *place, void* target)
 {
-	unsigned long rel = (unsigned long)target - ((unsigned long)place + 5);
-	((unsigned char *)x)[0] = 0xe9;
-	memcpy((char *)x + 1, &rel, sizeof(rel));
+	unsigned char *p = (unsigned char *)x;
+	// endbr32: f3 0f 1e fb
+	p[0] = 0xf3; p[1] = 0x0f; p[2] = 0x1e; p[3] = 0xfb;
+	// jmp rel32 (offset relative to end of jmp instruction)
+	p[4] = 0xe9;
+	unsigned long rel = (unsigned long)target - ((unsigned long)place + BYTES_SIZE);
+	memcpy(p + 5, &rel, sizeof(rel));
 }
 
 //checks if pointer x points to jump forwarder

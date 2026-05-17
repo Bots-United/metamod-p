@@ -35,21 +35,27 @@ static void restore_linkent(void)
 
 static int test_construct_jmp_basic(void)
 {
-	TEST("construct_jmp_instruction - produces E9 opcode with correct offset");
-	unsigned char buf[8];
+	TEST("construct_jmp_instruction - endbr32 + jmp with correct offset");
+	unsigned char buf[BYTES_SIZE];
 	memset(buf, 0, sizeof(buf));
 
-	char fake_place[8];
+	char fake_place[16];
 	unsigned long place_addr = (unsigned long)fake_place;
 	unsigned long target_addr = place_addr + 0x1000;
 
 	construct_jmp_instruction(buf, (void *)place_addr, (void *)target_addr);
 
-	ASSERT_TRUE(buf[0] == 0xe9);
+	// endbr32: f3 0f 1e fb
+	ASSERT_TRUE(buf[0] == 0xf3);
+	ASSERT_TRUE(buf[1] == 0x0f);
+	ASSERT_TRUE(buf[2] == 0x1e);
+	ASSERT_TRUE(buf[3] == 0xfb);
+	// jmp opcode
+	ASSERT_TRUE(buf[4] == 0xe9);
 
 	unsigned long encoded_offset;
-	memcpy(&encoded_offset, buf + 1, sizeof(encoded_offset));
-	unsigned long expected_offset = target_addr - (place_addr + 5);
+	memcpy(&encoded_offset, buf + 5, sizeof(encoded_offset));
+	unsigned long expected_offset = target_addr - (place_addr + BYTES_SIZE);
 	ASSERT_TRUE(encoded_offset == expected_offset);
 
 	PASS();
@@ -59,20 +65,22 @@ static int test_construct_jmp_basic(void)
 static int test_construct_jmp_backward(void)
 {
 	TEST("construct_jmp_instruction - backward jump has negative offset");
-	unsigned char buf[8];
+	unsigned char buf[BYTES_SIZE];
 	memset(buf, 0, sizeof(buf));
 
-	char fake_place[8];
+	char fake_place[16];
 	unsigned long place_addr = (unsigned long)fake_place;
 	unsigned long target_addr = place_addr - 0x100;
 
 	construct_jmp_instruction(buf, (void *)place_addr, (void *)target_addr);
 
-	ASSERT_TRUE(buf[0] == 0xe9);
+	ASSERT_TRUE(buf[0] == 0xf3);
+	ASSERT_TRUE(buf[3] == 0xfb);
+	ASSERT_TRUE(buf[4] == 0xe9);
 
 	unsigned long encoded_offset;
-	memcpy(&encoded_offset, buf + 1, sizeof(encoded_offset));
-	unsigned long expected_offset = target_addr - (place_addr + 5);
+	memcpy(&encoded_offset, buf + 5, sizeof(encoded_offset));
+	unsigned long expected_offset = target_addr - (place_addr + BYTES_SIZE);
 	ASSERT_TRUE(encoded_offset == expected_offset);
 
 	PASS();
@@ -81,18 +89,19 @@ static int test_construct_jmp_backward(void)
 
 static int test_construct_jmp_self(void)
 {
-	TEST("construct_jmp_instruction - jump to self (offset = -5)");
-	unsigned char buf[8];
+	TEST("construct_jmp_instruction - jump to self (offset = -BYTES_SIZE)");
+	unsigned char buf[BYTES_SIZE];
 	memset(buf, 0, sizeof(buf));
 
-	char fake_place[8];
+	char fake_place[16];
 	construct_jmp_instruction(buf, fake_place, fake_place);
 
-	ASSERT_TRUE(buf[0] == 0xe9);
+	ASSERT_TRUE(buf[0] == 0xf3);
+	ASSERT_TRUE(buf[4] == 0xe9);
 
 	unsigned long encoded_offset;
-	memcpy(&encoded_offset, buf + 1, sizeof(encoded_offset));
-	ASSERT_TRUE(encoded_offset == (unsigned long)-5);
+	memcpy(&encoded_offset, buf + 5, sizeof(encoded_offset));
+	ASSERT_TRUE(encoded_offset == (unsigned long)-(long)BYTES_SIZE);
 
 	PASS();
 	return 0;
