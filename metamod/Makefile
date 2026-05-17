@@ -276,7 +276,7 @@ TARGET_LINUX = $(OBJDIR_LINUX)/$(LIBFILE_LINUX)
 # windows .dll compile commands
 DO_CC_WIN=$(CC_WIN) $(CFLAGS) $(INCLUDEDIRS) -o $@ -c $<
 DO_RES_WIN=$(RES_WIN) '$(ODEF)' $(META_DEFS_RES) --include-dir . --include-dir ../metamod -i $< -O coff -o $@
-LINK_WIN=$(CC_WIN) $(CFLAGS) -mdll -Xlinker --add-stdcall-alias $(EXTRA_LINK) $(OBJ_WIN) $(RES_OBJ_WIN) -s -o $@
+LINK_WIN=$(CC_WIN) $(CFLAGS) -mdll -Xlinker --add-stdcall-alias -static-libgcc $(EXTRA_LINK) $(OBJ_WIN) $(RES_OBJ_WIN) -s -o $@
 
 # windows object files
 OBJ_WIN := $(SRCFILES:%.cpp=$(OBJDIR_WIN)/%.o)

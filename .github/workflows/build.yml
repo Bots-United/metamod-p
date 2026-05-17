@@ -114,6 +114,21 @@ jobs:
         run: make -j4 -C stub_plugin CC_WIN="i686-w64-mingw32-g++" OS=windows OPT=opt win32
       - name: Build wdmisc_plugin (optimized)
         run: make -j4 -C wdmisc_plugin CC_WIN="i686-w64-mingw32-g++" OS=windows OPT=opt win32
+      - name: Verify Win32 DLL exports and imports
+        run: |
+          pip install pefile
+          python3 -u .github/scripts/check_dll.py \
+            metamod/opt.win32/metamod.dll \
+              GiveFnptrsToDll GetEntityAPI GetEntityAPI2 GetNewDLLFunctions \
+            -- \
+            trace_plugin/opt.win32/trace_mm.dll \
+              GiveFnptrsToDll Meta_Query Meta_Attach Meta_Detach \
+            -- \
+            stub_plugin/opt.win32/stub_mm.dll \
+              GiveFnptrsToDll Meta_Query Meta_Attach Meta_Detach \
+            -- \
+            wdmisc_plugin/opt.win32/wdmisc_mm.dll \
+              GiveFnptrsToDll Meta_Query Meta_Attach Meta_Detach
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
