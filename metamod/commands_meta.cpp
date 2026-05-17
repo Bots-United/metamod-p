@@ -193,19 +193,34 @@ void DLLINTERNAL client_meta_aybabtu(edict_t *pEntity) {
 	META_CLIENT(pEntity, "%s", "All Your Base Are Belong To Us");
 }
 
+static edict_t *client_print_entity;
+
+static void DLLINTERNAL_NOVIS client_print_wrapper(const char *fmt, ...) {
+	va_list ap;
+	char buf[1024];
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	META_CLIENT(client_print_entity, "%s", buf);
+}
+
+void DLLINTERNAL print_version(meta_print_func_t print) {
+	print("%s v%s  %s (%s)", VNAME, VVERSION, VDATE, META_INTERFACE_VERSION);
+	print("by %s", VAUTHOR);
+	print("   %s", VURL);
+	print(" Patch: %s v%s", VPATCH_NAME, VPATCH_VERSION);
+	print(" by %s", VPATCH_AUTHOR);
+	print("    %s", VPATCH_WEBSITE);
+	print("compiled: %s %s (%s)", COMPILE_TIME, COMPILE_TZONE, OPT_TYPE);
+}
+
 // "meta version" console command.
 void DLLINTERNAL cmd_meta_version(void) {
 	if(CMD_ARGC() != 2) {
 		META_CONS("usage: meta version");
 		return;
 	}
-	META_CONS("%s v%s  %s (%s)", VNAME, VVERSION, VDATE, META_INTERFACE_VERSION);
-	META_CONS("by %s", VAUTHOR);
-	META_CONS("   %s", VURL);
-	META_CONS(" Patch: %s v%d", VPATCH_NAME, VPATCH_IVERSION);
-	META_CONS(" by %s", VPATCH_AUTHOR);
-	META_CONS("    %s", VPATCH_WEBSITE);
-	META_CONS("compiled: %s %s (%s)", COMPILE_TIME, COMPILE_TZONE, OPT_TYPE);
+	print_version(META_CONS);
 }
 
 // "meta version" client command.
@@ -214,13 +229,8 @@ void DLLINTERNAL client_meta_version(edict_t *pEntity) {
 		META_CLIENT(pEntity, "usage: meta version");
 		return;
 	}
-	META_CLIENT(pEntity, "%s v%s  %s (%s)", VNAME, VVERSION, VDATE, META_INTERFACE_VERSION);
-	META_CLIENT(pEntity, "by %s", VAUTHOR);
-	META_CLIENT(pEntity, "   %s", VURL);
-	META_CLIENT(pEntity, " Patch: %s v%d", VPATCH_NAME, VPATCH_IVERSION);
-	META_CLIENT(pEntity, " by %s", VPATCH_AUTHOR);
-	META_CLIENT(pEntity, "    %s", VPATCH_WEBSITE);
-	META_CLIENT(pEntity, "compiled: %s %s (%s)", COMPILE_TIME, COMPILE_TZONE, OPT_TYPE);
+	client_print_entity = pEntity;
+	print_version(client_print_wrapper);
 	META_CLIENT(pEntity, "ifvers: %s", META_INTERFACE_VERSION);
 }
 

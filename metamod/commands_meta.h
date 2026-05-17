@@ -59,6 +59,9 @@ void DLLINTERNAL meta_register_cmdcvar();
 
 void DLLHIDDEN svr_meta(void); // only hidden because called from outside!
 
+typedef void (DLLINTERNAL_NOVIS *meta_print_func_t)(const char *fmt, ...);
+void DLLINTERNAL print_version(meta_print_func_t print);
+
 void DLLINTERNAL cmd_meta_usage(void);
 void DLLINTERNAL cmd_meta_version(void);
 void DLLINTERNAL cmd_meta_gpl(void);
