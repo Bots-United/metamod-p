@@ -6,6 +6,9 @@
 #include <string.h>
 #include <utime.h>
 #include <time.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include <extdll.h>
 
@@ -19,13 +22,25 @@
 #include "test_common.h"
 
 static bool force_realloc_fail = false;
+static size_t last_realloc_old_size = 0;
 
 extern "C" void *__real_realloc(void *ptr, size_t size);
 extern "C" void *__wrap_realloc(void *ptr, size_t size)
 {
 	if (force_realloc_fail)
 		return NULL;
-	return __real_realloc(ptr, size);
+	// Always move the allocation so tests can detect stale pointers.
+	void *newptr = malloc(size);
+	if (!newptr)
+		return NULL;
+	if (ptr) {
+		size_t copy_size = size < last_realloc_old_size ? size : last_realloc_old_size;
+		memcpy(newptr, ptr, copy_size);
+		memset(ptr, 0, last_realloc_old_size);
+		free(ptr);
+	}
+	last_realloc_old_size = size;
+	return newptr;
 }
 
 static MRegCmdList test_reg_cmds;
@@ -4583,6 +4598,1508 @@ static int test_rebuild_endlist_bounds(void)
 }
 
 // ============================================================
+// find_plugin_after_rebuild (issue #108)
+// ============================================================
+
+// Tests for the index fixup function used by main_hook_function after
+// rebuild_hook_lists is called mid-iteration. Verifies correct new index
+// for all combinations of plugin load/unload/pause during a hook callback.
+//
+// The for loop in main_hook_function does i++ after the returned index,
+// so "return X" means next iteration processes plugs[X+1].
+
+static DLL_FUNCTIONS fake_dllapi3;
+static DLL_FUNCTIONS fake_dllapi4;
+static DLL_FUNCTIONS fake_dllapi5;
+
+// Case 1: [A,B,C] idx=0(A), C removed → [A,B]. A stays at 0.
+static int test_find_after_rebuild_later_removed(void)
+{
+	TEST("find_plugin_after_rebuild - later plugin removed, no shift");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[2];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 3;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	// Simulate: at idx=0 calling A, C gets removed, rebuild
+	int count = list->get_hook_list(e_api_dllapi)->count;
+	MPlugin * const *plugs = list->get_hook_list(e_api_dllapi)->plugs;
+	ASSERT_INT(count, 3);
+
+	plugC->status = PL_EMPTY; plugC->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugA, count, plugs);
+	ASSERT_INT(new_i, 0);
+	ASSERT_INT(count, 2);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 2: [A,B,C] idx=1(B), C removed → [A,B]. B stays at 1.
+static int test_find_after_rebuild_later_removed2(void)
+{
+	TEST("find_plugin_after_rebuild - later plugin removed, mid-list");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[2];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 3;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	plugC->status = PL_EMPTY; plugC->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugB, count, plugs);
+	ASSERT_INT(new_i, 1);
+	ASSERT_INT(count, 2);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 3: [A,B] idx=0(A), D added after B → [A,B,D]. A stays at 0.
+static int test_find_after_rebuild_later_added(void)
+{
+	TEST("find_plugin_after_rebuild - later plugin added, no shift");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 2;
+	list->rebuild_hook_lists();
+
+	// Add D at plist[3] (after B)
+	MPlugin *plugD = &list->plist[3];
+	memset(plugD, 0, sizeof(*plugD)); plugD->index = 4;
+	plugD->status = PL_RUNNING; plugD->tables.dllapi = &fake_dllapi4;
+	list->endlist = 4;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugA, count, plugs);
+	ASSERT_INT(new_i, 0);
+	ASSERT_INT(count, 3);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 4: [A,B,C] idx=2(C), A removed → [B,C]. C shifts to 1.
+static int test_find_after_rebuild_earlier_removed(void)
+{
+	TEST("find_plugin_after_rebuild - earlier removed, shift left");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[2];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 3;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	plugA->status = PL_EMPTY; plugA->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugC, count, plugs);
+	ASSERT_INT(new_i, 1);
+	ASSERT_INT(count, 2);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 5: [A,B,C] idx=2(C), A paused → [B,C]. C shifts to 1.
+static int test_find_after_rebuild_earlier_paused(void)
+{
+	TEST("find_plugin_after_rebuild - earlier paused, shift left");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[2];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 3;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	plugA->status = PL_PAUSED;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugC, count, plugs);
+	ASSERT_INT(new_i, 1);
+	ASSERT_INT(count, 2);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 6: [A,B,C] idx=2(C), A and B removed → [C]. C shifts to 0.
+static int test_find_after_rebuild_two_earlier_removed(void)
+{
+	TEST("find_plugin_after_rebuild - two earlier removed, shift left by 2");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[2];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 3;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	plugA->status = PL_EMPTY; plugA->tables.dllapi = NULL;
+	plugB->status = PL_EMPTY; plugB->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugC, count, plugs);
+	ASSERT_INT(new_i, 0);
+	ASSERT_INT(count, 1);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 7: [A,B,C] idx=1(B), A removed → [B,C]. B shifts to 0.
+static int test_find_after_rebuild_earlier_removed_mid(void)
+{
+	TEST("find_plugin_after_rebuild - earlier removed, mid-list shifts left");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[2];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 3;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	plugA->status = PL_EMPTY; plugA->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugB, count, plugs);
+	ASSERT_INT(new_i, 0);
+	ASSERT_INT(count, 2);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 8: [A,B] idx=1(B), A removed → [B]. B shifts to 0.
+static int test_find_after_rebuild_earlier_removed_becomes_first(void)
+{
+	TEST("find_plugin_after_rebuild - earlier removed, becomes first");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 2;
+	list->rebuild_hook_lists();
+
+	plugA->status = PL_EMPTY; plugA->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugB, count, plugs);
+	ASSERT_INT(new_i, 0);
+	ASSERT_INT(count, 1);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 9: [A,B] idx=0(A), X added before A in plist → [X,A,B]. A shifts to 1.
+static int test_find_after_rebuild_earlier_added(void)
+{
+	TEST("find_plugin_after_rebuild - earlier added, shift right");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+
+	// plist[0] = empty slot for X (added later)
+	// plist[1] = A, plist[2] = B
+	MPlugin *plugA = &list->plist[1];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 2;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[2];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 3;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	// Add X at plist[0] (before A)
+	MPlugin *plugX = &list->plist[0];
+	memset(plugX, 0, sizeof(*plugX)); plugX->index = 1;
+	plugX->status = PL_RUNNING; plugX->tables.dllapi = &fake_dllapi4;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugA, count, plugs);
+	ASSERT_INT(new_i, 1);
+	ASSERT_INT(count, 3);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 10: [A,B] idx=1(B), X added before A in plist → [X,A,B]. B shifts to 2.
+static int test_find_after_rebuild_earlier_added_last(void)
+{
+	TEST("find_plugin_after_rebuild - earlier added, last shifts right");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+
+	MPlugin *plugA = &list->plist[1];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 2;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[2];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 3;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	MPlugin *plugX = &list->plist[0];
+	memset(plugX, 0, sizeof(*plugX)); plugX->index = 1;
+	plugX->status = PL_RUNNING; plugX->tables.dllapi = &fake_dllapi4;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugB, count, plugs);
+	ASSERT_INT(new_i, 2);
+	ASSERT_INT(count, 3);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 11: [A,B] idx=1(B), X added between A and B → [A,X,B]. B shifts to 2.
+static int test_find_after_rebuild_added_between(void)
+{
+	TEST("find_plugin_after_rebuild - plugin added between, shift right");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+
+	// plist[0] = A, plist[1] empty for X, plist[2] = B
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[2];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 3;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	// Add X at plist[1] (between A and B)
+	MPlugin *plugX = &list->plist[1];
+	memset(plugX, 0, sizeof(*plugX)); plugX->index = 2;
+	plugX->status = PL_RUNNING; plugX->tables.dllapi = &fake_dllapi4;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugB, count, plugs);
+	ASSERT_INT(new_i, 2);
+	ASSERT_INT(count, 3);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 12: [A,B] idx=0(A), two plugins added before A → [X,Y,A,B]. A shifts to 2.
+static int test_find_after_rebuild_two_earlier_added(void)
+{
+	TEST("find_plugin_after_rebuild - two earlier added, shift right by 2");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+	memset(&fake_dllapi5, 0, sizeof(fake_dllapi5));
+
+	// plist[0],[1] empty for X,Y; plist[2] = A, plist[3] = B
+	MPlugin *plugA = &list->plist[2];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 3;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[3];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 4;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 4;
+	list->rebuild_hook_lists();
+
+	MPlugin *plugX = &list->plist[0];
+	memset(plugX, 0, sizeof(*plugX)); plugX->index = 1;
+	plugX->status = PL_RUNNING; plugX->tables.dllapi = &fake_dllapi4;
+
+	MPlugin *plugY = &list->plist[1];
+	memset(plugY, 0, sizeof(*plugY)); plugY->index = 2;
+	plugY->status = PL_RUNNING; plugY->tables.dllapi = &fake_dllapi5;
+
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugA, count, plugs);
+	ASSERT_INT(new_i, 2);
+	ASSERT_INT(count, 4);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 13: [A,B] idx=1(B), paused plugin before B unpaused → [A,X,B]. B shifts to 2.
+static int test_find_after_rebuild_earlier_unpaused(void)
+{
+	TEST("find_plugin_after_rebuild - earlier unpaused, shift right");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+
+	// plist[0] = A, plist[1] = X (paused), plist[2] = B
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugX = &list->plist[1];
+	memset(plugX, 0, sizeof(*plugX)); plugX->index = 2;
+	plugX->status = PL_PAUSED; plugX->tables.dllapi = &fake_dllapi4;
+
+	MPlugin *plugB = &list->plist[2];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 3;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+	// Hook list is [A, B] (X paused)
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 2);
+
+	// Unpause X
+	plugX->status = PL_RUNNING;
+	list->rebuild_hook_lists();
+	// Hook list is [A, X, B]
+	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 3);
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugB, count, plugs);
+	ASSERT_INT(new_i, 2);
+	ASSERT_INT(count, 3);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 14: [A] idx=0(A), A removed → []. Self gone, list empty. Return -1.
+static int test_find_after_rebuild_self_removed_only(void)
+{
+	TEST("find_plugin_after_rebuild - self removed, was only plugin");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	list->endlist = 1;
+	list->rebuild_hook_lists();
+
+	plugA->status = PL_EMPTY; plugA->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugA, count, plugs);
+	// i=-1, loop does i++ → 0, 0<0 false, loop ends
+	ASSERT_INT(new_i, -1);
+	ASSERT_INT(count, 0);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 15: [A,B] idx=0(A), A removed → [B]. Return -1 so i++→0 processes B.
+static int test_find_after_rebuild_self_removed_first(void)
+{
+	TEST("find_plugin_after_rebuild - self removed, was first of two");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 2;
+	list->rebuild_hook_lists();
+
+	plugA->status = PL_EMPTY; plugA->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugA, count, plugs);
+	// i=-1, loop does i++ → 0, processes plugs[0]=B
+	ASSERT_INT(new_i, -1);
+	ASSERT_INT(count, 1);
+	ASSERT_PTR_EQ(plugs[0], plugB);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 16: [A,B,C] idx=1(B), B removed → [A,C]. Return 0 so i++→1 processes C.
+static int test_find_after_rebuild_self_removed_mid(void)
+{
+	TEST("find_plugin_after_rebuild - self removed from middle");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[2];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 3;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	plugB->status = PL_EMPTY; plugB->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugB, count, plugs);
+	// i=0, loop does i++ → 1, processes plugs[1]=C
+	ASSERT_INT(new_i, 0);
+	ASSERT_INT(count, 2);
+	ASSERT_PTR_EQ(plugs[1], plugC);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 17: [A,B,C] idx=1(B), B paused → [A,C]. Return 0 so i++→1 processes C.
+static int test_find_after_rebuild_self_paused_mid(void)
+{
+	TEST("find_plugin_after_rebuild - self paused from middle");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[2];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 3;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	plugB->status = PL_PAUSED;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugB, count, plugs);
+	ASSERT_INT(new_i, 0);
+	ASSERT_INT(count, 2);
+	ASSERT_PTR_EQ(plugs[1], plugC);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 18: [A,B,C] idx=1(B), A removed + D added after C → [B,C,D]. B at 0.
+static int test_find_after_rebuild_mixed_remove_add_later(void)
+{
+	TEST("find_plugin_after_rebuild - earlier removed + later added");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[2];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 3;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	plugA->status = PL_EMPTY; plugA->tables.dllapi = NULL;
+	MPlugin *plugD = &list->plist[3];
+	memset(plugD, 0, sizeof(*plugD)); plugD->index = 4;
+	plugD->status = PL_RUNNING; plugD->tables.dllapi = &fake_dllapi4;
+	list->endlist = 4;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugB, count, plugs);
+	ASSERT_INT(new_i, 0);
+	ASSERT_INT(count, 3);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 19: [A,B,C] idx=1(B), A removed + X added before A → [X,B,C]. Net zero for B.
+static int test_find_after_rebuild_mixed_remove_add_earlier(void)
+{
+	TEST("find_plugin_after_rebuild - removed + added before, net zero");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+
+	// plist[0] empty for X, plist[1] = A, plist[2] = B, plist[3] = C
+	MPlugin *plugA = &list->plist[1];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 2;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[2];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 3;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[3];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 4;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 4;
+	list->rebuild_hook_lists();
+	// Hook list: [A, B, C]
+
+	plugA->status = PL_EMPTY; plugA->tables.dllapi = NULL;
+	MPlugin *plugX = &list->plist[0];
+	memset(plugX, 0, sizeof(*plugX)); plugX->index = 1;
+	plugX->status = PL_RUNNING; plugX->tables.dllapi = &fake_dllapi4;
+	list->rebuild_hook_lists();
+	// Hook list: [X, B, C]
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugB, count, plugs);
+	ASSERT_INT(new_i, 1);
+	ASSERT_INT(count, 3);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 20: [A,B,C] idx=2(C), A removed + X added before A → [X,B,C]. C at 2.
+static int test_find_after_rebuild_mixed_last_net_zero(void)
+{
+	TEST("find_plugin_after_rebuild - removed + added before, last stays");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+
+	// plist[0] empty for X, plist[1] = A, plist[2] = B, plist[3] = C
+	MPlugin *plugA = &list->plist[1];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 2;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[2];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 3;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[3];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 4;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 4;
+	list->rebuild_hook_lists();
+
+	plugA->status = PL_EMPTY; plugA->tables.dllapi = NULL;
+	MPlugin *plugX = &list->plist[0];
+	memset(plugX, 0, sizeof(*plugX)); plugX->index = 1;
+	plugX->status = PL_RUNNING; plugX->tables.dllapi = &fake_dllapi4;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugC, count, plugs);
+	ASSERT_INT(new_i, 2);
+	ASSERT_INT(count, 3);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 21: [A,B,C] idx=0(A), B removed + X added before A → [X,A,C]. A at 1.
+static int test_find_after_rebuild_mixed_add_before_remove_after(void)
+{
+	TEST("find_plugin_after_rebuild - added before + later removed");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+
+	// plist[0] empty for X, plist[1] = A, plist[2] = B, plist[3] = C
+	MPlugin *plugA = &list->plist[1];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 2;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[2];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 3;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[3];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 4;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 4;
+	list->rebuild_hook_lists();
+
+	plugB->status = PL_EMPTY; plugB->tables.dllapi = NULL;
+	MPlugin *plugX = &list->plist[0];
+	memset(plugX, 0, sizeof(*plugX)); plugX->index = 1;
+	plugX->status = PL_RUNNING; plugX->tables.dllapi = &fake_dllapi4;
+	list->rebuild_hook_lists();
+	// Hook list: [X, A, C]
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugA, count, plugs);
+	ASSERT_INT(new_i, 1);
+	ASSERT_INT(count, 3);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 22: [A,B,C] idx=1(B), A and C removed → [B]. B at 0.
+static int test_find_after_rebuild_others_removed(void)
+{
+	TEST("find_plugin_after_rebuild - all others removed, only self remains");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[2];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 3;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	plugA->status = PL_EMPTY; plugA->tables.dllapi = NULL;
+	plugC->status = PL_EMPTY; plugC->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugB, count, plugs);
+	ASSERT_INT(new_i, 0);
+	ASSERT_INT(count, 1);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 23: [A,B,C,D,E] idx=4(E), A,B,C removed → [D,E]. E at 1.
+static int test_find_after_rebuild_many_earlier_removed(void)
+{
+	TEST("find_plugin_after_rebuild - many earlier removed, large shift");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+	memset(&fake_dllapi5, 0, sizeof(fake_dllapi5));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[2];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 3;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	MPlugin *plugD = &list->plist[3];
+	memset(plugD, 0, sizeof(*plugD)); plugD->index = 4;
+	plugD->status = PL_RUNNING; plugD->tables.dllapi = &fake_dllapi4;
+
+	MPlugin *plugE = &list->plist[4];
+	memset(plugE, 0, sizeof(*plugE)); plugE->index = 5;
+	plugE->status = PL_RUNNING; plugE->tables.dllapi = &fake_dllapi5;
+
+	list->endlist = 5;
+	list->rebuild_hook_lists();
+
+	plugA->status = PL_EMPTY; plugA->tables.dllapi = NULL;
+	plugB->status = PL_EMPTY; plugB->tables.dllapi = NULL;
+	plugC->status = PL_EMPTY; plugC->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugE, count, plugs);
+	ASSERT_INT(new_i, 1);
+	ASSERT_INT(count, 2);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 24: [A] idx=0(A), 3 plugins added before A → [X,Y,Z,A]. A at 3.
+static int test_find_after_rebuild_many_earlier_added(void)
+{
+	TEST("find_plugin_after_rebuild - many earlier added, large shift right");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+
+	// plist[0,1,2] empty, plist[3] = A
+	MPlugin *plugA = &list->plist[3];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 4;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	list->endlist = 4;
+	list->rebuild_hook_lists();
+
+	MPlugin *plugX = &list->plist[0];
+	memset(plugX, 0, sizeof(*plugX)); plugX->index = 1;
+	plugX->status = PL_RUNNING; plugX->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugY = &list->plist[1];
+	memset(plugY, 0, sizeof(*plugY)); plugY->index = 2;
+	plugY->status = PL_RUNNING; plugY->tables.dllapi = &fake_dllapi3;
+
+	MPlugin *plugZ = &list->plist[2];
+	memset(plugZ, 0, sizeof(*plugZ)); plugZ->index = 3;
+	plugZ->status = PL_RUNNING; plugZ->tables.dllapi = &fake_dllapi4;
+
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugA, count, plugs);
+	ASSERT_INT(new_i, 3);
+	ASSERT_INT(count, 4);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 25: [A,B,C] idx=1(B), no state change, rebuild → [A,B,C]. B stays at 1.
+static int test_find_after_rebuild_no_change(void)
+{
+	TEST("find_plugin_after_rebuild - rebuild with no change");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[2];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 3;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugB, count, plugs);
+	ASSERT_INT(new_i, 1);
+	ASSERT_INT(count, 3);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Case 26: [A,B,C] idx=2(C), self removed (last) → [A,B]. Return 1 so i++→2, loop ends.
+static int test_find_after_rebuild_self_removed_last(void)
+{
+	TEST("find_plugin_after_rebuild - self removed, was last");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	MPlugin *plugA = &list->plist[0];
+	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
+	plugA->status = PL_RUNNING; plugA->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plugB = &list->plist[1];
+	memset(plugB, 0, sizeof(*plugB)); plugB->index = 2;
+	plugB->status = PL_RUNNING; plugB->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plugC = &list->plist[2];
+	memset(plugC, 0, sizeof(*plugC)); plugC->index = 3;
+	plugC->status = PL_RUNNING; plugC->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	plugC->status = PL_EMPTY; plugC->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	int count;
+	MPlugin * const *plugs;
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, mFALSE, plugC, count, plugs);
+	// i=1, loop does i++ → 2, 2<2 false, loop ends. No plugins skipped.
+	ASSERT_INT(new_i, 1);
+	ASSERT_INT(count, 2);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// ============================================================
+// hook_list stability during iteration (issue #108)
+// ============================================================
+
+// Simulates the iteration pattern in main_hook_function:
+// cache plugs pointer and count, then iterate. Tests verify that
+// rebuild_hook_lists called mid-iteration invalidates cached values,
+// which the fix in api_hook.cpp detects via hook_list_tables_updated.
+
+static int test_rebuild_during_iteration_load(void)
+{
+	TEST("rebuild during iteration - load invalidates cached plugs");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	// Start with 2 running plugins
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->index = 1;
+	plug0->status = PL_RUNNING;
+	plug0->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->index = 2;
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 2;
+	list->rebuild_hook_lists();
+
+	// Simulate main_hook_function: cache plugs and count
+	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi);
+	int count = hlist->count;
+	MPlugin * const *plugs = hlist->plugs;
+
+	ASSERT_INT(count, 2);
+	ASSERT_PTR_EQ(plugs[0], plug0);
+	ASSERT_PTR_EQ(plugs[1], plug1);
+
+	// Simulate: during iteration at i=0, a new plugin is loaded
+	// (AMXX loads module via LOAD_PLUGIN from within hook callback)
+	hook_list_tables_updated = mFALSE;
+	MPlugin *plug2 = &list->plist[2];
+	memset(plug2, 0, sizeof(*plug2));
+	plug2->index = 3;
+	plug2->status = PL_RUNNING;
+	plug2->tables.dllapi = &fake_dllapi3;
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	// rebuild_hook_lists signals that cached pointers are stale
+	ASSERT_TRUE(hook_list_tables_updated == mTRUE);
+
+	// After rebuild: the hook list has 3 entries now
+	ASSERT_INT(hlist->count, 3);
+
+	// Cached 'count' is stale (still 2) — fix must re-read from list
+	ASSERT_TRUE(count != hlist->count);
+
+	// Cached 'plugs' pointer is dangling (realloc moved data)
+	ASSERT_TRUE(plugs != hlist->plugs);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_during_iteration_unload_later(void)
+{
+	TEST("rebuild during iteration - unload later plugin shifts nothing");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	// 3 running plugins
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->index = 1;
+	plug0->status = PL_RUNNING;
+	plug0->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->index = 2;
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plug2 = &list->plist[2];
+	memset(plug2, 0, sizeof(*plug2));
+	plug2->index = 3;
+	plug2->status = PL_RUNNING;
+	plug2->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	// Cache like main_hook_function does
+	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi);
+	int count = hlist->count;
+	MPlugin * const *plugs = hlist->plugs;
+
+	ASSERT_INT(count, 3);
+
+	// Simulate: at i=0, plug2 (last one) is unloaded
+	plug2->status = PL_EMPTY;
+	plug2->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	// After rebuild: only 2 plugins, plug0 and plug1 stay in positions 0,1
+	ASSERT_INT(hlist->count, 2);
+
+	// Cached count is 3 but list now has 2 — fix must re-read
+	ASSERT_TRUE(count > hlist->count);
+
+	// Cached plugs pointer is dangling
+	ASSERT_TRUE(plugs != hlist->plugs);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_during_iteration_unload_earlier(void)
+{
+	TEST("rebuild during iteration - unload earlier plugin shifts indices");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	// 3 running plugins
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->index = 1;
+	plug0->status = PL_RUNNING;
+	plug0->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->index = 2;
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plug2 = &list->plist[2];
+	memset(plug2, 0, sizeof(*plug2));
+	plug2->index = 3;
+	plug2->status = PL_RUNNING;
+	plug2->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	// Cache like main_hook_function does
+	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi);
+	int count = hlist->count;
+	(void)count;
+
+	// Verify initial order
+	ASSERT_PTR_EQ(hlist->plugs[0], plug0);
+	ASSERT_PTR_EQ(hlist->plugs[1], plug1);
+	ASSERT_PTR_EQ(hlist->plugs[2], plug2);
+
+	// Simulate: while iterating at i=1 (calling plug1),
+	// plug0 (earlier plugin) gets unloaded
+	plug0->status = PL_EMPTY;
+	plug0->tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	// After rebuild: [plug1, plug2], count=2
+	ASSERT_INT(hlist->count, 2);
+	ASSERT_PTR_EQ(hlist->plugs[0], plug1);
+	ASSERT_PTR_EQ(hlist->plugs[1], plug2);
+
+	// BUG: if loop was at i=1 and continues to i=2 with old count=3,
+	// it accesses plugs[2] which is beyond the new list.
+	// Even with fixed arrays, if loop increments i to 2 and count is
+	// re-read as 2, loop ends — but plug2 (now at index 1) was SKIPPED.
+	// The iteration at i=1 already processed plug1 (now at index 0),
+	// so effectively plug2 never gets called.
+	//
+	// Correct behavior after fix: detect rebuild happened, find plug1
+	// in new list at index 0, set i=0, re-read count=2, continue from
+	// i=1 which is plug2.
+	ASSERT_TRUE(hlist->plugs[1] == plug2);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_during_iteration_load_post(void)
+{
+	TEST("rebuild during post iteration - load invalidates cached plugs");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	// 2 running plugins with post tables
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->index = 1;
+	plug0->status = PL_RUNNING;
+	plug0->post_tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->index = 2;
+	plug1->status = PL_RUNNING;
+	plug1->post_tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 2;
+	list->rebuild_hook_lists();
+
+	// Cache post hook list like main_hook_function does
+	const api_plugin_list_t *hlist = list->get_hook_post_list(e_api_dllapi);
+	int count = hlist->count;
+	MPlugin * const *plugs = hlist->plugs;
+
+	ASSERT_INT(count, 2);
+	ASSERT_PTR_EQ(plugs[0], plug0);
+	ASSERT_PTR_EQ(plugs[1], plug1);
+
+	// New plugin loaded during post hook callback
+	MPlugin *plug2 = &list->plist[2];
+	memset(plug2, 0, sizeof(*plug2));
+	plug2->index = 3;
+	plug2->status = PL_RUNNING;
+	plug2->post_tables.dllapi = &fake_dllapi3;
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	ASSERT_INT(hlist->count, 3);
+
+	// Cached count and plugs are stale — fix must re-read
+	ASSERT_TRUE(count != hlist->count);
+	ASSERT_TRUE(plugs != hlist->plugs);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_during_iteration_unload_earlier_post(void)
+{
+	TEST("rebuild during post iteration - unload earlier shifts indices");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	// 3 running plugins with post tables
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->index = 1;
+	plug0->status = PL_RUNNING;
+	plug0->post_tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->index = 2;
+	plug1->status = PL_RUNNING;
+	plug1->post_tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plug2 = &list->plist[2];
+	memset(plug2, 0, sizeof(*plug2));
+	plug2->index = 3;
+	plug2->status = PL_RUNNING;
+	plug2->post_tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	// Cache post hook list
+	const api_plugin_list_t *hlist = list->get_hook_post_list(e_api_dllapi);
+	int count = hlist->count;
+	(void)count;
+
+	ASSERT_PTR_EQ(hlist->plugs[0], plug0);
+	ASSERT_PTR_EQ(hlist->plugs[1], plug1);
+	ASSERT_PTR_EQ(hlist->plugs[2], plug2);
+
+	// Simulate: during post iteration at i=1, plug0 unloaded
+	plug0->status = PL_EMPTY;
+	plug0->post_tables.dllapi = NULL;
+	list->rebuild_hook_lists();
+
+	// After rebuild: [plug1, plug2], count=2
+	ASSERT_INT(hlist->count, 2);
+	ASSERT_PTR_EQ(hlist->plugs[0], plug1);
+	ASSERT_PTR_EQ(hlist->plugs[1], plug2);
+
+	// Same bug: plug2 at new index 1 would be skipped if loop
+	// continues from old i=1 -> i=2 which is beyond new count.
+	ASSERT_TRUE(hlist->plugs[1] == plug2);
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_during_iteration_segfault(void)
+{
+	TEST("rebuild during iteration - use-after-free segfaults");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+
+	// 2 running plugins
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->index = 1;
+	plug0->status = PL_RUNNING;
+	plug0->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->index = 2;
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 2;
+	list->rebuild_hook_lists();
+
+	// Simulate main_hook_function: cache plugs and count
+	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi);
+	int count = hlist->count;
+	MPlugin * const *plugs = hlist->plugs;
+
+	ASSERT_INT(count, 2);
+	ASSERT_PTR_EQ(plugs[0], plug0);
+
+	// A new plugin is loaded from within a hook callback → rebuild
+	MPlugin *plug2 = &list->plist[2];
+	memset(plug2, 0, sizeof(*plug2));
+	plug2->index = 3;
+	plug2->status = PL_RUNNING;
+	plug2->tables.dllapi = &fake_dllapi3;
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	// Old 'plugs' is now freed+zeroed memory.
+	// Fork a child that dereferences it without the fix's protection:
+	//   plug = plugs[0];          // reads NULL from zeroed memory
+	//   table = plug->tables...;  // SIGSEGV
+	pid_t pid = fork();
+	if (pid == 0) {
+		// Child: simulate the crash path
+		volatile MPlugin *plug = plugs[0];
+		volatile void *table = plug->tables.dllapi;
+		(void)table;
+		_exit(0);
+	}
+
+	int status = 0;
+	waitpid(pid, &status, 0);
+	// SIGSEGV/SIGABRT normally; ASan may exit(1) instead of signaling
+	ASSERT_TRUE(WIFSIGNALED(status) || (WIFEXITED(status) && WEXITSTATUS(status) != 0));
+
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// ============================================================
 // main
 // ============================================================
 
@@ -4803,6 +6320,42 @@ int main(void)
 	fail |= test_rebuild_plugs_contiguous();
 	fail |= test_rebuild_repeated_calls();
 	fail |= test_rebuild_endlist_bounds();
+
+	// find_plugin_after_rebuild (issue #108)
+	fail |= test_find_after_rebuild_later_removed();
+	fail |= test_find_after_rebuild_later_removed2();
+	fail |= test_find_after_rebuild_later_added();
+	fail |= test_find_after_rebuild_earlier_removed();
+	fail |= test_find_after_rebuild_earlier_paused();
+	fail |= test_find_after_rebuild_two_earlier_removed();
+	fail |= test_find_after_rebuild_earlier_removed_mid();
+	fail |= test_find_after_rebuild_earlier_removed_becomes_first();
+	fail |= test_find_after_rebuild_earlier_added();
+	fail |= test_find_after_rebuild_earlier_added_last();
+	fail |= test_find_after_rebuild_added_between();
+	fail |= test_find_after_rebuild_two_earlier_added();
+	fail |= test_find_after_rebuild_earlier_unpaused();
+	fail |= test_find_after_rebuild_self_removed_only();
+	fail |= test_find_after_rebuild_self_removed_first();
+	fail |= test_find_after_rebuild_self_removed_mid();
+	fail |= test_find_after_rebuild_self_paused_mid();
+	fail |= test_find_after_rebuild_mixed_remove_add_later();
+	fail |= test_find_after_rebuild_mixed_remove_add_earlier();
+	fail |= test_find_after_rebuild_mixed_last_net_zero();
+	fail |= test_find_after_rebuild_mixed_add_before_remove_after();
+	fail |= test_find_after_rebuild_others_removed();
+	fail |= test_find_after_rebuild_many_earlier_removed();
+	fail |= test_find_after_rebuild_many_earlier_added();
+	fail |= test_find_after_rebuild_no_change();
+	fail |= test_find_after_rebuild_self_removed_last();
+
+	// hook_list stability during iteration (issue #108)
+	fail |= test_rebuild_during_iteration_load();
+	fail |= test_rebuild_during_iteration_unload_later();
+	fail |= test_rebuild_during_iteration_unload_earlier();
+	fail |= test_rebuild_during_iteration_load_post();
+	fail |= test_rebuild_during_iteration_unload_earlier_post();
+	fail |= test_rebuild_during_iteration_segfault();
 
 	system("rm -rf /tmp/test_mlist_gd");
 

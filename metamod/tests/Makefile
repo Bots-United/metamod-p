@@ -81,7 +81,7 @@ test_vdate: test_vdate.o
 	${CXX} $(EXTRA_FLAGS) -o $@ $^
 
 test_api_hook: test_api_hook.o $(EXTENDED_OBJS) api_hook.o api_info.o dllapi.o
-	${CXX} $(EXTRA_FLAGS) -o $@ $^ -ldl
+	${CXX} $(EXTRA_FLAGS) -o $@ $^ -ldl -Wl,--wrap=realloc
 
 test_api_info: test_api_info.o $(EXTENDED_OBJS) api_info.o api_hook.o
 	${CXX} $(EXTRA_FLAGS) -o $@ $^ -ldl

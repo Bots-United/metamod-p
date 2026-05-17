@@ -48,8 +48,10 @@
 #include "osdep.h"				// win32 snprintf, normalize_pathname,
 #include "osdep_p.h"
 
+HOT_DATA mBOOL DLLHIDDEN hook_list_tables_updated = mFALSE;
+
 // Constructor
-MPluginList::MPluginList(const char *ifile) 
+MPluginList::MPluginList(const char *ifile)
 	: size(MAX_PLUGINS), endlist(0)
 {
 	int i;
@@ -224,6 +226,8 @@ void DLLINTERNAL MPluginList::rebuild_hook_lists(void) {
 				hook_lists[api][1].plugs[idx[api][1]++] = &plist[i];
 		}
 	}
+
+	hook_list_tables_updated = mTRUE;
 }
 
 // Find a plugin with the given plid.

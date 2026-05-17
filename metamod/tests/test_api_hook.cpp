@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include <extdll.h>
 
@@ -27,6 +30,24 @@
 // Plugins normally get this pointer via Meta_Query/Meta_Attach.
 // Point it at metamod's PublicMetaGlobals so RETURN_META works.
 meta_globals_t *gpMetaGlobals = &PublicMetaGlobals;
+
+// Wrap realloc to always move the allocation (exposes use-after-free bugs).
+static size_t last_realloc_old_size = 0;
+extern "C" void *__real_realloc(void *ptr, size_t size);
+extern "C" void *__wrap_realloc(void *ptr, size_t size)
+{
+	void *newptr = malloc(size);
+	if (!newptr)
+		return NULL;
+	if (ptr) {
+		size_t copy_size = size < last_realloc_old_size ? size : last_realloc_old_size;
+		memcpy(newptr, ptr, copy_size);
+		memset(ptr, 0, last_realloc_old_size);
+		free(ptr);
+	}
+	last_realloc_old_size = size;
+	return newptr;
+}
 
 // ============================================================
 // Test tracking state
@@ -122,6 +143,52 @@ static int plugin2_pre_Spawn(edict_t *)
 	g_plugin2_pre_called++;
 	g_plugin2_pre_seen_prev_mres = gpMetaGlobals->prev_mres;
 	RETURN_META_VALUE(g_plugin2_pre_mres, g_plugin2_pre_retval);
+}
+
+// ============================================================
+// Callbacks that trigger rebuild_hook_lists (issue #108)
+// ============================================================
+
+static DLL_FUNCTIONS plugin3_pre_funcs;
+static DLL_FUNCTIONS plugin3_post_funcs;
+
+static void plugin1_pre_GameInit_load_plugin3(void)
+{
+	g_plugin1_pre_called++;
+
+	// Simulate AMXX loading a new module from within a hook callback:
+	// activate plugin3 and call rebuild_hook_lists().
+	MPlugin *plug3 = &Plugins->plist[2];
+	memset(plug3, 0, sizeof(*plug3));
+	plug3->status = PL_RUNNING;
+	plug3->index = 3;
+	snprintf(plug3->filename, sizeof(plug3->filename), "plugin3");
+	plug3->file = plug3->filename;
+	plug3->tables.dllapi = &plugin3_pre_funcs;
+	plug3->post_tables.dllapi = &plugin3_post_funcs;
+	Plugins->endlist = 3;
+	Plugins->rebuild_hook_lists();
+
+	RETURN_META(MRES_IGNORED);
+}
+
+static void plugin1_post_GameInit_load_plugin3(void)
+{
+	g_plugin1_post_called++;
+
+	// Same as above but triggered from post hook path.
+	MPlugin *plug3 = &Plugins->plist[2];
+	memset(plug3, 0, sizeof(*plug3));
+	plug3->status = PL_RUNNING;
+	plug3->index = 3;
+	snprintf(plug3->filename, sizeof(plug3->filename), "plugin3");
+	plug3->file = plug3->filename;
+	plug3->tables.dllapi = &plugin3_pre_funcs;
+	plug3->post_tables.dllapi = &plugin3_post_funcs;
+	Plugins->endlist = 3;
+	Plugins->rebuild_hook_lists();
+
+	RETURN_META(MRES_IGNORED);
 }
 
 // ============================================================
@@ -1150,6 +1217,371 @@ static int test_return_null_pre_table(void)
 }
 
 // ============================================================
+// Issue #108: rebuild_hook_lists during iteration
+// ============================================================
+
+static int test_rebuild_during_pre_hook_survives(void)
+{
+	TEST("issue #108 - rebuild during pre hook iteration does not crash");
+	setup_two_plugins();
+
+	// plugin1 pre hook triggers rebuild (loads plugin3).
+	// Without fix, plugin2's pre hook would dereference stale pointer → SIGSEGV.
+	plugin1_pre_funcs.pfnGameInit = plugin1_pre_GameInit_load_plugin3;
+	plugin2_pre_funcs.pfnGameInit = plugin2_pre_GameInit;
+	g_plugin2_pre_mres = MRES_IGNORED;
+	memset(&plugin3_pre_funcs, 0, sizeof(plugin3_pre_funcs));
+	memset(&plugin3_post_funcs, 0, sizeof(plugin3_post_funcs));
+
+	pid_t pid = fork();
+	if (pid == 0) {
+		call_hooked_GameInit();
+		_exit(0);
+	}
+
+	int status = 0;
+	waitpid(pid, &status, 0);
+	ASSERT_TRUE(WIFEXITED(status));
+	ASSERT_TRUE(WEXITSTATUS(status) == 0);
+
+	teardown();
+	PASS();
+	return 0;
+}
+
+static int test_rebuild_during_post_hook_survives(void)
+{
+	TEST("issue #108 - rebuild during post hook iteration does not crash");
+	setup_two_plugins();
+
+	// plugin1 post hook triggers rebuild (loads plugin3).
+	// Without fix, plugin2's post hook would dereference stale pointer → SIGSEGV.
+	plugin1_post_funcs.pfnGameInit = plugin1_post_GameInit_load_plugin3;
+	plugin2_post_funcs.pfnGameInit = plugin2_post_GameInit;
+	g_plugin2_post_mres = MRES_IGNORED;
+	memset(&plugin3_pre_funcs, 0, sizeof(plugin3_pre_funcs));
+	memset(&plugin3_post_funcs, 0, sizeof(plugin3_post_funcs));
+
+	pid_t pid = fork();
+	if (pid == 0) {
+		call_hooked_GameInit();
+		_exit(0);
+	}
+
+	int status = 0;
+	waitpid(pid, &status, 0);
+	ASSERT_TRUE(WIFEXITED(status));
+	ASSERT_TRUE(WEXITSTATUS(status) == 0);
+
+	teardown();
+	PASS();
+	return 0;
+}
+
+// ============================================================
+// Tests: re-entrancy flag propagation (reentry_count)
+// ============================================================
+
+// Scenario: outer pre hook calls engine function which re-enters the
+// dispatcher. The inner call triggers rebuild_hook_lists. The outer call
+// must still detect the rebuild and refresh its iteration state.
+
+static int g_plugin3_pre_called;
+static int g_plugin3_post_called;
+
+static void plugin3_pre_GameInit(void)
+{
+	g_plugin3_pre_called++;
+	RETURN_META(MRES_IGNORED);
+}
+
+static void plugin3_post_GameInit(void)
+{
+	g_plugin3_post_called++;
+	RETURN_META(MRES_IGNORED);
+}
+
+static void plugin1_pre_reenter_and_rebuild(void)
+{
+	g_plugin1_pre_called++;
+
+	// Remove our hook to avoid infinite recursion
+	plugin1_pre_funcs.pfnGameInit = NULL;
+
+	// Re-enter the dispatcher (inner call)
+	DLL_FUNCTIONS inner_funcs;
+	memset(&inner_funcs, 0, sizeof(inner_funcs));
+	int ver = INTERFACE_VERSION;
+	GetEntityAPI2(&inner_funcs, &ver);
+	inner_funcs.pfnGameInit();
+
+	// After inner call returns, load plugin3 and rebuild.
+	// This simulates: plugin hook -> engine call -> dllapi re-entry ->
+	// return -> plugin continues and loads another plugin.
+	MPlugin *plug3 = &Plugins->plist[2];
+	memset(plug3, 0, sizeof(*plug3));
+	plug3->status = PL_RUNNING;
+	plug3->index = 3;
+	snprintf(plug3->filename, sizeof(plug3->filename), "plugin3");
+	plug3->file = plug3->filename;
+	plugin3_pre_funcs.pfnGameInit = plugin3_pre_GameInit;
+	plugin3_post_funcs.pfnGameInit = plugin3_post_GameInit;
+	plug3->tables.dllapi = &plugin3_pre_funcs;
+	plug3->post_tables.dllapi = &plugin3_post_funcs;
+	Plugins->endlist = 3;
+	Plugins->rebuild_hook_lists();
+
+	RETURN_META(MRES_IGNORED);
+}
+
+static int test_reentry_rebuild_propagates_to_outer_pre(void)
+{
+	TEST("issue #108 - nested call + rebuild after return propagates to outer pre loop");
+	setup_two_plugins();
+	plugin1_pre_funcs.pfnGameInit = plugin1_pre_reenter_and_rebuild;
+	plugin2_pre_funcs.pfnGameInit = plugin2_pre_GameInit;
+	g_plugin2_pre_mres = MRES_IGNORED;
+	g_plugin3_pre_called = 0;
+	g_plugin3_post_called = 0;
+	memset(&plugin3_pre_funcs, 0, sizeof(plugin3_pre_funcs));
+	memset(&plugin3_post_funcs, 0, sizeof(plugin3_post_funcs));
+
+	pid_t pid = fork();
+	if (pid == 0) {
+		call_hooked_GameInit();
+		_exit(0);
+	}
+
+	int status = 0;
+	waitpid(pid, &status, 0);
+	// Must not crash — outer loop must detect rebuild and refresh
+	ASSERT_TRUE(WIFEXITED(status));
+	ASSERT_TRUE(WEXITSTATUS(status) == 0);
+
+	teardown();
+	PASS();
+	return 0;
+}
+
+static void plugin1_post_reenter_and_rebuild(void)
+{
+	g_plugin1_post_called++;
+
+	// Remove our hook to avoid infinite recursion
+	plugin1_post_funcs.pfnGameInit = NULL;
+
+	// Re-enter the dispatcher (inner call)
+	DLL_FUNCTIONS inner_funcs;
+	memset(&inner_funcs, 0, sizeof(inner_funcs));
+	int ver = INTERFACE_VERSION;
+	GetEntityAPI2(&inner_funcs, &ver);
+	inner_funcs.pfnGameInit();
+
+	// After inner call returns, load plugin3 and rebuild
+	MPlugin *plug3 = &Plugins->plist[2];
+	memset(plug3, 0, sizeof(*plug3));
+	plug3->status = PL_RUNNING;
+	plug3->index = 3;
+	snprintf(plug3->filename, sizeof(plug3->filename), "plugin3");
+	plug3->file = plug3->filename;
+	plugin3_pre_funcs.pfnGameInit = plugin3_pre_GameInit;
+	plugin3_post_funcs.pfnGameInit = plugin3_post_GameInit;
+	plug3->tables.dllapi = &plugin3_pre_funcs;
+	plug3->post_tables.dllapi = &plugin3_post_funcs;
+	Plugins->endlist = 3;
+	Plugins->rebuild_hook_lists();
+
+	RETURN_META(MRES_IGNORED);
+}
+
+static int test_reentry_rebuild_propagates_to_outer_post(void)
+{
+	TEST("issue #108 - nested call + rebuild after return propagates to outer post loop");
+	setup_two_plugins();
+	plugin1_post_funcs.pfnGameInit = plugin1_post_reenter_and_rebuild;
+	plugin2_post_funcs.pfnGameInit = plugin2_post_GameInit;
+	g_plugin2_post_mres = MRES_IGNORED;
+	g_plugin3_pre_called = 0;
+	g_plugin3_post_called = 0;
+	memset(&plugin3_pre_funcs, 0, sizeof(plugin3_pre_funcs));
+	memset(&plugin3_post_funcs, 0, sizeof(plugin3_post_funcs));
+
+	pid_t pid = fork();
+	if (pid == 0) {
+		call_hooked_GameInit();
+		_exit(0);
+	}
+
+	int status = 0;
+	waitpid(pid, &status, 0);
+	ASSERT_TRUE(WIFEXITED(status));
+	ASSERT_TRUE(WEXITSTATUS(status) == 0);
+
+	teardown();
+	PASS();
+	return 0;
+}
+
+// Verify that hook_list_tables_updated is cleared after the outermost
+// call returns (no stale flag left for unrelated future calls).
+
+static void plugin1_pre_just_rebuild(void)
+{
+	g_plugin1_pre_called++;
+
+	MPlugin *plug3 = &Plugins->plist[2];
+	memset(plug3, 0, sizeof(*plug3));
+	plug3->status = PL_RUNNING;
+	plug3->index = 3;
+	snprintf(plug3->filename, sizeof(plug3->filename), "plugin3");
+	plug3->file = plug3->filename;
+	plugin3_pre_funcs.pfnGameInit = plugin3_pre_GameInit;
+	plug3->tables.dllapi = &plugin3_pre_funcs;
+	plug3->post_tables.dllapi = &plugin3_post_funcs;
+	Plugins->endlist = 3;
+	Plugins->rebuild_hook_lists();
+
+	RETURN_META(MRES_IGNORED);
+}
+
+static int test_flag_cleared_after_outermost_returns(void)
+{
+	TEST("issue #108 - hook_list_tables_updated cleared after outermost call returns");
+	setup_two_plugins();
+	plugin1_pre_funcs.pfnGameInit = plugin1_pre_just_rebuild;
+	plugin2_pre_funcs.pfnGameInit = plugin2_pre_GameInit;
+	g_plugin2_pre_mres = MRES_IGNORED;
+	g_plugin3_pre_called = 0;
+	memset(&plugin3_pre_funcs, 0, sizeof(plugin3_pre_funcs));
+	memset(&plugin3_post_funcs, 0, sizeof(plugin3_post_funcs));
+
+	call_hooked_GameInit();
+	// After the call completes, the flag must be cleared
+	ASSERT_TRUE(hook_list_tables_updated == mFALSE);
+
+	teardown();
+	PASS();
+	return 0;
+}
+
+// Return-typed version: nested call with rebuild must propagate
+
+static int plugin1_pre_Spawn_reenter_and_rebuild(edict_t *ed)
+{
+	g_plugin1_pre_called++;
+
+	plugin1_pre_funcs.pfnSpawn = NULL;
+
+	DLL_FUNCTIONS inner_funcs;
+	memset(&inner_funcs, 0, sizeof(inner_funcs));
+	int ver = INTERFACE_VERSION;
+	GetEntityAPI2(&inner_funcs, &ver);
+	inner_funcs.pfnSpawn(ed);
+
+	// After inner call, rebuild
+	MPlugin *plug3 = &Plugins->plist[2];
+	memset(plug3, 0, sizeof(*plug3));
+	plug3->status = PL_RUNNING;
+	plug3->index = 3;
+	snprintf(plug3->filename, sizeof(plug3->filename), "plugin3");
+	plug3->file = plug3->filename;
+	plugin3_pre_funcs.pfnGameInit = NULL;
+	plug3->tables.dllapi = &plugin3_pre_funcs;
+	plug3->post_tables.dllapi = &plugin3_post_funcs;
+	Plugins->endlist = 3;
+	Plugins->rebuild_hook_lists();
+
+	RETURN_META_VALUE(MRES_IGNORED, 0);
+}
+
+static int test_reentry_rebuild_propagates_return_type(void)
+{
+	TEST("issue #108 - nested rebuild propagates in return-typed dispatch");
+	setup_two_plugins();
+	plugin1_pre_funcs.pfnSpawn = plugin1_pre_Spawn_reenter_and_rebuild;
+	plugin2_pre_funcs.pfnSpawn = plugin2_pre_Spawn;
+	g_plugin2_pre_mres = MRES_IGNORED;
+	memset(&plugin3_pre_funcs, 0, sizeof(plugin3_pre_funcs));
+	memset(&plugin3_post_funcs, 0, sizeof(plugin3_post_funcs));
+
+	pid_t pid = fork();
+	if (pid == 0) {
+		call_hooked_Spawn();
+		_exit(0);
+	}
+
+	int status = 0;
+	waitpid(pid, &status, 0);
+	ASSERT_TRUE(WIFEXITED(status));
+	ASSERT_TRUE(WEXITSTATUS(status) == 0);
+
+	teardown();
+	PASS();
+	return 0;
+}
+
+// Verify nested call does NOT clear the flag that was already set before entry
+
+static void plugin1_pre_set_flag_then_reenter(void)
+{
+	g_plugin1_pre_called++;
+
+	// Trigger rebuild first (sets flag)
+	MPlugin *plug3 = &Plugins->plist[2];
+	memset(plug3, 0, sizeof(*plug3));
+	plug3->status = PL_RUNNING;
+	plug3->index = 3;
+	snprintf(plug3->filename, sizeof(plug3->filename), "plugin3");
+	plug3->file = plug3->filename;
+	plugin3_pre_funcs.pfnGameInit = plugin3_pre_GameInit;
+	plugin3_post_funcs.pfnGameInit = plugin3_post_GameInit;
+	plug3->tables.dllapi = &plugin3_pre_funcs;
+	plug3->post_tables.dllapi = &plugin3_post_funcs;
+	Plugins->endlist = 3;
+	Plugins->rebuild_hook_lists();
+	// flag is now set
+
+	// Re-enter — inner call must NOT clobber the flag for outer
+	plugin1_pre_funcs.pfnGameInit = NULL;
+	DLL_FUNCTIONS inner_funcs;
+	memset(&inner_funcs, 0, sizeof(inner_funcs));
+	int ver = INTERFACE_VERSION;
+	GetEntityAPI2(&inner_funcs, &ver);
+	inner_funcs.pfnGameInit();
+
+	RETURN_META(MRES_IGNORED);
+}
+
+static int test_reentry_does_not_clobber_outer_flag(void)
+{
+	TEST("issue #108 - nested call does not clear flag set before re-entry");
+	setup_two_plugins();
+	plugin1_pre_funcs.pfnGameInit = plugin1_pre_set_flag_then_reenter;
+	plugin2_pre_funcs.pfnGameInit = plugin2_pre_GameInit;
+	g_plugin2_pre_mres = MRES_IGNORED;
+	g_plugin3_pre_called = 0;
+	g_plugin3_post_called = 0;
+	memset(&plugin3_pre_funcs, 0, sizeof(plugin3_pre_funcs));
+	memset(&plugin3_post_funcs, 0, sizeof(plugin3_post_funcs));
+
+	pid_t pid = fork();
+	if (pid == 0) {
+		call_hooked_GameInit();
+		_exit(0);
+	}
+
+	int status = 0;
+	waitpid(pid, &status, 0);
+	// Outer call must detect the rebuild (set before re-entry) and not crash
+	ASSERT_TRUE(WIFEXITED(status));
+	ASSERT_TRUE(WEXITSTATUS(status) == 0);
+
+	teardown();
+	PASS();
+	return 0;
+}
+
+// ============================================================
 // main
 // ============================================================
 
@@ -1223,6 +1655,17 @@ int main(void)
 	// NULL table tests
 	fail |= test_void_null_post_table();
 	fail |= test_return_null_pre_table();
+
+	// Issue #108: rebuild during hook iteration
+	fail |= test_rebuild_during_pre_hook_survives();
+	fail |= test_rebuild_during_post_hook_survives();
+
+	// Issue #108: re-entrancy flag propagation
+	fail |= test_reentry_rebuild_propagates_to_outer_pre();
+	fail |= test_reentry_rebuild_propagates_to_outer_post();
+	fail |= test_flag_cleared_after_outermost_returns();
+	fail |= test_reentry_rebuild_propagates_return_type();
+	fail |= test_reentry_does_not_clobber_outer_flag();
 
 	printf("\n%d/%d tests passed\n", tests_passed, tests_run);
 	return fail ? EXIT_FAILURE : EXIT_SUCCESS;
