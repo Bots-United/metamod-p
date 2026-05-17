@@ -199,7 +199,7 @@ static void DLLINTERNAL_NOVIS client_print_wrapper(const char *fmt, ...) {
 	va_list ap;
 	char buf[1024];
 	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
+	safevoid_vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	META_CLIENT(client_print_entity, "%s", buf);
 }
