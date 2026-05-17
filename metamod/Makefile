@@ -59,11 +59,7 @@ DLLS_DIR=../dlls
 SDKSRC=../hlsdk
 METADIR=../metamod
 
-COMPILE_TZ=EET
-## Developer overrides
-ifeq "$(USER)" "jussi"
-	COMPILE_TZ=EET
-endif
+COMPILE_TZ=UTC
 
 
 #############################################################################
