@@ -44,22 +44,22 @@
 
 
 #ifndef VDATE
-#define VDATE 			"2018/02/11"
+#define VDATE 			"yyyy/mm/dd"
 #endif
 #ifndef VPATCH_COPYRIGHT_YEAR
-#define VPATCH_COPYRIGHT_YEAR   "2018"
+#define VPATCH_COPYRIGHT_YEAR   "yyyy"
 #endif
 #define VMETA_VERSION		"1.21"
 
 #define VPATCH_NAME		"Metamod-P (mm-p)"
 #ifndef VPATCH_IVERSION
-#define VPATCH_IVERSION		38
+#define VPATCH_IVERSION		0
 #endif
 #ifndef VPATCH_VERSION
-#define VPATCH_VERSION		"38"
+#define VPATCH_VERSION		"0"
 #endif
 #define VPATCH_AUTHOR		"Jussi Kivilinna"
-#define VPATCH_WEBSITE		"http://metamod-p.sourceforge.net/"
+#define VPATCH_WEBSITE		"https://github.com/Bots-United/metamod-p"
 
 #define VVERSION		VMETA_VERSION "p" VPATCH_VERSION
 #define RC_VERS_DWORD		1,21,0,VPATCH_IVERSION	// Version Windows DLL Resources in res_meta.rc

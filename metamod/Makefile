@@ -184,6 +184,10 @@ CFLAGS+=-std=gnu++98 -Wno-c++11-compat
 ifdef META_VERSION
 META_DEFS += -DVPATCH_IVERSION=$(META_VERSION) -DVPATCH_VERSION="\"$(META_VERSION)\""
 META_DEFS_RES += '-DVPATCH_IVERSION=$(META_VERSION)' '-DVPATCH_VERSION="\"$(META_VERSION)\""'
+else
+META_GIT_VERSION := 0git$(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
+META_DEFS += -DVPATCH_VERSION="\"$(META_GIT_VERSION)\""
+META_DEFS_RES += '-DVPATCH_VERSION="\"$(META_GIT_VERSION)\""'
 endif
 ifdef META_DATE
 META_COPYRIGHT_YEAR := $(firstword $(subst /, ,$(META_DATE)))

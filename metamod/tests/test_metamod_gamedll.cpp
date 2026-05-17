@@ -167,8 +167,12 @@ int DLLINTERNAL init_linkent_replacement(DLHANDLE, DLHANDLE)
 	return g_init_linkent_return ? 1 : 0;
 }
 
-// meta_register_cmdcvar is in commands_meta.cpp
+// Stubs for commands_meta.cpp functions
 void DLLINTERNAL meta_register_cmdcvar()
+{
+}
+
+void DLLINTERNAL print_version(meta_print_func_t)
 {
 }
 
