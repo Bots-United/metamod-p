@@ -123,6 +123,7 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 	//Pre plugin functions
 	PublicMetaGlobals.prev_mres=MRES_UNSET;
 	rebuild_happened = hook_list_tables_updated;
+	hook_list_tables_updated = mFALSE;
 	list = Plugins->get_hook_list(api);
 	count = list->count;
 	plugs = list->plugs;
