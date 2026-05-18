@@ -95,7 +95,7 @@ inline const api_info_t * DLLINTERNAL get_api_info(enum_api_t api, unsigned int 
   #define MAYBE_META_DEBUG(do_debug, level, args) do { break; } while(0)
 #endif
 
-HOT_DATA static DLLHIDDEN int reentry_count;
+HOT_DATA static DLLHIDDEN int reentry_index = -1;
 
 // simplified 'void' version of main hook function
 template <bool do_debug>
@@ -117,7 +117,7 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 
 	//Setup
 	status=MRES_UNSET;
-	if (likely(reentry_count++ == 0))
+	if (likely(++reentry_index == 0))
 		hook_list_tables_updated = mFALSE;
 
 	//Pre plugin functions
@@ -233,7 +233,7 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 	copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
 	if(unlikely(rebuild_happened))
 		hook_list_tables_updated = mTRUE;
-	if (likely(--reentry_count == 0))
+	if (likely(--reentry_index < 0))
 		hook_list_tables_updated = mFALSE;
 }
 
@@ -275,7 +275,7 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 
 	//Setup
 	status=MRES_UNSET;
-	if (likely(reentry_count++ == 0))
+	if (likely(++reentry_index == 0))
 		hook_list_tables_updated = mFALSE;
 
 	//Pre plugin functions
@@ -414,7 +414,7 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 	copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
 	if(unlikely(rebuild_happened))
 		hook_list_tables_updated = mTRUE;
-	if (likely(--reentry_count == 0))
+	if (likely(--reentry_index < 0))
 		hook_list_tables_updated = mFALSE;
 
 	//return value is passed through ret_init!
