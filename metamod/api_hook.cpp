@@ -99,7 +99,9 @@ HOT_DATA static DLLHIDDEN int reentry_index = -1;
 
 // simplified 'void' version of main hook function
 template <bool do_debug>
-static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
+static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int api_info_offset,
+								  enum_api_t api, unsigned int func_offset,
+								  const void * packed_args) {
 	api_info_t api_info;
 	const api_plugin_list_t *list;
 	int i, count;
@@ -111,14 +113,15 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 	//passing offset from api wrapper function makes code faster/smaller
 	api_info = *get_api_info(api, api_info_offset);
 
-	// Save meta globals for re-entrant API calls (e.g. pfnRunPlayerMove
-	// calling dllapi functions before returning).
-	copy_meta_globals(&saved_meta_globals, &PublicMetaGlobals);
-
 	//Setup
 	status=MRES_UNSET;
-	if (likely(++reentry_index == 0))
+	if (likely(++reentry_index == 0)) {
 		hook_list_tables_updated = mFALSE;
+	} else {
+		// Save meta globals for re-entrant API calls (e.g. pfnRunPlayerMove
+		// calling dllapi functions before returning).
+		copy_meta_globals(&saved_meta_globals, &PublicMetaGlobals);
+	}
 
 	//Pre plugin functions
 	PublicMetaGlobals.prev_mres=MRES_UNSET;
@@ -230,14 +233,17 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 			META_WARNING("MRES_SUPERCEDE not valid in Post functions: %s:%s_Post()", plug->file, api_info.name);
 	}
 
-	copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
 	if(unlikely(rebuild_happened))
 		hook_list_tables_updated = mTRUE;
-	if (likely(--reentry_index < 0))
+	if (likely(--reentry_index < 0)) {
 		hook_list_tables_updated = mFALSE;
+	} else {
+		copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
+	}
 }
 
-HOT_FUNC void DLLINTERNAL NOINLINE main_hook_function_void(unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args) {
+HOT_FUNC void DLLINTERNAL NOINLINE main_hook_function_void(unsigned int api_info_offset, enum_api_t api,
+							   unsigned int func_offset, const void * packed_args) {
 #ifndef __BUILD_FAST_METAMOD__
 	if(unlikely(meta_debug_value >= get_api_info(api, api_info_offset)->loglevel))
 		main_hook_function_void_t<true>(api_info_offset, api, func_offset, packed_args);
@@ -248,8 +254,9 @@ HOT_FUNC void DLLINTERNAL NOINLINE main_hook_function_void(unsigned int api_info
 
 // full return typed version of main hook function
 template <bool do_debug>
-static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api,
-						      unsigned int func_offset, const void * packed_args) {
+static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t ret_init, unsigned int api_info_offset,
+							       enum_api_t api, unsigned int func_offset,
+							       const void * packed_args) {
 	api_info_t api_info;
 	const api_plugin_list_t *list;
 	int i, count;
@@ -265,18 +272,19 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 	//passing offset from api wrapper function makes code faster/smaller
 	api_info = *get_api_info(api, api_info_offset);
 
-	// Save meta globals for re-entrant API calls (e.g. pfnRunPlayerMove
-	// calling dllapi functions before returning).
-	copy_meta_globals(&saved_meta_globals, &PublicMetaGlobals);
-
 	//Return class setup
 	rv.orig_ret=ret_init;
 	rv.override_ret=ret_init;
 
 	//Setup
 	status=MRES_UNSET;
-	if (likely(++reentry_index == 0))
+	if (likely(++reentry_index == 0)) {
 		hook_list_tables_updated = mFALSE;
+	} else {
+		// Save meta globals for re-entrant API calls (e.g. pfnRunPlayerMove
+		// calling dllapi functions before returning).
+		copy_meta_globals(&saved_meta_globals, &PublicMetaGlobals);
+	}
 
 	//Pre plugin functions
 	PublicMetaGlobals.prev_mres = MRES_UNSET;
@@ -411,11 +419,13 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 		}
 	}
 
-	copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
 	if(unlikely(rebuild_happened))
 		hook_list_tables_updated = mTRUE;
-	if (likely(--reentry_index < 0))
+	if (likely(--reentry_index < 0)) {
 		hook_list_tables_updated = mFALSE;
+	} else {
+		copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
+	}
 
 	//return value is passed through ret_init!
 	if(likely(status!=MRES_OVERRIDE)) {
@@ -426,8 +436,9 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 	}
 }
 
-HOT_FUNC void * DLLINTERNAL NOINLINE main_hook_function(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api,
-					       unsigned int func_offset, const void * packed_args) {
+HOT_FUNC void * DLLINTERNAL NOINLINE main_hook_function(const class_ret_t ret_init, unsigned int api_info_offset,
+							enum_api_t api, unsigned int func_offset,
+							const void * packed_args) {
 #ifndef __BUILD_FAST_METAMOD__
 	if(unlikely(meta_debug_value >= get_api_info(api, api_info_offset)->loglevel))
 		return main_hook_function_t<true>(ret_init, api_info_offset, api, func_offset, packed_args);
