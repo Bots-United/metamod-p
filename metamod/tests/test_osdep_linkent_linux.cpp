@@ -35,7 +35,7 @@ static void restore_linkent(void)
 
 static int test_construct_jmp_basic(void)
 {
-	TEST("construct_jmp_instruction - endbr32 + jmp with correct offset");
+	TEST("construct_jmp_instruction - jmp with correct offset");
 	unsigned char buf[BYTES_SIZE];
 	memset(buf, 0, sizeof(buf));
 
@@ -45,16 +45,11 @@ static int test_construct_jmp_basic(void)
 
 	construct_jmp_instruction(buf, (void *)place_addr, (void *)target_addr);
 
-	// endbr32: f3 0f 1e fb
-	ASSERT_TRUE(buf[0] == 0xf3);
-	ASSERT_TRUE(buf[1] == 0x0f);
-	ASSERT_TRUE(buf[2] == 0x1e);
-	ASSERT_TRUE(buf[3] == 0xfb);
 	// jmp opcode
-	ASSERT_TRUE(buf[4] == 0xe9);
+	ASSERT_TRUE(buf[0] == 0xe9);
 
 	unsigned long encoded_offset;
-	memcpy(&encoded_offset, buf + 5, sizeof(encoded_offset));
+	memcpy(&encoded_offset, buf + 1, sizeof(encoded_offset));
 	unsigned long expected_offset = target_addr - (place_addr + BYTES_SIZE);
 	ASSERT_TRUE(encoded_offset == expected_offset);
 
@@ -74,12 +69,10 @@ static int test_construct_jmp_backward(void)
 
 	construct_jmp_instruction(buf, (void *)place_addr, (void *)target_addr);
 
-	ASSERT_TRUE(buf[0] == 0xf3);
-	ASSERT_TRUE(buf[3] == 0xfb);
-	ASSERT_TRUE(buf[4] == 0xe9);
+	ASSERT_TRUE(buf[0] == 0xe9);
 
 	unsigned long encoded_offset;
-	memcpy(&encoded_offset, buf + 5, sizeof(encoded_offset));
+	memcpy(&encoded_offset, buf + 1, sizeof(encoded_offset));
 	unsigned long expected_offset = target_addr - (place_addr + BYTES_SIZE);
 	ASSERT_TRUE(encoded_offset == expected_offset);
 
@@ -96,13 +89,23 @@ static int test_construct_jmp_self(void)
 	char fake_place[16];
 	construct_jmp_instruction(buf, fake_place, fake_place);
 
-	ASSERT_TRUE(buf[0] == 0xf3);
-	ASSERT_TRUE(buf[4] == 0xe9);
+	ASSERT_TRUE(buf[0] == 0xe9);
 
 	unsigned long encoded_offset;
-	memcpy(&encoded_offset, buf + 5, sizeof(encoded_offset));
+	memcpy(&encoded_offset, buf + 1, sizeof(encoded_offset));
 	ASSERT_TRUE(encoded_offset == (unsigned long)-(long)BYTES_SIZE);
 
+	PASS();
+	return 0;
+}
+
+static int test_has_endbr32(void)
+{
+	TEST("has_endbr32 - detects landing pad");
+	unsigned char with[]    = { 0xf3, 0x0f, 0x1e, 0xfb, 0x55 };
+	unsigned char without[] = { 0x55, 0x89, 0xe5, 0x00, 0x00 };
+	ASSERT_TRUE(has_endbr32(with) == true);
+	ASSERT_TRUE(has_endbr32(without) == false);
 	PASS();
 	return 0;
 }
@@ -205,6 +208,18 @@ static int test_linkent_init_and_hook(void)
 	int ret = init_linkent_replacement(mm_handle, gd_handle);
 	ASSERT_INT(ret, 1);
 
+	// The jmp forwarder is written at the patch site, not the call target.
+	ASSERT_INT(dlsym_patch_addr[0], 0xe9);
+	// The call target (dlsym_original) must stay the real entry so a CET/IBT
+	// indirect call lands on its endbr32; the forwarder sits past the endbr32.
+	unsigned char *entry = (unsigned char *)(void *)dlsym_original;
+	if (has_endbr32(entry)) {
+		ASSERT_INT(entry[0], 0xf3);
+		ASSERT_TRUE(dlsym_patch_addr == entry + ENDBR32_SIZE);
+	} else {
+		ASSERT_TRUE(dlsym_patch_addr == entry);
+	}
+
 	// After hook: dlsym on mm_handle should find GiveFnptrsToDll from gamedll
 	void *after = dlsym(mm_handle, "GiveFnptrsToDll");
 	ASSERT_PTR_NOT_NULL(after);
@@ -297,6 +312,7 @@ int main(void)
 	fail |= test_construct_jmp_basic();
 	fail |= test_construct_jmp_backward();
 	fail |= test_construct_jmp_self();
+	fail |= test_has_endbr32();
 	fail |= test_trampoline_ff25();
 	fail |= test_trampoline_not_ff25();
 	fail |= test_trampoline_only_ff();
