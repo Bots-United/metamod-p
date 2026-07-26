@@ -233,9 +233,8 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 			META_WARNING("MRES_SUPERCEDE not valid in Post functions: %s:%s_Post()", plug->file, api_info.name);
 	}
 
-	if(unlikely(rebuild_happened))
-		hook_list_tables_updated = mTRUE;
-	if (likely(--reentry_index < 0)) {
+	hook_list_tables_updated = (mBOOL)(rebuild_happened | hook_list_tables_updated);
+	if(likely(--reentry_index < 0)) {
 		hook_list_tables_updated = mFALSE;
 	} else {
 		copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
@@ -419,9 +418,8 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 		}
 	}
 
-	if(unlikely(rebuild_happened))
-		hook_list_tables_updated = mTRUE;
-	if (likely(--reentry_index < 0)) {
+	hook_list_tables_updated = (mBOOL)(rebuild_happened | hook_list_tables_updated);
+	if(likely(--reentry_index < 0)) {
 		hook_list_tables_updated = mFALSE;
 	} else {
 		copy_meta_globals(&PublicMetaGlobals, &saved_meta_globals);
