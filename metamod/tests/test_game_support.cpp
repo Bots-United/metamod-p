@@ -20,7 +20,7 @@
 #include "test_common.h"
 
 // install_gamedll is DLLINTERNAL, declare it for testing
-extern mBOOL install_gamedll(char *from, const char *to);
+extern mBOOL DLLINTERNAL install_gamedll(char *from, const char *to);
 
 // ============================================================
 // Temp directory helpers
