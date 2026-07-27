@@ -193,7 +193,7 @@ ALL_TESTS = test_support_meta test_osdep test_log_meta test_vdate \
     test_metamod_gamedll \
     test_osdep_detect_gamedll_win32 test_osdep_linkent_win32
 
-.PHONY: all run run-opt run-release valgrind sanitize clang-sanitize coverage coverage-clean clean
+.PHONY: all run run-opt run-release bench valgrind sanitize clang-sanitize coverage coverage-clean clean
 
 all: $(ALL_TESTS)
 
@@ -217,6 +217,20 @@ RELEASE_FLAGS = -O2 -fomit-frame-pointer -flto=auto -fPIC -fvisibility=hidden \
 run-release:
 	$(MAKE) clean
 	$(MAKE) CXXFLAGS="$(RELEASE_FLAGS)" run
+
+# Dispatch cost of the API wrappers, with trivial plugin and gamedll callees
+# so what is measured is metamod's own overhead. A live server buries that
+# under the ~97% of cycles it spends elsewhere, which is enough to hide a
+# regression: pin it to a core and compare against a build of the base branch.
+# Built the way metamod.so is: measuring -O0 code would say nothing.
+bench:
+	$(MAKE) clean
+	$(MAKE) CXXFLAGS="$(RELEASE_FLAGS)" bench_api_hook
+	taskset -c 8 ./bench_api_hook
+
+bench_api_hook: bench_api_hook.o $(EXTENDED_OBJS) api_hook.o api_info.o \
+    dllapi.o engine_api.o commands_meta.o vdate.o mutil.o
+	${CXX} $(EXTRA_FLAGS) -o $@ $^ -ldl
 
 VALGRIND = valgrind --leak-check=full --error-exitcode=1
 
