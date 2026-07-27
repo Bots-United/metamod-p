@@ -45,8 +45,10 @@
 const char * DLLINTERNAL autodetect_gamedll(const gamedll_t *gamedll, const char *knownfn)
 {
 	static char buf[256];
-	char dllpath[256];
-	char fnpath[256];
+	// full_gamedir_path resolves through realpath, which writes up to
+	// PATH_MAX regardless of what the caller has room for.
+	char dllpath[PATH_MAX];
+	char fnpath[PATH_MAX];
 	DIR *dir;
 	struct dirent *ent;
 	unsigned int fn_len;
