@@ -63,7 +63,9 @@ public:
 
 public:
 	MPlayer() DLLINTERNAL;
-	~MPlayer() DLLINTERNAL;
+	// Not DLLINTERNAL, for the reason on ~MPluginList: regparm cannot
+	// survive a destructor reached through __cxa_atexit.
+	~MPlayer();
 	void        DLLINTERNAL set_cvar_query(const char *cvar);            // mark this player as querying a client cvar
 	void        DLLINTERNAL clear_cvar_query(const char *cvar=NULL);     // unmark this player as querying a client cvar
 	const char *DLLINTERNAL is_querying_cvar(void);                      // check if a player is querying a cvar. returns
