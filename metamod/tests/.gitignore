@@ -24,6 +24,7 @@ test_api_info
 test_commands_meta
 test_dllapi
 test_engine_api
+test_api_args
 test_h_export
 test_linkgame
 test_linkplug

@@ -52,15 +52,22 @@
 // Engine routines, functions returning "void".
 #define META_ENGINE_HANDLE_void(FN_TYPE, pfnName, pack_args_type, pfn_args) \
 	API_START_TSC_TRACKING(); \
-	API_PACK_ARGS(pack_args_type, pfn_args); \
-	main_hook_function_void(offsetof(engine_info_t, pfnName), e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args); \
+	API_BUILD_ARGS(pack_args_type, pfn_args); \
+	main_hook_function_void(offsetof(engine_info_t, pfnName), e_api_engine, offsetof(enginefuncs_t, pfnName), API_ARGS_PTR(pack_args_type, pfn_args)); \
 	API_END_TSC_TRACKING()
 
 // Engine routines, functions returning an actual value.
 #define META_ENGINE_HANDLE(ret_t, ret_init, FN_TYPE, pfnName, pack_args_type, pfn_args) \
 	API_START_TSC_TRACKING(); \
+	API_BUILD_ARGS(pack_args_type, pfn_args); \
+	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), offsetof(engine_info_t, pfnName), e_api_engine, offsetof(enginefuncs_t, pfnName), API_ARGS_PTR(pack_args_type, pfn_args))); \
+	API_END_TSC_TRACKING()
+
+// Wrappers whose incoming slots cannot be handed over as they stand.
+#define META_ENGINE_HANDLE_void_packed(FN_TYPE, pfnName, pack_args_type, pfn_args) \
+	API_START_TSC_TRACKING(); \
 	API_PACK_ARGS(pack_args_type, pfn_args); \
-	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), offsetof(engine_info_t, pfnName), e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args)); \
+	main_hook_function_void(offsetof(engine_info_t, pfnName), e_api_engine, offsetof(enginefuncs_t, pfnName), &packed_args); \
 	API_END_TSC_TRACKING()
 
 // For varargs functions
@@ -556,7 +563,7 @@ static HOT_FUNC FORCE_STACK_ALIGN void mm_CRC32_ProcessBuffer(CRC32_t *pulCRC, v
 	RETURN_API_void()
 }
 static HOT_FUNC FORCE_STACK_ALIGN void mm_CRC32_ProcessByte(CRC32_t *pulCRC, unsigned char ch) {
-	META_ENGINE_HANDLE_void(FN_CRC32_PROCESSBYTE, pfnCRC32_ProcessByte, puc, (pulCRC, ch));
+	META_ENGINE_HANDLE_void_packed(FN_CRC32_PROCESSBYTE, pfnCRC32_ProcessByte, puc, (pulCRC, ch));
 	RETURN_API_void()
 }
 static HOT_FUNC FORCE_STACK_ALIGN CRC32_t mm_CRC32_Final(CRC32_t pulCRC) {
@@ -633,7 +640,7 @@ static HOT_FUNC FORCE_STACK_ALIGN edict_t * mm_CreateFakeClient(const char *netn
 	RETURN_API(edict_t *)
 }
 static HOT_FUNC FORCE_STACK_ALIGN void mm_RunPlayerMove(edict_t *fakeclient, const float *viewangles, float forwardmove, float sidemove, float upmove, unsigned short buttons, byte impulse, byte msec ) {
-	META_ENGINE_HANDLE_void(FN_RUNPLAYERMOVE, pfnRunPlayerMove, 2p3fus2uc, (fakeclient, viewangles, forwardmove, sidemove, upmove, buttons, impulse, msec));
+	META_ENGINE_HANDLE_void_packed(FN_RUNPLAYERMOVE, pfnRunPlayerMove, 2p3fus2uc, (fakeclient, viewangles, forwardmove, sidemove, upmove, buttons, impulse, msec));
 	RETURN_API_void()
 }
 static HOT_FUNC FORCE_STACK_ALIGN int mm_NumberOfEntities(void) {
@@ -717,7 +724,7 @@ static HOT_FUNC FORCE_STACK_ALIGN unsigned short mm_PrecacheEvent( int type, con
 	RETURN_API(unsigned short)
 }
 static HOT_FUNC FORCE_STACK_ALIGN void mm_PlaybackEvent( int flags, const edict_t *pInvoker, unsigned short eventindex, float delay, float *origin, float *angles, float fparam1, float fparam2, int iparam1, int iparam2, int bparam1, int bparam2 ) {
-	META_ENGINE_HANDLE_void(FN_PLAYBACKEVENT, pfnPlaybackEvent, ipusf2p2f4i, (flags, pInvoker, eventindex, delay, origin, angles, fparam1, fparam2, iparam1, iparam2, bparam1, bparam2));
+	META_ENGINE_HANDLE_void_packed(FN_PLAYBACKEVENT, pfnPlaybackEvent, ipusf2p2f4i, (flags, pInvoker, eventindex, delay, origin, angles, fparam1, fparam2, iparam1, iparam2, bparam1, bparam2));
 	RETURN_API_void()
 }
 

@@ -64,13 +64,41 @@ void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int a
 #define API_PACK_ARGS(type, args) \
 	_COMBINE2(pack_args_type_, type) packed_args args;
 
+#define API_BUILD_ARGS(type, args) API_PACK_ARGS(type, args)
+#define API_ARGS_PTR(type, args) ((const void *)&packed_args)
+
+//
+// A wrapper is entered through the block the engine or gamedll pushed,
+// which is already that image, so hand it over instead of copying the
+// parameters into a struct. Wrappers whose packed arguments are not simply
+// their own parameters keep packing.
+//
+// The block is taken as the address of the first parameter, which the ABI
+// does not promise: GCC leaves stack parameters where they arrived, but
+// clang copies out the one whose address is taken, and address sanitizer
+// gives each parameter its own redzoned slot. Both keep packing, as does
+// every non-i386 target. test_api_args.cpp checks the delivered block.
+//
+// META_WRAPPER_ARGS_PACKED forces packing, for the tests' reference build.
+#if defined(API_CALLER_BULK_ARGS) && !defined(META_WRAPPER_ARGS_PACKED) \
+	&& !defined(__clang__) && !defined(__SANITIZE_ADDRESS__)
+	#define API_WRAPPER_BULK_ARGS 1
+	#define API_ARGS_FIRST(first, rest...) first
+	#undef API_BUILD_ARGS
+	#undef API_ARGS_PTR
+	#define API_BUILD_ARGS(type, args)
+	#define API_ARGS_PTR(type, args) ((const void *)&(API_ARGS_FIRST args))
+#endif
+
 #define PACK_ARGS_CLASS_HEADER(type, constructor_args) \
 	class _COMBINE2(pack_args_type_, type) : public class_metamod_new { \
 		public: inline _COMBINE2(pack_args_type_, type) constructor_args
 
 #define PACK_ARGS_END };
 
-#define VOID_ARG 0
+// Addressable so a wrapper taking no arguments takes the same
+// &first-argument form; the void-argument callers never read through it.
+static const int VOID_ARG ATTRIBUTE(unused) = 0;
 
 PACK_ARGS_CLASS_HEADER(void, (int)) {};
 PACK_ARGS_END

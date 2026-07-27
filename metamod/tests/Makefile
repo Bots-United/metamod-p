@@ -95,6 +95,26 @@ test_dllapi: test_dllapi.o $(EXTENDED_OBJS) dllapi.o api_hook.o api_info.o comma
 test_engine_api: test_engine_api.o $(EXTENDED_OBJS) engine_api.o api_hook.o api_info.o
 	${CXX} $(EXTRA_FLAGS) -o $@ $^ -ldl
 
+# Reference copies of the hook wrappers, built with the argument copy forced
+# back on and their entry points renamed, so test_api_args can compare the
+# argument block each pair of wrappers delivers.
+REFARGS_FLAGS = -DMETA_WRAPPER_ARGS_PACKED \
+    -DGetEntityAPI=ref_GetEntityAPI -DGetEntityAPI2=ref_GetEntityAPI2 \
+    -DGetNewDLLFunctions=ref_GetNewDLLFunctions \
+    -Dg_pHookedDllFunctions=ref_g_pHookedDllFunctions \
+    -Dg_pHookedNewDllFunctions=ref_g_pHookedNewDllFunctions \
+    -Dmeta_engfuncs=ref_meta_engfuncs
+
+dllapi_refargs.o: ../dllapi.cpp
+	${CXX} ${TEST_CXXFLAGS} $(REFARGS_FLAGS) -c $< -o $@
+
+engine_api_refargs.o: ../engine_api.cpp
+	${CXX} ${TEST_CXXFLAGS} $(REFARGS_FLAGS) -c $< -o $@
+
+test_api_args: test_api_args.o $(EXTENDED_OBJS) dllapi.o engine_api.o \
+    dllapi_refargs.o engine_api_refargs.o api_info.o commands_meta.o vdate.o
+	${CXX} $(EXTRA_FLAGS) -o $@ $^ -ldl
+
 test_h_export: test_h_export.o $(COMMON_OBJS) meta_eiface.o h_export.o \
     engineinfo.o osdep_p.o engine_test.so
 	${CXX} $(EXTRA_FLAGS) -o $@ $(filter %.o,$^) -ldl
@@ -184,7 +204,7 @@ ALL_TESTS = test_support_meta test_osdep test_log_meta test_vdate \
     test_mreg test_mreg_malloc test_mplayer test_conf_meta \
     test_game_support test_game_autodetect test_engineinfo \
     test_sdk_util test_api_hook test_api_info \
-    test_commands_meta test_dllapi test_engine_api \
+    test_commands_meta test_dllapi test_engine_api test_api_args \
     test_h_export test_linkgame test_linkplug \
     test_meta_eiface test_metamod test_mlist test_mplugin \
     test_mutil test_reg_support test_studioapi \

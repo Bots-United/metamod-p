@@ -49,29 +49,29 @@
 // Original DLL routines, functions returning "void".
 #define META_DLLAPI_HANDLE_void(FN_TYPE, pfnName, pack_args_type, pfn_args) \
 	API_START_TSC_TRACKING(); \
-	API_PACK_ARGS(pack_args_type, pfn_args); \
-	main_hook_function_void(offsetof(dllapi_info_t, pfnName), e_api_dllapi, offsetof(DLL_FUNCTIONS, pfnName), &packed_args); \
+	API_BUILD_ARGS(pack_args_type, pfn_args); \
+	main_hook_function_void(offsetof(dllapi_info_t, pfnName), e_api_dllapi, offsetof(DLL_FUNCTIONS, pfnName), API_ARGS_PTR(pack_args_type, pfn_args)); \
 	API_END_TSC_TRACKING()
 
 // Original DLL routines, functions returning an actual value.
 #define META_DLLAPI_HANDLE(ret_t, ret_init, FN_TYPE, pfnName, pack_args_type, pfn_args) \
 	API_START_TSC_TRACKING(); \
-	API_PACK_ARGS(pack_args_type, pfn_args); \
-	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), offsetof(dllapi_info_t, pfnName), e_api_dllapi, offsetof(DLL_FUNCTIONS, pfnName), &packed_args)); \
+	API_BUILD_ARGS(pack_args_type, pfn_args); \
+	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), offsetof(dllapi_info_t, pfnName), e_api_dllapi, offsetof(DLL_FUNCTIONS, pfnName), API_ARGS_PTR(pack_args_type, pfn_args))); \
 	API_END_TSC_TRACKING()
 
 // The "new" api routines (just 3 right now), functions returning "void".
 #define META_NEWAPI_HANDLE_void(FN_TYPE, pfnName, pack_args_type, pfn_args) \
 	API_START_TSC_TRACKING(); \
-	API_PACK_ARGS(pack_args_type, pfn_args); \
-	main_hook_function_void(offsetof(newapi_info_t, pfnName), e_api_newapi, offsetof(NEW_DLL_FUNCTIONS, pfnName), &packed_args); \
+	API_BUILD_ARGS(pack_args_type, pfn_args); \
+	main_hook_function_void(offsetof(newapi_info_t, pfnName), e_api_newapi, offsetof(NEW_DLL_FUNCTIONS, pfnName), API_ARGS_PTR(pack_args_type, pfn_args)); \
 	API_END_TSC_TRACKING()
 
 // The "new" api routines (just 3 right now), functions returning an actual value.
 #define META_NEWAPI_HANDLE(ret_t, ret_init, FN_TYPE, pfnName, pack_args_type, pfn_args) \
 	API_START_TSC_TRACKING(); \
-	API_PACK_ARGS(pack_args_type, pfn_args); \
-	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), offsetof(newapi_info_t, pfnName), e_api_newapi, offsetof(NEW_DLL_FUNCTIONS, pfnName), &packed_args)); \
+	API_BUILD_ARGS(pack_args_type, pfn_args); \
+	class_ret_t ret_val(main_hook_function(class_ret_t((ret_t)ret_init), offsetof(newapi_info_t, pfnName), e_api_newapi, offsetof(NEW_DLL_FUNCTIONS, pfnName), API_ARGS_PTR(pack_args_type, pfn_args))); \
 	API_END_TSC_TRACKING()
 
 
