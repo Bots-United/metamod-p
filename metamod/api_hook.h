@@ -47,6 +47,18 @@ void DLLINTERNAL main_hook_function_void(unsigned int api_info_offset, enum_api_
 void * DLLINTERNAL main_hook_function(const class_ret_t ret_init, unsigned int api_info_offset, enum_api_t api, unsigned int func_offset, const void * packed_args);
 
 //
+// Every pack_args_type_* below is laid out as the image of the callee's
+// 4-byte argument slots, sub-word arguments widened to a full slot, so
+// passing one by value is the identical stack block and the compiler moves
+// it whole. Other targets classify by-value structs differently and pass
+// argument by argument. test_api_hook.cpp checks the layouts.
+//
+#if defined(__i386__) && defined(__GNUC__)
+	#define API_CALLER_BULK_ARGS 1
+	template<int N> struct api_arg_blob { char bytes[N]; };
+#endif
+
+//
 // API function args structures/classes
 //
 #define API_PACK_ARGS(type, args) \

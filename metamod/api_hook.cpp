@@ -450,274 +450,41 @@ HOT_FUNC void * DLLINTERNAL NOINLINE main_hook_function(const class_ret_t ret_in
 //
 #define BEGIN_API_CALLER_FUNC(ret_type, args_type_code) \
 	HOT_FUNC void * DLLINTERNAL _COMBINE4(api_caller_, ret_type, _args_, args_type_code)(const void * func, const void * packed_args) { \
-		_COMBINE2(pack_args_type_, args_type_code) * p ATTRIBUTE(unused)= (_COMBINE2(pack_args_type_, args_type_code) *)packed_args;
+		typedef _COMBINE2(pack_args_type_, args_type_code) pack_t; \
+		pack_t * p ATTRIBUTE(unused)= (pack_t *)packed_args;
+
+// Hand the packed struct over as one by-value block. The declared argument
+// list stays spelled out at each call site for the targets without it.
+#ifdef API_CALLER_BULK_ARGS
+	#define API_CALL_TARGET(ret_t, args_t, args) \
+		((*(( ret_t (*)(api_arg_blob<(int)sizeof(pack_t)>) )func)) \
+		 (*(const api_arg_blob<(int)sizeof(pack_t)> *)packed_args))
+#else
+	#define API_CALL_TARGET(ret_t, args_t, args) \
+		((*(( ret_t (*) args_t )func)) args)
+#endif
+
 #define END_API_CALLER_FUNC(ret_t, args_t, args) \
 		API_PAUSE_TSC_TRACKING(); \
-		return(*(void **)class_ret_t((*(( ret_t (*) args_t )func)) args).getptr()); \
+		return(*(void **)class_ret_t( API_CALL_TARGET(ret_t, args_t, args) ).getptr()); \
 	}
 #define END_API_CALLER_FUNC_void(args_t, args) \
 		API_PAUSE_TSC_TRACKING(); \
-		return((*(( void* (*) args_t )func)) args); \
+		return( API_CALL_TARGET(void*, args_t, args) ); \
+	}
+
+// Functions taking no arguments have no block to copy, and pack_args_type_void
+// is a 1-byte empty class rather than an argument image.
+#define END_API_CALLER_FUNC_noargs(ret_t) \
+		API_PAUSE_TSC_TRACKING(); \
+		return(*(void **)class_ret_t((*(( ret_t (*)(void) )func))()).getptr()); \
+	}
+#define END_API_CALLER_FUNC_noargs_void() \
+		API_PAUSE_TSC_TRACKING(); \
+		return((*(( void* (*)(void) )func))()); \
 	}
 
 //
 // API function callers.
 //
-
-//-
-BEGIN_API_CALLER_FUNC(void, ipV)
-END_API_CALLER_FUNC_void( (int, const void*, ...), (p->i1, p->p1, p->str) )
-
-//-
-BEGIN_API_CALLER_FUNC(void, 2pV)
-END_API_CALLER_FUNC_void( (const void*, const void*, ...), (p->p1, p->p2, p->str) )
-
-//-
-BEGIN_API_CALLER_FUNC(void, void)
-END_API_CALLER_FUNC_void( (void), () )
-
-BEGIN_API_CALLER_FUNC(ptr, void)
-END_API_CALLER_FUNC(void*, (void), () )
-
-BEGIN_API_CALLER_FUNC(int, void)
-END_API_CALLER_FUNC(int, (void), () )
-
-BEGIN_API_CALLER_FUNC(float, void)
-END_API_CALLER_FUNC(float, (void), () )
-
-//-
-BEGIN_API_CALLER_FUNC(float, 2f)
-END_API_CALLER_FUNC( float, (float, float), (p->f1, p->f2) )
-
-//-
-BEGIN_API_CALLER_FUNC(void, 2i)
-END_API_CALLER_FUNC_void( (int, int), (p->i1, p->i2) );
-
-BEGIN_API_CALLER_FUNC(int, 2i)
-END_API_CALLER_FUNC(int, (int, int), (p->i1, p->i2) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 2i2p)
-END_API_CALLER_FUNC_void( (int, int, const void*, const void*), (p->i1, p->i2, p->p1, p->p2) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 2i2pi2p)
-END_API_CALLER_FUNC_void( (int, int, const void*, const void*, int, const void*, const void*), (p->i1, p->i2, p->p1, p->p2, p->i3, p->p3, p->p4) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 2p)
-END_API_CALLER_FUNC_void( (const void*, const void*), (p->p1, p->p2) );
-
-BEGIN_API_CALLER_FUNC(ptr, 2p)
-END_API_CALLER_FUNC(void*, (const void*, const void*), (p->p1, p->p2) );
-
-BEGIN_API_CALLER_FUNC(int, 2p)
-END_API_CALLER_FUNC(int, (const void*, const void*), (p->p1, p->p2) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 2p2f)
-END_API_CALLER_FUNC_void( (const void*, const void*, float, float), (p->p1, p->p2, p->f1, p->f2) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 2p2i2p)
-END_API_CALLER_FUNC_void( (const void*, const void*, int, int, const void*, const void*), (p->p1, p->p2, p->i1, p->i2, p->p3, p->p4) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 2p3fus2uc)
-END_API_CALLER_FUNC_void( (const void*, const void*, float, float, float, unsigned short, unsigned char, unsigned char), (p->p1, p->p2, p->f1, p->f2, p->f3, p->us1, p->uc1, p->uc2) );
-
-//-
-BEGIN_API_CALLER_FUNC(ptr, 2pf)
-END_API_CALLER_FUNC(void*, (const void*, const void*, float), (p->p1, p->p2, p->f1) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 2pfi)
-END_API_CALLER_FUNC_void( (const void*, const void*, float, int), (p->p1, p->p2, p->f1, p->i1) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 2pi)
-END_API_CALLER_FUNC_void( (const void*, const void*, int), (p->p1, p->p2, p->i1) );
-
-BEGIN_API_CALLER_FUNC(int, 2pi)
-END_API_CALLER_FUNC(int, (const void*, const void*, int), (p->p1, p->p2, p->i1) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 2pui)
-END_API_CALLER_FUNC_void( (const void*, const void*, unsigned int), (p->p1, p->p2, p->ui1) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 2pi2p)
-END_API_CALLER_FUNC_void( (const void*, const void*, int, const void*, const void*), (p->p1, p->p2, p->i1, p->p3, p->p4) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 2pif2p)
-END_API_CALLER_FUNC_void( (const void*, const void*, int, float, const void*, const void*), (p->p1, p->p2, p->i1, p->f1, p->p3, p->p4) );
-
-//-
-BEGIN_API_CALLER_FUNC(int, 3i)
-END_API_CALLER_FUNC(int, (int, int, int), (p->i1, p->i2, p->i3) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 3p)
-END_API_CALLER_FUNC_void( (const void*, const void*, const void*), (p->p1, p->p2, p->p3) );
-
-BEGIN_API_CALLER_FUNC(ptr, 3p)
-END_API_CALLER_FUNC(void*, (const void*, const void*, const void*), (p->p1, p->p2, p->p3) );
-
-BEGIN_API_CALLER_FUNC(int, 3p)
-END_API_CALLER_FUNC(int, (const void*, const void*, const void*), (p->p1, p->p2, p->p3) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 3p2f2i)
-END_API_CALLER_FUNC_void( (const void*, const void*, const void*, float, float, int, int), (p->p1, p->p2, p->p3, p->f1, p->f2, p->i1, p->i2) );
-
-//-
-BEGIN_API_CALLER_FUNC(int, 3pi2p)
-END_API_CALLER_FUNC(int, (const void*, const void*, const void*, int, const void*, const void*), (p->p1, p->p2, p->p3, p->i1, p->p4, p->p5) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 4p)
-END_API_CALLER_FUNC_void( (const void*, const void*, const void*, const void*), (p->p1, p->p2, p->p3, p->p4) );
-
-BEGIN_API_CALLER_FUNC(int, 4p)
-END_API_CALLER_FUNC(int, (const void*, const void*, const void*, const void*), (p->p1, p->p2, p->p3, p->p4) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, 4pi)
-END_API_CALLER_FUNC_void( (const void*, const void*, const void*, const void*, int), (p->p1, p->p2, p->p3, p->p4, p->i1) );
-
-BEGIN_API_CALLER_FUNC(int, 4pi)
-END_API_CALLER_FUNC(int, (const void*, const void*, const void*, const void*, int), (p->p1, p->p2, p->p3, p->p4, p->i1) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, f)
-END_API_CALLER_FUNC_void( (float), (p->f1) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, i)
-END_API_CALLER_FUNC_void( (int), (p->i1) );
-
-BEGIN_API_CALLER_FUNC(int, i)
-END_API_CALLER_FUNC(int, (int), (p->i1) );
-
-BEGIN_API_CALLER_FUNC(ptr, i)
-END_API_CALLER_FUNC(void*, (int), (p->i1) );
-
-BEGIN_API_CALLER_FUNC(uint, ui)
-END_API_CALLER_FUNC(unsigned int, (unsigned int), (p->ui1) );
-
-BEGIN_API_CALLER_FUNC(ptr, ui)
-END_API_CALLER_FUNC(void*, (unsigned int), (p->ui1) );
-
-//-
-BEGIN_API_CALLER_FUNC(ulong, ul)
-END_API_CALLER_FUNC(unsigned long, (unsigned long), (p->ul1) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, i2p)
-END_API_CALLER_FUNC_void( (int, const void*, const void*), (p->i1, p->p1, p->p2) );
-
-BEGIN_API_CALLER_FUNC(int, i2p)
-END_API_CALLER_FUNC(int, (int, const void*, const void*), (p->i1, p->p1, p->p2) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, i3p)
-END_API_CALLER_FUNC_void( (int, const void*, const void*, const void*), (p->i1, p->p1, p->p2, p->p3) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, ip)
-END_API_CALLER_FUNC_void( (int, const void*), (p->i1, p->p1) );
-
-BEGIN_API_CALLER_FUNC(ushort, ip)
-END_API_CALLER_FUNC( unsigned short, (int, const void*), (p->i1, p->p1) );
-
-BEGIN_API_CALLER_FUNC(int, ip)
-END_API_CALLER_FUNC( int, (int, const void*), (p->i1, p->p1) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, ipusf2p2f4i)
-END_API_CALLER_FUNC_void( (int, const void*, unsigned short, float, const void*, const void*, float, float, int, int, int, int), (p->i1, p->p1, p->us1, p->f1, p->p2, p->p3, p->f2, p->f3, p->i2, p->i3, p->i4, p->i5) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, p)
-END_API_CALLER_FUNC_void( (const void*), (p->p1) );
-
-BEGIN_API_CALLER_FUNC(ptr, p)
-END_API_CALLER_FUNC(void*, (const void*), (p->p1) );
-
-BEGIN_API_CALLER_FUNC(char, p)
-END_API_CALLER_FUNC(char, (const void*), (p->p1) );
-
-BEGIN_API_CALLER_FUNC(int, p)
-END_API_CALLER_FUNC(int, (const void*), (p->p1) );
-
-BEGIN_API_CALLER_FUNC(uint, p)
-END_API_CALLER_FUNC(unsigned int, (const void*), (p->p1) );
-
-BEGIN_API_CALLER_FUNC(float, p)
-END_API_CALLER_FUNC(float, (const void*), (p->p1) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, p2f)
-END_API_CALLER_FUNC_void( (const void*, float, float), (p->p1, p->f1, p->f2) );
-
-//-
-BEGIN_API_CALLER_FUNC(int, p2fi)
-END_API_CALLER_FUNC(int, (const void*, float, float, int), (p->p1, p->f1, p->f2, p->i1) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, p2i)
-END_API_CALLER_FUNC_void( (const void*, int, int), (p->p1, p->i1, p->i2) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, p3i)
-END_API_CALLER_FUNC_void( (const void*, int, int, int), (p->p1, p->i1, p->i2, p->i3) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, p4i)
-END_API_CALLER_FUNC_void( (const void*, int, int, int, int), (p->p1, p->i1, p->i2, p->i3, p->i4) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, puc)
-END_API_CALLER_FUNC_void( (const void*, unsigned char), (p->p1, p->uc1) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, pf)
-END_API_CALLER_FUNC_void( (const void*, float), (p->p1, p->f1) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, pfp)
-END_API_CALLER_FUNC_void( (const void*, float, const void*), (p->p1, p->f1, p->p2) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, pi)
-END_API_CALLER_FUNC_void( (const void*, int), (p->p1, p->i1) );
-
-BEGIN_API_CALLER_FUNC(ptr, pi)
-END_API_CALLER_FUNC(void*, (const void*, int), (p->p1, p->i1) );
-
-BEGIN_API_CALLER_FUNC(int, pi)
-END_API_CALLER_FUNC(int, (const void*, int), (p->p1, p->i1) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, pi2p)
-END_API_CALLER_FUNC_void( (const void*, int, const void*, const void*), (p->p1, p->i1, p->p2, p->p3) );
-
-//-
-BEGIN_API_CALLER_FUNC(int, pi2p2ip)
-END_API_CALLER_FUNC(int, (const void*, int, const void*, const void*, int, int, const void*), (p->p1, p->i1, p->p2, p->p3, p->i2, p->i3, p->p4) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, pip)
-END_API_CALLER_FUNC_void( (const void*, int, const void*), (p->p1, p->i1, p->p2) );
-
-BEGIN_API_CALLER_FUNC(ptr, pip)
-END_API_CALLER_FUNC(void*, (const void*, int, const void*), (p->p1, p->i1, p->p2) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, pip2f2i)
-END_API_CALLER_FUNC_void( (const void*, int, const void*, float, float, int, int), (p->p1, p->i1, p->p2, p->f1, p->f2, p->i2, p->i3) );
-
-//-
-BEGIN_API_CALLER_FUNC(void, pip2f4i2p)
-END_API_CALLER_FUNC_void( (const void*, int, const void*, float, float, int, int, int, int, const void*, const void*), (p->p1, p->i1, p->p2, p->f1, p->f2, p->i2, p->i3, p->i4, p->i5, p->p3, p->p4) );
+#include "api_caller_list.h"

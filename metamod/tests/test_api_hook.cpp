@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include <stdarg.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -1582,6 +1583,168 @@ static int test_reentry_does_not_clobber_outer_flag(void)
 }
 
 // ============================================================
+// api_caller argument marshalling
+//
+// A caller marshals in bulk from the packed struct, which only holds while
+// each pack_args_type_* stays laid out as the image of the slots its call
+// signature describes. Drift corrupts arguments rather than failing to
+// compile, so the caller list is expanded again here into reference callers
+// passing arguments one by one: the reference encodes the signature, the
+// real caller the struct layout, and the delivered blocks are compared.
+// ============================================================
+
+#define BEGIN_API_CALLER_FUNC(ret_type, args_type_code) \
+	void * _COMBINE4(ref_api_caller_, ret_type, _args_, args_type_code)(const void * func, const void * packed_args) { \
+		typedef _COMBINE2(pack_args_type_, args_type_code) pack_t; \
+		pack_t * p ATTRIBUTE(unused)= (pack_t *)packed_args;
+#define END_API_CALLER_FUNC(ret_t, args_t, args) \
+		return(*(void **)class_ret_t((*(( ret_t (*) args_t )func)) args).getptr()); \
+	}
+#define END_API_CALLER_FUNC_void(args_t, args) \
+		return((*(( void* (*) args_t )func)) args); \
+	}
+#define END_API_CALLER_FUNC_noargs(ret_t) \
+		return(*(void **)class_ret_t((*(( ret_t (*)(void) )func))()).getptr()); \
+	}
+#define END_API_CALLER_FUNC_noargs_void() \
+		return((*(( void* (*)(void) )func))()); \
+	}
+
+#include "../api_caller_list.h"
+
+static unsigned char abi_seen[64];
+static unsigned char abi_ref[64];
+static unsigned int abi_seen_len;
+
+// Receivers copy the block they were called with. The address of the first
+// parameter will not do: clang, and any compiler under a sanitizer, keeps
+// that parameter somewhere of its own and leaves the rest of the block
+// behind. va_start points into the block itself, the variadic arguments
+// living nowhere else, one slot past the first parameter.
+//
+// Externally visible so GCC cannot give them a local calling convention,
+// and NOINLINE so an inlined one does not leave no block at all.
+static NOINLINE void abi_record(va_list past_first)
+{
+	const char *first = (const char *)past_first - sizeof(int);
+	memcpy(abi_seen, first, abi_seen_len);
+}
+
+NOINLINE void *abi_capture(int a0, ...);
+NOINLINE void *abi_capture(int a0, ...)
+{
+	va_list ap;
+	va_start(ap, a0);
+	abi_record(ap);
+	va_end(ap);
+	return NULL;
+}
+
+// Callers whose signature returns float must reach a float-returning
+// target, otherwise the caller's fstp runs on an empty x87 stack.
+NOINLINE float abi_capture_float(int a0, ...);
+NOINLINE float abi_capture_float(int a0, ...)
+{
+	va_list ap;
+	va_start(ap, a0);
+	abi_record(ap);
+	va_end(ap);
+	return 0.0f;
+}
+
+#define AP(n) ((const void *)(0x10000000 + (n) * 0x11111))
+
+// A caller reaches its target through an opaque pointer, and the target's
+// real signature never matches the one the caller casts to. Hand the
+// receivers over through volatile pointers so an optimizing build cannot
+// recover their identity, devirtualize the indirect call and re-type the
+// arguments to the receiver's own declaration.
+static void * volatile abi_recv;
+static void * volatile abi_recv_float;
+
+#define ABI_CHECK_TO(recv, ret_type, type, ctor_args) do { \
+	pack_args_type_##type pk ctor_args; \
+	abi_seen_len = (unsigned int)sizeof(pk); \
+	memset(abi_ref, 0, sizeof(abi_ref)); \
+	memset(abi_seen, 0, sizeof(abi_seen)); \
+	_COMBINE4(ref_api_caller_, ret_type, _args_, type)((const void *)recv, &pk); \
+	memcpy(abi_ref, abi_seen, sizeof(abi_ref)); \
+	memset(abi_seen, 0, sizeof(abi_seen)); \
+	_COMBINE4(api_caller_, ret_type, _args_, type)((const void *)recv, &pk); \
+	if (memcmp(abi_seen, abi_ref, abi_seen_len) != 0) { \
+		printf("FAILED\n    %s: bulk arg block != declared signature\n", #type); \
+		return 1; \
+	} \
+	if (memcmp(abi_seen, &pk, sizeof(pk)) != 0) { \
+		printf("FAILED\n    %s: arg block != packed struct image\n", #type); \
+		return 1; \
+	} \
+} while (0)
+
+#define ABI_CHECK(ret_type, type, ctor_args) \
+	ABI_CHECK_TO(abi_recv, ret_type, type, ctor_args)
+
+static int test_api_caller_arg_block_abi(void)
+{
+	TEST("api_caller - bulk arg block matches declared signature");
+
+	abi_recv = (void *)abi_capture;
+	abi_recv_float = (void *)abi_capture_float;
+
+	ABI_CHECK_TO(abi_recv_float, float, 2f, (1.5f, 2.25f));
+
+	ABI_CHECK(int, 2i, (11, 12));
+	ABI_CHECK(void, 2i2p, (21, 22, AP(1), AP(2)));
+	ABI_CHECK(void, 2i2pi2p, (31, 32, AP(1), AP(2), 33, AP(3), AP(4)));
+	ABI_CHECK(int, 2p, (AP(1), AP(2)));
+	ABI_CHECK(void, 2p2f, (AP(1), AP(2), 1.5f, 2.25f));
+	ABI_CHECK(void, 2p2i2p, (AP(1), AP(2), 41, 42, AP(3), AP(4)));
+	ABI_CHECK(void, 2p3fus2uc, (AP(1), AP(2), 1.5f, 2.25f, 3.125f, 0xbeef, 0x5a, 0xa5));
+	ABI_CHECK(void, 2pV, (AP(1), AP(2), AP(3)));
+	ABI_CHECK(ptr, 2pf, (AP(1), AP(2), 1.5f));
+	ABI_CHECK(void, 2pfi, (AP(1), AP(2), 1.5f, 51));
+	ABI_CHECK(int, 2pi, (AP(1), AP(2), 61));
+	ABI_CHECK(void, 2pi2p, (AP(1), AP(2), 71, AP(3), AP(4)));
+	ABI_CHECK(void, 2pif2p, (AP(1), AP(2), 81, 1.5f, AP(3), AP(4)));
+	ABI_CHECK(void, 2pui, (AP(1), AP(2), 0x91919191u));
+	ABI_CHECK(int, 3i, (101, 102, 103));
+	ABI_CHECK(int, 3p, (AP(1), AP(2), AP(3)));
+	ABI_CHECK(void, 3p2f2i, (AP(1), AP(2), AP(3), 1.5f, 2.25f, 111, 112));
+	ABI_CHECK(int, 3pi2p, (AP(1), AP(2), AP(3), 121, AP(4), AP(5)));
+	ABI_CHECK(int, 4p, (AP(1), AP(2), AP(3), AP(4)));
+	ABI_CHECK(int, 4pi, (AP(1), AP(2), AP(3), AP(4), 131));
+	ABI_CHECK(void, f, (1.5f));
+	ABI_CHECK(int, i, (141));
+	ABI_CHECK(int, i2p, (151, AP(1), AP(2)));
+	ABI_CHECK(void, i3p, (161, AP(1), AP(2), AP(3)));
+	ABI_CHECK(int, ip, (171, AP(1)));
+	ABI_CHECK(void, ipV, (181, AP(1), AP(2)));
+	ABI_CHECK(void, ipusf2p2f4i,
+		  (191, AP(1), 0xc0de, 1.5f, AP(2), AP(3), 2.25f, 3.125f, 192, 193, 194, 195));
+	ABI_CHECK(char, p, (AP(1)));
+	ABI_CHECK(void, p2f, (AP(1), 1.5f, 2.25f));
+	ABI_CHECK(int, p2fi, (AP(1), 1.5f, 2.25f, 201));
+	ABI_CHECK(void, p2i, (AP(1), 211, 212));
+	ABI_CHECK(void, p3i, (AP(1), 221, 222, 223));
+	ABI_CHECK(void, p4i, (AP(1), 231, 232, 233, 234));
+	ABI_CHECK(void, pf, (AP(1), 1.5f));
+	ABI_CHECK(void, pfp, (AP(1), 1.5f, AP(2)));
+	ABI_CHECK(int, pi, (AP(1), 241));
+	ABI_CHECK(void, pi2p, (AP(1), 251, AP(2), AP(3)));
+	ABI_CHECK(int, pi2p2ip, (AP(1), 261, AP(2), AP(3), 262, 263, AP(4)));
+	ABI_CHECK(ptr, pip, (AP(1), 271, AP(2)));
+	ABI_CHECK(void, pip2f2i, (AP(1), 281, AP(2), 1.5f, 2.25f, 282, 283));
+	ABI_CHECK(void, pip2f4i2p,
+		  (AP(1), 291, AP(2), 1.5f, 2.25f, 292, 293, 294, 295, AP(3), AP(4)));
+	ABI_CHECK(void, puc, (AP(1), 0x7e));
+	ABI_CHECK(ptr, ui, (0x31313131u));
+	ABI_CHECK(ulong, ul, (0x41414141ul));
+
+	PASS();
+	return 0;
+}
+
+// ============================================================
 // main
 // ============================================================
 
@@ -1666,6 +1829,9 @@ int main(void)
 	fail |= test_flag_cleared_after_outermost_returns();
 	fail |= test_reentry_rebuild_propagates_return_type();
 	fail |= test_reentry_does_not_clobber_outer_flag();
+
+	// api_caller argument marshalling
+	fail |= test_api_caller_arg_block_abi();
 
 	printf("\n%d/%d tests passed\n", tests_passed, tests_run);
 	return fail ? EXIT_FAILURE : EXIT_SUCCESS;
