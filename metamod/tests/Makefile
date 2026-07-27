@@ -193,12 +193,44 @@ ALL_TESTS = test_support_meta test_osdep test_log_meta test_vdate \
     test_metamod_gamedll \
     test_osdep_detect_gamedll_win32 test_osdep_linkent_win32
 
-.PHONY: all run valgrind sanitize clang-sanitize coverage coverage-clean clean
+.PHONY: all run run-opt run-release bench valgrind sanitize clang-sanitize coverage coverage-clean clean
 
 all: $(ALL_TESTS)
 
 run: $(ALL_TESTS)
 	@for t in $(ALL_TESTS); do ./$$t || exit 1; done
+
+# The shipped build is optimized. Argument marshalling that folds away only
+# once the optimizer can see through a copy is invisible at the default -O0,
+# so the suite is also worth running the way the release is built.
+run-opt:
+	$(MAKE) clean
+	$(MAKE) CXXFLAGS="-O2" run
+
+# metamod.so is built with different code generation and a different calling
+# convention than the tests default to: PIC, regparm, no frame pointer. Which
+# prologue a wrapper gets, and where its arguments live, follow from those, so
+# argument marshalling can be right in one build and wrong in the other.
+RELEASE_FLAGS = -O2 -fomit-frame-pointer -flto=auto -fPIC -fvisibility=hidden \
+    -mtune=generic -fno-exceptions -fno-rtti -D__INTERNALS_USE_REGPARAMS__
+
+run-release:
+	$(MAKE) clean
+	$(MAKE) CXXFLAGS="$(RELEASE_FLAGS)" run
+
+# Dispatch cost of the API wrappers, with trivial plugin and gamedll callees
+# so what is measured is metamod's own overhead. A live server buries that
+# under the ~97% of cycles it spends elsewhere, which is enough to hide a
+# regression: pin it to a core and compare against a build of the base branch.
+# Built the way metamod.so is: measuring -O0 code would say nothing.
+bench:
+	$(MAKE) clean
+	$(MAKE) CXXFLAGS="$(RELEASE_FLAGS)" bench_api_hook
+	taskset -c 8 ./bench_api_hook
+
+bench_api_hook: bench_api_hook.o $(EXTENDED_OBJS) api_hook.o api_info.o \
+    dllapi.o engine_api.o commands_meta.o vdate.o mutil.o
+	${CXX} $(EXTRA_FLAGS) -o $@ $^ -ldl
 
 VALGRIND = valgrind --leak-check=full --error-exitcode=1
 

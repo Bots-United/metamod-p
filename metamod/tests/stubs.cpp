@@ -19,14 +19,20 @@ extern __attribute__((weak)) const engine_info_t engine_info = {};
 __attribute__((weak)) gamedll_funcs_t GameDLL_funcs = {};
 __attribute__((weak)) mutil_funcs_t MetaUtilFunctions = {};
 __attribute__((weak)) enginefuncs_t *Engine_funcs = NULL;
-__attribute__((weak)) meta_enginefuncs_t meta_engfuncs;
+// Storage only, under the real symbol name, for tests that do not link
+// engine_api.o. A weak object of the real type would run its default
+// constructor even where engine_api.o's strong definition wins, and which
+// of the two runs last is unspecified: with LTO it was the default one,
+// which zeroed the table engine_api.o had just filled.
+__attribute__((weak, aligned(16)))
+char meta_engfuncs_stub_storage[sizeof(meta_enginefuncs_t)] __asm__("meta_engfuncs");
 
-__attribute__((weak)) void main_hook_function_void(unsigned int, enum_api_t, unsigned int, const void *) {}
-__attribute__((weak)) void *main_hook_function(const class_ret_t, unsigned int, enum_api_t, unsigned int, const void *) { return NULL; }
+__attribute__((weak)) void DLLINTERNAL main_hook_function_void(unsigned int, enum_api_t, unsigned int, const void *) {}
+__attribute__((weak)) void * DLLINTERNAL main_hook_function(const class_ret_t, unsigned int, enum_api_t, unsigned int, const void *) { return NULL; }
 
-__attribute__((weak)) void client_meta(edict_t *) {}
+__attribute__((weak)) void DLLINTERNAL client_meta(edict_t *) {}
 
-__attribute__((weak)) const char *META_UTIL_VarArgs(const char *, ...)
+__attribute__((weak)) const char * DLLINTERNAL META_UTIL_VarArgs(const char *, ...)
 {
 	static char buf[] = "";
 	return buf;

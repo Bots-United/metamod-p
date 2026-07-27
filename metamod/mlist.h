@@ -95,7 +95,9 @@ class MPluginList : public class_metamod_new {
 
 	// constructor/destructor:
 		MPluginList(const char *ifile) DLLINTERNAL;
-		~MPluginList(void) DLLINTERNAL;
+		// Not DLLINTERNAL: __cxa_atexit calls a static object's destructor
+		// as plain cdecl, where regparm would look for `this` in a register.
+		~MPluginList(void);
 
 	// functions:
 		void DLLINTERNAL reset_plugin(MPlugin *pl_find);
