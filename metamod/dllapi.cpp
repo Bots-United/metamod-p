@@ -219,6 +219,12 @@ static HOT_FUNC FORCE_STACK_ALIGN void mm_PlayerPostThink(edict_t *pEntity) {
 static HOT_FUNC FORCE_STACK_ALIGN void mm_StartFrame(void) {
 	meta_debug_value = (int)meta_debug.value;
 
+	// Catch plugins that installed a hook into their own table since the
+	// lists were built.  Done here, before dispatching, so that no hook
+	// list is being walked at the moment a rebuild happens.
+	if(likely(Plugins != NULL))
+		Plugins->refresh_hook_lists_if_changed();
+
 	META_DLLAPI_HANDLE_void(FN_STARTFRAME, pfnStartFrame, void, (VOID_ARG));
 	RETURN_API_void();
 }
