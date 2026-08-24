@@ -127,13 +127,15 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 	PublicMetaGlobals.prev_mres=MRES_UNSET;
 	rebuild_happened = hook_list_tables_updated;
 	hook_list_tables_updated = mFALSE;
-	list = Plugins->get_hook_list(api);
+	list = Plugins->get_hook_list(api, func_offset);
 	count = list->count;
 	plugs = list->plugs;
 	for(i=0; likely(i < count); i++) {
 		MPlugin *plug = plugs[i];
+		// Listed plugins hook this function, unless one dropped its own
+		// table entry since the list was built.
 		void *pfn_routine=get_api_function(plug->get_api_table(api), func_offset);
-		if(likely(!pfn_routine))
+		if(unlikely(!pfn_routine))
 			continue;
 
 		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s()", plug->file, api_info.name));
@@ -149,7 +151,7 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 		if(unlikely(hook_list_tables_updated)) {
 			hook_list_tables_updated = mFALSE;
 			rebuild_happened = mTRUE;
-			i = Plugins->find_plugin_after_rebuild(api, mFALSE, plug, count, plugs);
+			i = Plugins->find_plugin_after_rebuild(api, func_offset, mFALSE, plug, count, plugs);
 		}
 
 		// plugin's result code
@@ -194,13 +196,13 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 	PublicMetaGlobals.prev_mres=MRES_UNSET;
 	rebuild_happened = (mBOOL)(rebuild_happened | hook_list_tables_updated);
 	hook_list_tables_updated = mFALSE;
-	list = Plugins->get_hook_post_list(api);
+	list = Plugins->get_hook_post_list(api, func_offset);
 	count = list->count;
 	plugs = list->plugs;
 	for(i=0; likely(i < count); i++) {
 		MPlugin *plug = plugs[i];
 		void *pfn_routine=get_api_function(plug->get_api_post_table(api), func_offset);
-		if(likely(!pfn_routine))
+		if(unlikely(!pfn_routine))
 			continue;
 
 		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s_Post()", plug->file, api_info.name));
@@ -216,7 +218,7 @@ static inline HOT_FUNC void DLLINTERNAL main_hook_function_void_t(unsigned int a
 		if(unlikely(hook_list_tables_updated)) {
 			hook_list_tables_updated = mFALSE;
 			rebuild_happened = mTRUE;
-			i = Plugins->find_plugin_after_rebuild(api, mTRUE, plug, count, plugs);
+			i = Plugins->find_plugin_after_rebuild(api, func_offset, mTRUE, plug, count, plugs);
 		}
 
 		// plugin's result code
@@ -289,13 +291,15 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 	//Pre plugin functions
 	PublicMetaGlobals.prev_mres = MRES_UNSET;
 	rebuild_happened = hook_list_tables_updated;
-	list = Plugins->get_hook_list(api);
+	list = Plugins->get_hook_list(api, func_offset);
 	count = list->count;
 	plugs = list->plugs;
 	for(i=0; likely(i < count); i++) {
 		MPlugin *plug = plugs[i];
+		// Listed plugins hook this function, unless one dropped its own
+		// table entry since the list was built.
 		void *pfn_routine=get_api_function(plug->get_api_table(api), func_offset);
-		if(likely(!pfn_routine))
+		if(unlikely(!pfn_routine))
 			continue;
 
 		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s()", plug->file, api_info.name));
@@ -317,7 +321,7 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 		if(unlikely(hook_list_tables_updated)) {
 			hook_list_tables_updated = mFALSE;
 			rebuild_happened = mTRUE;
-			i = Plugins->find_plugin_after_rebuild(api, mFALSE, plug, count, plugs);
+			i = Plugins->find_plugin_after_rebuild(api, func_offset, mFALSE, plug, count, plugs);
 		}
 
 		// plugin's result code
@@ -369,13 +373,13 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 	PublicMetaGlobals.prev_mres = MRES_UNSET;
 	rebuild_happened = (mBOOL)(rebuild_happened | hook_list_tables_updated);
 	hook_list_tables_updated = mFALSE;
-	list = Plugins->get_hook_post_list(api);
+	list = Plugins->get_hook_post_list(api, func_offset);
 	count = list->count;
 	plugs = list->plugs;
 	for(i=0; likely(i < count); i++) {
 		MPlugin *plug = plugs[i];
 		void *pfn_routine=get_api_function(plug->get_api_post_table(api), func_offset);
-		if(likely(!pfn_routine))
+		if(unlikely(!pfn_routine))
 			continue;
 
 		MAYBE_META_DEBUG(do_debug, api_info.loglevel, ("Calling %s:%s_Post()", plug->file, api_info.name));
@@ -397,7 +401,7 @@ static inline HOT_FUNC void * DLLINTERNAL main_hook_function_t(const class_ret_t
 		if(unlikely(hook_list_tables_updated)) {
 			hook_list_tables_updated = mFALSE;
 			rebuild_happened = mTRUE;
-			i = Plugins->find_plugin_after_rebuild(api, mTRUE, plug, count, plugs);
+			i = Plugins->find_plugin_after_rebuild(api, func_offset, mTRUE, plug, count, plugs);
 		}
 
 		// plugin's result code

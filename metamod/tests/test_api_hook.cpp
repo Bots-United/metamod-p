@@ -296,6 +296,17 @@ static void teardown(void)
 	GameDLL_funcs.dllapi_table = NULL;
 }
 
+// Hook lists are per function, so which functions a plugin hooks is decided
+// when the lists are built.  At runtime that ordering is metamod's: a plugin
+// fills its table while attaching and the rebuild follows.  A test sets its
+// table up after the setup_*_plugin() helpers have already rebuilt, so the
+// rebuild has to happen once more before dispatching.
+static void rebuild_before_dispatch(void)
+{
+	if(Plugins)
+		Plugins->rebuild_hook_lists();
+}
+
 // Helper: call GameDLLInit through the hook dispatcher
 static void call_hooked_GameInit(void)
 {
@@ -303,6 +314,7 @@ static void call_hooked_GameInit(void)
 	memset(&meta_funcs, 0, sizeof(meta_funcs));
 	int ver = INTERFACE_VERSION;
 	GetEntityAPI2(&meta_funcs, &ver);
+	rebuild_before_dispatch();
 	meta_funcs.pfnGameInit();
 }
 
@@ -315,6 +327,7 @@ static int call_hooked_Spawn(void)
 	GetEntityAPI2(&meta_funcs, &ver);
 	edict_t ed;
 	memset(&ed, 0, sizeof(ed));
+	rebuild_before_dispatch();
 	return meta_funcs.pfnSpawn(&ed);
 }
 
@@ -1582,6 +1595,222 @@ static int test_reentry_does_not_clobber_outer_flag(void)
 }
 
 // ============================================================
+// Per-function hook lists
+// ============================================================
+
+// Which functions a plugin hooks is decided when the lists are built, so
+// removing and adding a hook are not symmetric: a slot that went NULL is
+// skipped on the next call, a slot that was filled is not reached until the
+// lists are rebuilt.  Both are checked here because a plugin holds the
+// pointer to the table metamod handed it and can write to it whenever.
+
+static void plugin1_pre_GameInit_unload_plugin2(void)
+{
+	g_plugin1_pre_called++;
+
+	// A plugin unloading another one from inside a hook, while the pre
+	// loop is still iterating and has plugin2 ahead of it.
+	Plugins->plist[1].status = PL_EMPTY;
+	Plugins->plist[1].tables.dllapi = NULL;
+	Plugins->plist[1].post_tables.dllapi = NULL;
+	Plugins->rebuild_hook_lists();
+
+	RETURN_META(MRES_IGNORED);
+}
+
+static int test_unload_during_pre_iteration_skips_plugin(void)
+{
+	TEST("issue #108 - plugin unloaded mid-iteration is not called, later one still is");
+	setup_two_plugins();
+
+	// A third plugin behind plugin2, to show the loop carries on correctly
+	// after the entry it was about to reach disappears.
+	memset(&plugin3_pre_funcs, 0, sizeof(plugin3_pre_funcs));
+	memset(&plugin3_post_funcs, 0, sizeof(plugin3_post_funcs));
+	plugin3_pre_funcs.pfnGameInit = plugin3_pre_GameInit;
+	MPlugin *plug3 = &test_plugins.plist[2];
+	memset(plug3, 0, sizeof(*plug3));
+	plug3->status = PL_RUNNING;
+	plug3->index = 3;
+	snprintf(plug3->filename, sizeof(plug3->filename), "plugin3");
+	plug3->file = plug3->filename;
+	plug3->tables.dllapi = &plugin3_pre_funcs;
+	test_plugins.endlist = 3;
+
+	plugin1_pre_funcs.pfnGameInit = plugin1_pre_GameInit_unload_plugin2;
+	plugin2_pre_funcs.pfnGameInit = plugin2_pre_GameInit;
+	g_plugin2_pre_mres = MRES_IGNORED;
+	g_plugin3_pre_called = 0;
+	g_plugin3_post_called = 0;
+
+	call_hooked_GameInit();
+
+	ASSERT_TRUE(g_plugin1_pre_called == 1);
+	ASSERT_TRUE(g_plugin2_pre_called == 0);
+	ASSERT_TRUE(g_plugin3_pre_called == 1);
+	ASSERT_TRUE(g_gamedll_called == 1);
+	teardown();
+	PASS();
+	return 0;
+}
+
+// Dispatch without rebuilding first, to see the lists as a plugin that
+// edits its own table between calls would leave them.
+static void call_hooked_GameInit_no_rebuild(void)
+{
+	DLL_FUNCTIONS meta_funcs;
+	memset(&meta_funcs, 0, sizeof(meta_funcs));
+	int ver = INTERFACE_VERSION;
+	GetEntityAPI2(&meta_funcs, &ver);
+	meta_funcs.pfnGameInit();
+}
+
+static int test_hook_cleared_after_rebuild_is_skipped(void)
+{
+	TEST("per-function lists - hook cleared after rebuild is skipped");
+	setup_two_plugins();
+	plugin1_pre_funcs.pfnGameInit = plugin1_pre_GameInit;
+	plugin2_pre_funcs.pfnGameInit = plugin2_pre_GameInit;
+	g_plugin1_pre_mres = MRES_IGNORED;
+	g_plugin2_pre_mres = MRES_IGNORED;
+	test_plugins.rebuild_hook_lists();
+
+	// plugin1 drops its hook without telling anyone.
+	plugin1_pre_funcs.pfnGameInit = NULL;
+
+	call_hooked_GameInit_no_rebuild();
+
+	ASSERT_TRUE(g_plugin1_pre_called == 0);
+	ASSERT_TRUE(g_plugin2_pre_called == 1);
+	ASSERT_TRUE(g_gamedll_called == 1);
+	teardown();
+	PASS();
+	return 0;
+}
+
+static int test_hook_added_after_rebuild_waits_for_rebuild(void)
+{
+	TEST("per-function lists - hook added after rebuild waits for the next rebuild");
+	setup_two_plugins();
+	plugin2_pre_funcs.pfnGameInit = plugin2_pre_GameInit;
+	g_plugin2_pre_mres = MRES_IGNORED;
+	g_plugin1_pre_mres = MRES_IGNORED;
+	test_plugins.rebuild_hook_lists();
+
+	// plugin1 installs a hook after the lists were built.
+	plugin1_pre_funcs.pfnGameInit = plugin1_pre_GameInit;
+
+	call_hooked_GameInit_no_rebuild();
+	ASSERT_TRUE(g_plugin1_pre_called == 0);
+	ASSERT_TRUE(g_plugin2_pre_called == 1);
+
+	// Load, unload, pause and unpause all rebuild, and then it is called.
+	test_plugins.rebuild_hook_lists();
+	call_hooked_GameInit_no_rebuild();
+	ASSERT_TRUE(g_plugin1_pre_called == 1);
+	ASSERT_TRUE(g_plugin2_pre_called == 2);
+
+	teardown();
+	PASS();
+	return 0;
+}
+
+// ============================================================
+// Hooks installed while running
+// ============================================================
+
+// A plugin owns the table metamod handed it and may edit it at any time.
+// AMX Mod X's fakemeta register_forward() installs hooks exactly that way,
+// long after the plugin attached, so the per-function lists have to notice.
+
+static int g_plugin1_startframe_called;
+static int g_gamedll_startframe_called;
+
+static void plugin1_pre_StartFrame(void)
+{
+	g_plugin1_startframe_called++;
+	RETURN_META(MRES_IGNORED);
+}
+
+static void mock_gamedll_startframe(void)
+{
+	g_gamedll_startframe_called++;
+}
+
+static void call_hooked_StartFrame(void)
+{
+	DLL_FUNCTIONS meta_funcs;
+	memset(&meta_funcs, 0, sizeof(meta_funcs));
+	int ver = INTERFACE_VERSION;
+	GetEntityAPI2(&meta_funcs, &ver);
+	meta_funcs.pfnStartFrame();
+}
+
+static int test_runtime_hook_install_is_picked_up(void)
+{
+	TEST("dynamic hooks - hook installed while running goes live on the next frame");
+	setup_one_plugin();
+	gamedll_funcs.pfnStartFrame = mock_gamedll_startframe;
+	g_plugin1_startframe_called = 0;
+	g_gamedll_startframe_called = 0;
+	test_plugins.rebuild_hook_lists();
+
+	// Nobody hooks StartFrame yet.
+	call_hooked_StartFrame();
+	ASSERT_TRUE(g_plugin1_startframe_called == 0);
+	ASSERT_TRUE(g_gamedll_startframe_called == 1);
+
+	// The plugin installs a hook into its own table and tells nobody.
+	plugin1_pre_funcs.pfnStartFrame = plugin1_pre_StartFrame;
+
+	// The next frame notices and calls it, and keeps calling it.
+	call_hooked_StartFrame();
+	ASSERT_TRUE(g_plugin1_startframe_called == 1);
+	call_hooked_StartFrame();
+	ASSERT_TRUE(g_plugin1_startframe_called == 2);
+	ASSERT_TRUE(g_gamedll_startframe_called == 3);
+
+	// And dropping it again takes effect immediately.
+	plugin1_pre_funcs.pfnStartFrame = NULL;
+	call_hooked_StartFrame();
+	ASSERT_TRUE(g_plugin1_startframe_called == 2);
+	ASSERT_TRUE(g_gamedll_startframe_called == 4);
+
+	gamedll_funcs.pfnStartFrame = NULL;
+	teardown();
+	PASS();
+	return 0;
+}
+
+// The check runs every frame, so it must not rebuild when nothing changed:
+// a rebuild reallocates and invalidates any iteration in flight.
+static int test_unchanged_tables_do_not_rebuild(void)
+{
+	TEST("dynamic hooks - unchanged tables do not trigger a rebuild");
+	setup_one_plugin();
+	gamedll_funcs.pfnStartFrame = mock_gamedll_startframe;
+	plugin1_pre_funcs.pfnStartFrame = plugin1_pre_StartFrame;
+	test_plugins.rebuild_hook_lists();
+
+	MPlugin * const *plugs_before =
+		test_plugins.get_hook_list(e_api_dllapi, offsetof(DLL_FUNCTIONS, pfnStartFrame))->plugs;
+
+	ASSERT_TRUE(test_plugins.hook_tables_changed() == mFALSE);
+	call_hooked_StartFrame();
+	ASSERT_TRUE(test_plugins.hook_tables_changed() == mFALSE);
+
+	// No rebuild means the backing allocation was left alone.
+	ASSERT_PTR_EQ(test_plugins.get_hook_list(e_api_dllapi,
+			offsetof(DLL_FUNCTIONS, pfnStartFrame))->plugs, plugs_before);
+
+	gamedll_funcs.pfnStartFrame = NULL;
+	plugin1_pre_funcs.pfnStartFrame = NULL;
+	teardown();
+	PASS();
+	return 0;
+}
+
+// ============================================================
 // main
 // ============================================================
 
@@ -1666,6 +1895,15 @@ int main(void)
 	fail |= test_flag_cleared_after_outermost_returns();
 	fail |= test_reentry_rebuild_propagates_return_type();
 	fail |= test_reentry_does_not_clobber_outer_flag();
+	fail |= test_unload_during_pre_iteration_skips_plugin();
+
+	// Per-function hook lists
+	fail |= test_hook_cleared_after_rebuild_is_skipped();
+	fail |= test_hook_added_after_rebuild_waits_for_rebuild();
+
+	// Hooks installed while running
+	fail |= test_runtime_hook_install_is_picked_up();
+	fail |= test_unchanged_tables_do_not_rebuild();
 
 	printf("\n%d/%d tests passed\n", tests_passed, tests_run);
 	return fail ? EXIT_FAILURE : EXIT_SUCCESS;

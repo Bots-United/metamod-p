@@ -4105,6 +4105,25 @@ static DLL_FUNCTIONS fake_dllapi2;
 static NEW_DLL_FUNCTIONS fake_newapi;
 static enginefuncs_t fake_engine_funcs;
 
+// Hook lists are kept per API function, so a fake table has to hook
+// something for its plugin to land in a list at all.  One slot per api
+// group, never called, only looked up.
+static int fake_hook_spawn(edict_t *) { return 0; }
+static void fake_hook_think(edict_t *) {}
+static int fake_hook_precache_model(char *) { return 0; }
+static void fake_hook_game_shutdown(void) {}
+
+#define FAKE_OFF_ENGINE	offsetof(enginefuncs_t, pfnPrecacheModel)
+#define FAKE_OFF_DLLAPI	offsetof(DLL_FUNCTIONS, pfnSpawn)
+#define FAKE_OFF_NEWAPI	offsetof(NEW_DLL_FUNCTIONS, pfnGameShutdown)
+
+// Indexed by enum_api_t, for the tests that loop over all three groups.
+static const unsigned int fake_api_offsets[3] = {
+	FAKE_OFF_ENGINE,
+	FAKE_OFF_DLLAPI,
+	FAKE_OFF_NEWAPI,
+};
+
 static int test_rebuild_empty(void)
 {
 	TEST("rebuild_hook_lists - empty list produces zero counts");
@@ -4113,8 +4132,8 @@ static int test_rebuild_empty(void)
 	list->endlist = 0;
 	list->rebuild_hook_lists();
 	for(int api = 0; api < 3; api++) {
-		ASSERT_INT(list->get_hook_list((enum_api_t)api)->count, 0);
-		ASSERT_INT(list->get_hook_post_list((enum_api_t)api)->count, 0);
+		ASSERT_INT(list->get_hook_list((enum_api_t)api, fake_api_offsets[api])->count, 0);
+		ASSERT_INT(list->get_hook_post_list((enum_api_t)api, fake_api_offsets[api])->count, 0);
 	}
 	ASSERT_TRUE(list->hook_list_data == NULL);
 	teardown_globals();
@@ -4129,6 +4148,7 @@ static int test_rebuild_one_running_dllapi(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	MPlugin *plug = &list->plist[0];
 	memset(plug, 0, sizeof(*plug));
 	plug->status = PL_RUNNING;
@@ -4138,14 +4158,14 @@ static int test_rebuild_one_running_dllapi(void)
 
 	list->rebuild_hook_lists();
 
-	ASSERT_INT(list->get_hook_list(e_api_engine)->count, 0);
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
-	ASSERT_INT(list->get_hook_list(e_api_newapi)->count, 0);
-	ASSERT_INT(list->get_hook_post_list(e_api_engine)->count, 0);
-	ASSERT_INT(list->get_hook_post_list(e_api_dllapi)->count, 1);
-	ASSERT_INT(list->get_hook_post_list(e_api_newapi)->count, 0);
-	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug);
-	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi)->plugs[0], plug);
+	ASSERT_INT(list->get_hook_list(e_api_engine, FAKE_OFF_ENGINE)->count, 0);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 1);
+	ASSERT_INT(list->get_hook_list(e_api_newapi, FAKE_OFF_NEWAPI)->count, 0);
+	ASSERT_INT(list->get_hook_post_list(e_api_engine, FAKE_OFF_ENGINE)->count, 0);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 1);
+	ASSERT_INT(list->get_hook_post_list(e_api_newapi, FAKE_OFF_NEWAPI)->count, 0);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[0], plug);
+	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[0], plug);
 	teardown_globals();
 	PASS();
 	return 0;
@@ -4158,8 +4178,11 @@ static int test_rebuild_one_running_all_tables(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_newapi, 0, sizeof(fake_newapi));
+	fake_newapi.pfnGameShutdown = fake_hook_game_shutdown;
 	memset(&fake_engine_funcs, 0, sizeof(fake_engine_funcs));
+	fake_engine_funcs.pfnPrecacheModel = fake_hook_precache_model;
 	MPlugin *plug = &list->plist[0];
 	memset(plug, 0, sizeof(*plug));
 	plug->status = PL_RUNNING;
@@ -4174,10 +4197,10 @@ static int test_rebuild_one_running_all_tables(void)
 	list->rebuild_hook_lists();
 
 	for(int api = 0; api < 3; api++) {
-		ASSERT_INT(list->get_hook_list((enum_api_t)api)->count, 1);
-		ASSERT_INT(list->get_hook_post_list((enum_api_t)api)->count, 1);
-		ASSERT_PTR_EQ(list->get_hook_list((enum_api_t)api)->plugs[0], plug);
-		ASSERT_PTR_EQ(list->get_hook_post_list((enum_api_t)api)->plugs[0], plug);
+		ASSERT_INT(list->get_hook_list((enum_api_t)api, fake_api_offsets[api])->count, 1);
+		ASSERT_INT(list->get_hook_post_list((enum_api_t)api, fake_api_offsets[api])->count, 1);
+		ASSERT_PTR_EQ(list->get_hook_list((enum_api_t)api, fake_api_offsets[api])->plugs[0], plug);
+		ASSERT_PTR_EQ(list->get_hook_post_list((enum_api_t)api, fake_api_offsets[api])->plugs[0], plug);
 	}
 	teardown_globals();
 	PASS();
@@ -4191,6 +4214,7 @@ static int test_rebuild_pre_only(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	MPlugin *plug = &list->plist[0];
 	memset(plug, 0, sizeof(*plug));
 	plug->status = PL_RUNNING;
@@ -4200,10 +4224,10 @@ static int test_rebuild_pre_only(void)
 
 	list->rebuild_hook_lists();
 
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
-	ASSERT_INT(list->get_hook_post_list(e_api_dllapi)->count, 0);
-	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug);
-	ASSERT_PTR_NULL(list->get_hook_post_list(e_api_dllapi)->plugs);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 1);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 0);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[0], plug);
+	ASSERT_PTR_NULL(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs);
 	teardown_globals();
 	PASS();
 	return 0;
@@ -4216,6 +4240,7 @@ static int test_rebuild_post_only(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	MPlugin *plug = &list->plist[0];
 	memset(plug, 0, sizeof(*plug));
 	plug->status = PL_RUNNING;
@@ -4225,10 +4250,10 @@ static int test_rebuild_post_only(void)
 
 	list->rebuild_hook_lists();
 
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 0);
-	ASSERT_INT(list->get_hook_post_list(e_api_dllapi)->count, 1);
-	ASSERT_PTR_NULL(list->get_hook_list(e_api_dllapi)->plugs);
-	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi)->plugs[0], plug);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 0);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 1);
+	ASSERT_PTR_NULL(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs);
+	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[0], plug);
 	teardown_globals();
 	PASS();
 	return 0;
@@ -4241,6 +4266,7 @@ static int test_rebuild_skips_non_running(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 
 	PLUG_STATUS skip_statuses[] = { PL_PAUSED, PL_EMPTY, PL_VALID, PL_OPENED };
 	for(int s = 0; s < 4; s++) {
@@ -4255,8 +4281,8 @@ static int test_rebuild_skips_non_running(void)
 	list->rebuild_hook_lists();
 
 	for(int api = 0; api < 3; api++) {
-		ASSERT_INT(list->get_hook_list((enum_api_t)api)->count, 0);
-		ASSERT_INT(list->get_hook_post_list((enum_api_t)api)->count, 0);
+		ASSERT_INT(list->get_hook_list((enum_api_t)api, fake_api_offsets[api])->count, 0);
+		ASSERT_INT(list->get_hook_post_list((enum_api_t)api, fake_api_offsets[api])->count, 0);
 	}
 	teardown_globals();
 	PASS();
@@ -4270,7 +4296,9 @@ static int test_rebuild_mixed_statuses(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plug0 = &list->plist[0];
 	memset(plug0, 0, sizeof(*plug0));
@@ -4295,9 +4323,9 @@ static int test_rebuild_mixed_statuses(void)
 	list->endlist = 4;
 	list->rebuild_hook_lists();
 
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 2);
-	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug1);
-	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[1], plug3);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 2);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[0], plug1);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[1], plug3);
 	teardown_globals();
 	PASS();
 	return 0;
@@ -4310,7 +4338,9 @@ static int test_rebuild_two_plugins_order(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plug0 = &list->plist[0];
 	memset(plug0, 0, sizeof(*plug0));
@@ -4327,12 +4357,12 @@ static int test_rebuild_two_plugins_order(void)
 	list->endlist = 2;
 	list->rebuild_hook_lists();
 
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 2);
-	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug0);
-	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[1], plug1);
-	ASSERT_INT(list->get_hook_post_list(e_api_dllapi)->count, 2);
-	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi)->plugs[0], plug0);
-	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi)->plugs[1], plug1);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 2);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[0], plug0);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[1], plug1);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 2);
+	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[0], plug0);
+	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[1], plug1);
 	teardown_globals();
 	PASS();
 	return 0;
@@ -4345,8 +4375,11 @@ static int test_rebuild_different_api_groups(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_newapi, 0, sizeof(fake_newapi));
+	fake_newapi.pfnGameShutdown = fake_hook_game_shutdown;
 	memset(&fake_engine_funcs, 0, sizeof(fake_engine_funcs));
+	fake_engine_funcs.pfnPrecacheModel = fake_hook_precache_model;
 
 	MPlugin *plug0 = &list->plist[0];
 	memset(plug0, 0, sizeof(*plug0));
@@ -4362,15 +4395,15 @@ static int test_rebuild_different_api_groups(void)
 	list->endlist = 2;
 	list->rebuild_hook_lists();
 
-	ASSERT_INT(list->get_hook_list(e_api_engine)->count, 1);
-	ASSERT_PTR_EQ(list->get_hook_list(e_api_engine)->plugs[0], plug0);
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
-	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug1);
-	ASSERT_INT(list->get_hook_list(e_api_newapi)->count, 0);
-	ASSERT_INT(list->get_hook_post_list(e_api_engine)->count, 0);
-	ASSERT_INT(list->get_hook_post_list(e_api_dllapi)->count, 0);
-	ASSERT_INT(list->get_hook_post_list(e_api_newapi)->count, 1);
-	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_newapi)->plugs[0], plug1);
+	ASSERT_INT(list->get_hook_list(e_api_engine, FAKE_OFF_ENGINE)->count, 1);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_engine, FAKE_OFF_ENGINE)->plugs[0], plug0);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 1);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[0], plug1);
+	ASSERT_INT(list->get_hook_list(e_api_newapi, FAKE_OFF_NEWAPI)->count, 0);
+	ASSERT_INT(list->get_hook_post_list(e_api_engine, FAKE_OFF_ENGINE)->count, 0);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 0);
+	ASSERT_INT(list->get_hook_post_list(e_api_newapi, FAKE_OFF_NEWAPI)->count, 1);
+	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_newapi, FAKE_OFF_NEWAPI)->plugs[0], plug1);
 	teardown_globals();
 	PASS();
 	return 0;
@@ -4383,7 +4416,9 @@ static int test_rebuild_realloc_shrinks(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plug0 = &list->plist[0];
 	memset(plug0, 0, sizeof(*plug0));
@@ -4397,12 +4432,12 @@ static int test_rebuild_realloc_shrinks(void)
 
 	list->endlist = 2;
 	list->rebuild_hook_lists();
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 2);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 2);
 
 	plug1->status = PL_EMPTY;
 	list->rebuild_hook_lists();
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
-	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug0);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 1);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[0], plug0);
 	teardown_globals();
 	PASS();
 	return 0;
@@ -4415,6 +4450,7 @@ static int test_rebuild_realloc_failure_keeps_old(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	MPlugin *plug = &list->plist[0];
 	memset(plug, 0, sizeof(*plug));
 	plug->status = PL_RUNNING;
@@ -4422,12 +4458,13 @@ static int test_rebuild_realloc_failure_keeps_old(void)
 	list->endlist = 1;
 
 	list->rebuild_hook_lists();
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 1);
 	MPlugin **old_data = list->hook_list_data;
 	ASSERT_PTR_NOT_NULL(old_data);
 
 	// Add a second plugin and force realloc to fail
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	MPlugin *plug1 = &list->plist[1];
 	memset(plug1, 0, sizeof(*plug1));
 	plug1->status = PL_RUNNING;
@@ -4440,8 +4477,8 @@ static int test_rebuild_realloc_failure_keeps_old(void)
 
 	// Old allocation preserved, but lists zeroed so dispatch is safe
 	ASSERT_PTR_EQ(list->hook_list_data, old_data);
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 0);
-	ASSERT_PTR_NULL(list->get_hook_list(e_api_dllapi)->plugs);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 0);
+	ASSERT_PTR_NULL(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs);
 	teardown_globals();
 	PASS();
 	return 0;
@@ -4454,6 +4491,7 @@ static int test_rebuild_to_empty_frees(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	MPlugin *plug = &list->plist[0];
 	memset(plug, 0, sizeof(*plug));
 	plug->status = PL_RUNNING;
@@ -4467,8 +4505,8 @@ static int test_rebuild_to_empty_frees(void)
 	list->rebuild_hook_lists();
 	ASSERT_PTR_NULL(list->hook_list_data);
 	for(int api = 0; api < 3; api++) {
-		ASSERT_INT(list->get_hook_list((enum_api_t)api)->count, 0);
-		ASSERT_INT(list->get_hook_post_list((enum_api_t)api)->count, 0);
+		ASSERT_INT(list->get_hook_list((enum_api_t)api, fake_api_offsets[api])->count, 0);
+		ASSERT_INT(list->get_hook_post_list((enum_api_t)api, fake_api_offsets[api])->count, 0);
 	}
 	teardown_globals();
 	PASS();
@@ -4495,8 +4533,8 @@ static int test_rebuild_null_tables_ignored(void)
 	list->rebuild_hook_lists();
 
 	for(int api = 0; api < 3; api++) {
-		ASSERT_INT(list->get_hook_list((enum_api_t)api)->count, 0);
-		ASSERT_INT(list->get_hook_post_list((enum_api_t)api)->count, 0);
+		ASSERT_INT(list->get_hook_list((enum_api_t)api, fake_api_offsets[api])->count, 0);
+		ASSERT_INT(list->get_hook_post_list((enum_api_t)api, fake_api_offsets[api])->count, 0);
 	}
 	ASSERT_PTR_NULL(list->hook_list_data);
 	teardown_globals();
@@ -4511,7 +4549,9 @@ static int test_rebuild_plugs_contiguous(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_engine_funcs, 0, sizeof(fake_engine_funcs));
+	fake_engine_funcs.pfnPrecacheModel = fake_hook_precache_model;
 
 	MPlugin *plug0 = &list->plist[0];
 	memset(plug0, 0, sizeof(*plug0));
@@ -4528,9 +4568,9 @@ static int test_rebuild_plugs_contiguous(void)
 	ASSERT_PTR_NOT_NULL(base);
 
 	// engine pre (1) + engine post (0) + dllapi pre (1) + dllapi post (1) = 3 total
-	const api_plugin_list_t *eng_pre = list->get_hook_list(e_api_engine);
-	const api_plugin_list_t *dll_pre = list->get_hook_list(e_api_dllapi);
-	const api_plugin_list_t *dll_post = list->get_hook_post_list(e_api_dllapi);
+	const api_plugin_list_t *eng_pre = list->get_hook_list(e_api_engine, FAKE_OFF_ENGINE);
+	const api_plugin_list_t *dll_pre = list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI);
+	const api_plugin_list_t *dll_post = list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI);
 
 	ASSERT_PTR_EQ(eng_pre->plugs, base);
 	ASSERT_PTR_EQ(dll_pre->plugs, base + 1);
@@ -4547,6 +4587,7 @@ static int test_rebuild_repeated_calls(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	MPlugin *plug = &list->plist[0];
 	memset(plug, 0, sizeof(*plug));
 	plug->status = PL_RUNNING;
@@ -4555,14 +4596,14 @@ static int test_rebuild_repeated_calls(void)
 	list->endlist = 1;
 
 	list->rebuild_hook_lists();
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
-	ASSERT_INT(list->get_hook_post_list(e_api_dllapi)->count, 1);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 1);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 1);
 
 	list->rebuild_hook_lists();
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
-	ASSERT_INT(list->get_hook_post_list(e_api_dllapi)->count, 1);
-	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug);
-	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi)->plugs[0], plug);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 1);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 1);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[0], plug);
+	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[0], plug);
 	teardown_globals();
 	PASS();
 	return 0;
@@ -4575,7 +4616,9 @@ static int test_rebuild_endlist_bounds(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plug0 = &list->plist[0];
 	memset(plug0, 0, sizeof(*plug0));
@@ -4590,8 +4633,191 @@ static int test_rebuild_endlist_bounds(void)
 	list->endlist = 1;
 	list->rebuild_hook_lists();
 
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 1);
-	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi)->plugs[0], plug0);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 1);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs[0], plug0);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// ============================================================
+// rebuild_hook_lists: per-function granularity
+// ============================================================
+
+// A table is what a plugin registers; the slots it fills are what it hooks.
+// Registering a table it never fills hooks nothing.
+static int test_rebuild_empty_table_hooks_nothing(void)
+{
+	TEST("rebuild_hook_lists - table with no hooks lands in no list");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	MPlugin *plug = &list->plist[0];
+	memset(plug, 0, sizeof(*plug));
+	plug->status = PL_RUNNING;
+	plug->tables.dllapi = &fake_dllapi;
+	plug->post_tables.dllapi = &fake_dllapi;
+	list->endlist = 1;
+
+	list->rebuild_hook_lists();
+
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 0);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 0);
+	ASSERT_TRUE(list->hook_list_data == NULL);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// mplugin.cpp allocates a plugin's engine table without the reserved
+// extra_functions tail, so rebuild_hook_lists() must not scan past what a
+// plugin can fill.  The table is allocated here the same way, and on the
+// heap, so a scan that runs off the end is a heap overread that ASan and
+// valgrind will report rather than something that silently reads padding.
+static int test_rebuild_engine_table_not_overread(void)
+{
+	TEST("rebuild_hook_lists - plugin engine table is not scanned past its end");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	size_t plugin_engine_size =
+		sizeof(enginefuncs_t) - sizeof(((enginefuncs_t *)0)->extra_functions);
+	enginefuncs_t *eng = (enginefuncs_t *)calloc(1, plugin_engine_size);
+	ASSERT_TRUE(eng != NULL);
+	eng->pfnPrecacheModel = fake_hook_precache_model;
+
+	MPlugin *plug = &list->plist[0];
+	memset(plug, 0, sizeof(*plug));
+	plug->status = PL_RUNNING;
+	plug->tables.engine = eng;
+	plug->post_tables.engine = eng;
+	list->endlist = 1;
+
+	list->rebuild_hook_lists();
+
+	ASSERT_INT(list->get_hook_list(e_api_engine, FAKE_OFF_ENGINE)->count, 1);
+	ASSERT_PTR_EQ(list->get_hook_list(e_api_engine, FAKE_OFF_ENGINE)->plugs[0], plug);
+	ASSERT_INT(list->get_hook_post_list(e_api_engine, FAKE_OFF_ENGINE)->count, 1);
+
+	free(eng);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Only running plugins are in the lists, so only their tables are worth
+// watching.  A paused plugin editing its table must not cost a rebuild.
+static int test_hook_tables_changed_ignores_paused(void)
+{
+	TEST("hook_tables_changed - edits by a non-running plugin are ignored");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
+
+	MPlugin *running = &list->plist[0];
+	memset(running, 0, sizeof(*running));
+	running->status = PL_RUNNING;
+	running->tables.dllapi = &fake_dllapi;
+
+	MPlugin *paused = &list->plist[1];
+	memset(paused, 0, sizeof(*paused));
+	paused->status = PL_PAUSED;
+	paused->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 2;
+	list->rebuild_hook_lists();
+	ASSERT_TRUE(list->hook_tables_changed() == mFALSE);
+
+	// The paused plugin edits its table: nothing to rebuild for.
+	fake_dllapi2.pfnThink = fake_hook_think;
+	ASSERT_TRUE(list->hook_tables_changed() == mFALSE);
+
+	// The running one edits its table: that has to be noticed.
+	fake_dllapi.pfnThink = fake_hook_think;
+	ASSERT_TRUE(list->hook_tables_changed() == mTRUE);
+
+	// And a rebuild puts the snapshot back in step.
+	list->rebuild_hook_lists();
+	ASSERT_TRUE(list->hook_tables_changed() == mFALSE);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, offsetof(DLL_FUNCTIONS, pfnThink))->count, 1);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// Two plugins holding a table for the same group, hooking different
+// functions of it: neither shows up in the other's list.
+static int test_rebuild_separate_list_per_function(void)
+{
+	TEST("rebuild_hook_lists - each function gets its own list");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnThink = fake_hook_think;
+
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->status = PL_RUNNING;
+	plug0->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi2;
+
+	list->endlist = 2;
+	list->rebuild_hook_lists();
+
+	const api_plugin_list_t *spawn = list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI);
+	const api_plugin_list_t *think = list->get_hook_list(e_api_dllapi, offsetof(DLL_FUNCTIONS, pfnThink));
+
+	ASSERT_INT(spawn->count, 1);
+	ASSERT_PTR_EQ(spawn->plugs[0], plug0);
+	ASSERT_INT(think->count, 1);
+	ASSERT_PTR_EQ(think->plugs[0], plug1);
+
+	// A function neither of them hooks stays empty.
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, offsetof(DLL_FUNCTIONS, pfnUse))->count, 0);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
+// The pre and post tables of one plugin can hook different functions.
+static int test_rebuild_post_hooks_per_function(void)
+{
+	TEST("rebuild_hook_lists - post hooks tracked per function");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnThink = fake_hook_think;
+
+	MPlugin *plug = &list->plist[0];
+	memset(plug, 0, sizeof(*plug));
+	plug->status = PL_RUNNING;
+	plug->tables.dllapi = &fake_dllapi;		// pre hooks Spawn
+	plug->post_tables.dllapi = &fake_dllapi2;	// post hooks Think
+	list->endlist = 1;
+
+	list->rebuild_hook_lists();
+
+	unsigned int think_off = offsetof(DLL_FUNCTIONS, pfnThink);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 1);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 0);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, think_off)->count, 0);
+	ASSERT_INT(list->get_hook_post_list(e_api_dllapi, think_off)->count, 1);
+	ASSERT_PTR_EQ(list->get_hook_post_list(e_api_dllapi, think_off)->plugs[0], plug);
 	teardown_globals();
 	PASS();
 	return 0;
@@ -4620,8 +4846,11 @@ static int test_find_after_rebuild_later_removed(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -4639,15 +4868,15 @@ static int test_find_after_rebuild_later_removed(void)
 	list->rebuild_hook_lists();
 
 	// Simulate: at idx=0 calling A, C gets removed, rebuild
-	int count = list->get_hook_list(e_api_dllapi)->count;
-	MPlugin * const *plugs = list->get_hook_list(e_api_dllapi)->plugs;
+	int count = list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count;
+	MPlugin * const *plugs = list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs;
 	ASSERT_INT(count, 3);
 
 	plugC->status = PL_EMPTY; plugC->tables.dllapi = NULL;
 	list->rebuild_hook_lists();
 
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugA, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugA, count, plugs);
 	ASSERT_INT(new_i, 0);
 	ASSERT_INT(count, 2);
 
@@ -4664,8 +4893,11 @@ static int test_find_after_rebuild_later_removed2(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -4688,7 +4920,7 @@ static int test_find_after_rebuild_later_removed2(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugB, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugB, count, plugs);
 	ASSERT_INT(new_i, 1);
 	ASSERT_INT(count, 2);
 
@@ -4705,8 +4937,11 @@ static int test_find_after_rebuild_later_added(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+	fake_dllapi4.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -4729,7 +4964,7 @@ static int test_find_after_rebuild_later_added(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugA, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugA, count, plugs);
 	ASSERT_INT(new_i, 0);
 	ASSERT_INT(count, 3);
 
@@ -4746,8 +4981,11 @@ static int test_find_after_rebuild_earlier_removed(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -4770,7 +5008,7 @@ static int test_find_after_rebuild_earlier_removed(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugC, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugC, count, plugs);
 	ASSERT_INT(new_i, 1);
 	ASSERT_INT(count, 2);
 
@@ -4787,8 +5025,11 @@ static int test_find_after_rebuild_earlier_paused(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -4811,7 +5052,7 @@ static int test_find_after_rebuild_earlier_paused(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugC, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugC, count, plugs);
 	ASSERT_INT(new_i, 1);
 	ASSERT_INT(count, 2);
 
@@ -4828,8 +5069,11 @@ static int test_find_after_rebuild_two_earlier_removed(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -4853,7 +5097,7 @@ static int test_find_after_rebuild_two_earlier_removed(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugC, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugC, count, plugs);
 	ASSERT_INT(new_i, 0);
 	ASSERT_INT(count, 1);
 
@@ -4870,8 +5114,11 @@ static int test_find_after_rebuild_earlier_removed_mid(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -4894,7 +5141,7 @@ static int test_find_after_rebuild_earlier_removed_mid(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugB, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugB, count, plugs);
 	ASSERT_INT(new_i, 0);
 	ASSERT_INT(count, 2);
 
@@ -4911,7 +5158,9 @@ static int test_find_after_rebuild_earlier_removed_becomes_first(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -4930,7 +5179,7 @@ static int test_find_after_rebuild_earlier_removed_becomes_first(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugB, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugB, count, plugs);
 	ASSERT_INT(new_i, 0);
 	ASSERT_INT(count, 1);
 
@@ -4947,8 +5196,11 @@ static int test_find_after_rebuild_earlier_added(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+	fake_dllapi4.pfnSpawn = fake_hook_spawn;
 
 	// plist[0] = empty slot for X (added later)
 	// plist[1] = A, plist[2] = B
@@ -4972,7 +5224,7 @@ static int test_find_after_rebuild_earlier_added(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugA, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugA, count, plugs);
 	ASSERT_INT(new_i, 1);
 	ASSERT_INT(count, 3);
 
@@ -4989,8 +5241,11 @@ static int test_find_after_rebuild_earlier_added_last(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+	fake_dllapi4.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[1];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 2;
@@ -5011,7 +5266,7 @@ static int test_find_after_rebuild_earlier_added_last(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugB, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugB, count, plugs);
 	ASSERT_INT(new_i, 2);
 	ASSERT_INT(count, 3);
 
@@ -5028,8 +5283,11 @@ static int test_find_after_rebuild_added_between(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+	fake_dllapi4.pfnSpawn = fake_hook_spawn;
 
 	// plist[0] = A, plist[1] empty for X, plist[2] = B
 	MPlugin *plugA = &list->plist[0];
@@ -5052,7 +5310,7 @@ static int test_find_after_rebuild_added_between(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugB, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugB, count, plugs);
 	ASSERT_INT(new_i, 2);
 	ASSERT_INT(count, 3);
 
@@ -5069,9 +5327,13 @@ static int test_find_after_rebuild_two_earlier_added(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+	fake_dllapi4.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi5, 0, sizeof(fake_dllapi5));
+	fake_dllapi5.pfnSpawn = fake_hook_spawn;
 
 	// plist[0],[1] empty for X,Y; plist[2] = A, plist[3] = B
 	MPlugin *plugA = &list->plist[2];
@@ -5098,7 +5360,7 @@ static int test_find_after_rebuild_two_earlier_added(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugA, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugA, count, plugs);
 	ASSERT_INT(new_i, 2);
 	ASSERT_INT(count, 4);
 
@@ -5115,8 +5377,11 @@ static int test_find_after_rebuild_earlier_unpaused(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+	fake_dllapi4.pfnSpawn = fake_hook_spawn;
 
 	// plist[0] = A, plist[1] = X (paused), plist[2] = B
 	MPlugin *plugA = &list->plist[0];
@@ -5134,18 +5399,18 @@ static int test_find_after_rebuild_earlier_unpaused(void)
 	list->endlist = 3;
 	list->rebuild_hook_lists();
 	// Hook list is [A, B] (X paused)
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 2);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 2);
 
 	// Unpause X
 	plugX->status = PL_RUNNING;
 	list->rebuild_hook_lists();
 	// Hook list is [A, X, B]
-	ASSERT_INT(list->get_hook_list(e_api_dllapi)->count, 3);
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count, 3);
 
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugB, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugB, count, plugs);
 	ASSERT_INT(new_i, 2);
 	ASSERT_INT(count, 3);
 
@@ -5162,6 +5427,7 @@ static int test_find_after_rebuild_self_removed_only(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -5176,7 +5442,7 @@ static int test_find_after_rebuild_self_removed_only(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugA, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugA, count, plugs);
 	// i=-1, loop does i++ → 0, 0<0 false, loop ends
 	ASSERT_INT(new_i, -1);
 	ASSERT_INT(count, 0);
@@ -5194,7 +5460,9 @@ static int test_find_after_rebuild_self_removed_first(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -5213,7 +5481,7 @@ static int test_find_after_rebuild_self_removed_first(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugA, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugA, count, plugs);
 	// i=-1, loop does i++ → 0, processes plugs[0]=B
 	ASSERT_INT(new_i, -1);
 	ASSERT_INT(count, 1);
@@ -5232,8 +5500,11 @@ static int test_find_after_rebuild_self_removed_mid(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -5256,7 +5527,7 @@ static int test_find_after_rebuild_self_removed_mid(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugB, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugB, count, plugs);
 	// i=0, loop does i++ → 1, processes plugs[1]=C
 	ASSERT_INT(new_i, 0);
 	ASSERT_INT(count, 2);
@@ -5275,8 +5546,11 @@ static int test_find_after_rebuild_self_paused_mid(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -5299,7 +5573,7 @@ static int test_find_after_rebuild_self_paused_mid(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugB, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugB, count, plugs);
 	ASSERT_INT(new_i, 0);
 	ASSERT_INT(count, 2);
 	ASSERT_PTR_EQ(plugs[1], plugC);
@@ -5317,9 +5591,13 @@ static int test_find_after_rebuild_mixed_remove_add_later(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+	fake_dllapi4.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -5346,7 +5624,7 @@ static int test_find_after_rebuild_mixed_remove_add_later(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugB, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugB, count, plugs);
 	ASSERT_INT(new_i, 0);
 	ASSERT_INT(count, 3);
 
@@ -5363,9 +5641,13 @@ static int test_find_after_rebuild_mixed_remove_add_earlier(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+	fake_dllapi4.pfnSpawn = fake_hook_spawn;
 
 	// plist[0] empty for X, plist[1] = A, plist[2] = B, plist[3] = C
 	MPlugin *plugA = &list->plist[1];
@@ -5394,7 +5676,7 @@ static int test_find_after_rebuild_mixed_remove_add_earlier(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugB, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugB, count, plugs);
 	ASSERT_INT(new_i, 1);
 	ASSERT_INT(count, 3);
 
@@ -5411,9 +5693,13 @@ static int test_find_after_rebuild_mixed_last_net_zero(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+	fake_dllapi4.pfnSpawn = fake_hook_spawn;
 
 	// plist[0] empty for X, plist[1] = A, plist[2] = B, plist[3] = C
 	MPlugin *plugA = &list->plist[1];
@@ -5440,7 +5726,7 @@ static int test_find_after_rebuild_mixed_last_net_zero(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugC, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugC, count, plugs);
 	ASSERT_INT(new_i, 2);
 	ASSERT_INT(count, 3);
 
@@ -5457,9 +5743,13 @@ static int test_find_after_rebuild_mixed_add_before_remove_after(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+	fake_dllapi4.pfnSpawn = fake_hook_spawn;
 
 	// plist[0] empty for X, plist[1] = A, plist[2] = B, plist[3] = C
 	MPlugin *plugA = &list->plist[1];
@@ -5487,7 +5777,7 @@ static int test_find_after_rebuild_mixed_add_before_remove_after(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugA, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugA, count, plugs);
 	ASSERT_INT(new_i, 1);
 	ASSERT_INT(count, 3);
 
@@ -5504,8 +5794,11 @@ static int test_find_after_rebuild_others_removed(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -5529,7 +5822,7 @@ static int test_find_after_rebuild_others_removed(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugB, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugB, count, plugs);
 	ASSERT_INT(new_i, 0);
 	ASSERT_INT(count, 1);
 
@@ -5546,10 +5839,15 @@ static int test_find_after_rebuild_many_earlier_removed(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+	fake_dllapi4.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi5, 0, sizeof(fake_dllapi5));
+	fake_dllapi5.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -5582,7 +5880,7 @@ static int test_find_after_rebuild_many_earlier_removed(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugE, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugE, count, plugs);
 	ASSERT_INT(new_i, 1);
 	ASSERT_INT(count, 2);
 
@@ -5599,9 +5897,13 @@ static int test_find_after_rebuild_many_earlier_added(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi4, 0, sizeof(fake_dllapi4));
+	fake_dllapi4.pfnSpawn = fake_hook_spawn;
 
 	// plist[0,1,2] empty, plist[3] = A
 	MPlugin *plugA = &list->plist[3];
@@ -5628,7 +5930,7 @@ static int test_find_after_rebuild_many_earlier_added(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugA, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugA, count, plugs);
 	ASSERT_INT(new_i, 3);
 	ASSERT_INT(count, 4);
 
@@ -5645,8 +5947,11 @@ static int test_find_after_rebuild_no_change(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -5667,7 +5972,7 @@ static int test_find_after_rebuild_no_change(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugB, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugB, count, plugs);
 	ASSERT_INT(new_i, 1);
 	ASSERT_INT(count, 3);
 
@@ -5684,8 +5989,11 @@ static int test_find_after_rebuild_self_removed_last(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	MPlugin *plugA = &list->plist[0];
 	memset(plugA, 0, sizeof(*plugA)); plugA->index = 1;
@@ -5708,7 +6016,7 @@ static int test_find_after_rebuild_self_removed_last(void)
 	int count;
 	MPlugin * const *plugs;
 	int new_i = list->find_plugin_after_rebuild(
-		e_api_dllapi, mFALSE, plugC, count, plugs);
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plugC, count, plugs);
 	// i=1, loop does i++ → 2, 2<2 false, loop ends. No plugins skipped.
 	ASSERT_INT(new_i, 1);
 	ASSERT_INT(count, 2);
@@ -5734,8 +6042,11 @@ static int test_rebuild_during_iteration_load(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	// Start with 2 running plugins
 	MPlugin *plug0 = &list->plist[0];
@@ -5754,7 +6065,7 @@ static int test_rebuild_during_iteration_load(void)
 	list->rebuild_hook_lists();
 
 	// Simulate main_hook_function: cache plugs and count
-	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi);
+	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI);
 	int count = hlist->count;
 	MPlugin * const *plugs = hlist->plugs;
 
@@ -5797,8 +6108,11 @@ static int test_rebuild_during_iteration_unload_later(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	// 3 running plugins
 	MPlugin *plug0 = &list->plist[0];
@@ -5823,7 +6137,7 @@ static int test_rebuild_during_iteration_unload_later(void)
 	list->rebuild_hook_lists();
 
 	// Cache like main_hook_function does
-	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi);
+	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI);
 	int count = hlist->count;
 	MPlugin * const *plugs = hlist->plugs;
 
@@ -5855,8 +6169,11 @@ static int test_rebuild_during_iteration_unload_earlier(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	// 3 running plugins
 	MPlugin *plug0 = &list->plist[0];
@@ -5881,7 +6198,7 @@ static int test_rebuild_during_iteration_unload_earlier(void)
 	list->rebuild_hook_lists();
 
 	// Cache like main_hook_function does
-	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi);
+	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI);
 	int count = hlist->count;
 	(void)count;
 
@@ -5918,6 +6235,69 @@ static int test_rebuild_during_iteration_unload_earlier(void)
 	return 0;
 }
 
+// A plugin can leave one function's list while staying a running plugin
+// that hooks others.  find_plugin_after_rebuild has to cope with that the
+// same way it copes with a plugin being unloaded outright.
+static int test_rebuild_during_iteration_drops_this_hook(void)
+{
+	TEST("rebuild during iteration - plugin drops this hook, later ones shift");
+	setup_globals();
+	HeapPluginList list("test.ini");
+
+	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
+	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
+	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
+
+	MPlugin *plug0 = &list->plist[0];
+	memset(plug0, 0, sizeof(*plug0));
+	plug0->index = 1;
+	plug0->status = PL_RUNNING;
+	plug0->tables.dllapi = &fake_dllapi;
+
+	MPlugin *plug1 = &list->plist[1];
+	memset(plug1, 0, sizeof(*plug1));
+	plug1->index = 2;
+	plug1->status = PL_RUNNING;
+	plug1->tables.dllapi = &fake_dllapi2;
+
+	MPlugin *plug2 = &list->plist[2];
+	memset(plug2, 0, sizeof(*plug2));
+	plug2->index = 3;
+	plug2->status = PL_RUNNING;
+	plug2->tables.dllapi = &fake_dllapi3;
+
+	list->endlist = 3;
+	list->rebuild_hook_lists();
+
+	int count = list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->count;
+	MPlugin * const *plugs = list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI)->plugs;
+	ASSERT_INT(count, 3);
+
+	// Iteration is at plug1 (index 1) when plug0 stops hooking Spawn but
+	// keeps running and keeps hooking something else.
+	fake_dllapi.pfnSpawn = NULL;
+	fake_dllapi.pfnThink = fake_hook_think;
+	list->rebuild_hook_lists();
+
+	int new_i = list->find_plugin_after_rebuild(
+		e_api_dllapi, FAKE_OFF_DLLAPI, mFALSE, plug1, count, plugs);
+
+	// plug1 is now first in Spawn's list, and plug2 still follows it.
+	ASSERT_INT(count, 2);
+	ASSERT_INT(new_i, 0);
+	ASSERT_PTR_EQ(plugs[0], plug1);
+	ASSERT_PTR_EQ(plugs[1], plug2);
+
+	// plug0 kept running, so it is in the list of what it does hook.
+	ASSERT_INT(list->get_hook_list(e_api_dllapi, offsetof(DLL_FUNCTIONS, pfnThink))->count, 1);
+	teardown_globals();
+	PASS();
+	return 0;
+}
+
 static int test_rebuild_during_iteration_load_post(void)
 {
 	TEST("rebuild during post iteration - load invalidates cached plugs");
@@ -5925,8 +6305,11 @@ static int test_rebuild_during_iteration_load_post(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	// 2 running plugins with post tables
 	MPlugin *plug0 = &list->plist[0];
@@ -5945,7 +6328,7 @@ static int test_rebuild_during_iteration_load_post(void)
 	list->rebuild_hook_lists();
 
 	// Cache post hook list like main_hook_function does
-	const api_plugin_list_t *hlist = list->get_hook_post_list(e_api_dllapi);
+	const api_plugin_list_t *hlist = list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI);
 	int count = hlist->count;
 	MPlugin * const *plugs = hlist->plugs;
 
@@ -5980,8 +6363,11 @@ static int test_rebuild_during_iteration_unload_earlier_post(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	// 3 running plugins with post tables
 	MPlugin *plug0 = &list->plist[0];
@@ -6006,7 +6392,7 @@ static int test_rebuild_during_iteration_unload_earlier_post(void)
 	list->rebuild_hook_lists();
 
 	// Cache post hook list
-	const api_plugin_list_t *hlist = list->get_hook_post_list(e_api_dllapi);
+	const api_plugin_list_t *hlist = list->get_hook_post_list(e_api_dllapi, FAKE_OFF_DLLAPI);
 	int count = hlist->count;
 	(void)count;
 
@@ -6040,8 +6426,11 @@ static int test_rebuild_during_iteration_segfault(void)
 	HeapPluginList list("test.ini");
 
 	memset(&fake_dllapi, 0, sizeof(fake_dllapi));
+	fake_dllapi.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi2, 0, sizeof(fake_dllapi2));
+	fake_dllapi2.pfnSpawn = fake_hook_spawn;
 	memset(&fake_dllapi3, 0, sizeof(fake_dllapi3));
+	fake_dllapi3.pfnSpawn = fake_hook_spawn;
 
 	// 2 running plugins
 	MPlugin *plug0 = &list->plist[0];
@@ -6060,7 +6449,7 @@ static int test_rebuild_during_iteration_segfault(void)
 	list->rebuild_hook_lists();
 
 	// Simulate main_hook_function: cache plugs and count
-	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi);
+	const api_plugin_list_t *hlist = list->get_hook_list(e_api_dllapi, FAKE_OFF_DLLAPI);
 	int count = hlist->count;
 	MPlugin * const *plugs = hlist->plugs;
 
@@ -6320,6 +6709,11 @@ int main(void)
 	fail |= test_rebuild_plugs_contiguous();
 	fail |= test_rebuild_repeated_calls();
 	fail |= test_rebuild_endlist_bounds();
+	fail |= test_rebuild_empty_table_hooks_nothing();
+	fail |= test_rebuild_engine_table_not_overread();
+	fail |= test_hook_tables_changed_ignores_paused();
+	fail |= test_rebuild_separate_list_per_function();
+	fail |= test_rebuild_post_hooks_per_function();
 
 	// find_plugin_after_rebuild (issue #108)
 	fail |= test_find_after_rebuild_later_removed();
@@ -6353,6 +6747,7 @@ int main(void)
 	fail |= test_rebuild_during_iteration_load();
 	fail |= test_rebuild_during_iteration_unload_later();
 	fail |= test_rebuild_during_iteration_unload_earlier();
+	fail |= test_rebuild_during_iteration_drops_this_hook();
 	fail |= test_rebuild_during_iteration_load_post();
 	fail |= test_rebuild_during_iteration_unload_earlier_post();
 	fail |= test_rebuild_during_iteration_segfault();
